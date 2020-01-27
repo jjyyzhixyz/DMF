@@ -698,7 +698,7 @@ Return Value:
     // ---------------------------------
     //
     DMF_CONFIG_HashTable_AND_ATTRIBUTES_INIT(&moduleConfigHashTable,
-                                              &moduleAttributes);
+                                             &moduleAttributes);
     moduleAttributes.ClientModuleInstanceName = "HastTable.Default";
     moduleConfigHashTable.MaximumTableSize = BUFFER_COUNT_MAXIMUM;
     moduleConfigHashTable.MaximumValueLength = BUFFER_SIZE;

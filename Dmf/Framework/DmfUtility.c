@@ -65,6 +65,8 @@ Return Value:
 
 #endif
 
+#if !defined(DMF_WIN32_MODE)
+
 _Must_inspect_result_
 NTSTATUS
 DMF_Utility_UserModeAccessCreate(
@@ -137,6 +139,8 @@ Exit:
 
     return ntStatus;
 }
+
+#endif
 
 BOOLEAN
 DMF_Utility_IsEqualGUID(
@@ -332,6 +336,8 @@ Exit:
 
 #endif // !defined(DMF_USER_MODE)
 
+#if !defined(DMF_WIN32_MODE)
+
 #pragma code_seg("PAGE")
 VOID
 DMF_Utility_EventLoggingNamesGet(
@@ -420,6 +426,8 @@ Return Value:
     FuncExitVoid(DMF_TRACE);
 }
 #pragma code_seg()
+
+#endif
 
 #if !defined(DMF_USER_MODE)
 

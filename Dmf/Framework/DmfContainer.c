@@ -440,10 +440,14 @@ Return Value:
         //
         if (dmfDeviceContext->IsFilterDevice)
         {
+#if !defined(DMF_WIN32_MODE)
             // Completes this Request with error if it cannot passthru.
             //
             DMF_RequestPassthru(device,
                                 Request);
+#else
+            DmfAssert(FALSE);
+#endif
         }
         else
         {
@@ -506,10 +510,14 @@ Return Value:
         //
         if (dmfDeviceContext->IsFilterDevice)
         {
+#if !defined(DMF_WIN32_MODE)
             // Completes this Request with error if it cannot passthru.
             //
             DMF_RequestPassthru(device,
                                 Request);
+#else
+            DmfAssert(FALSE);
+#endif
         }
         else
         {
@@ -581,10 +589,14 @@ Return Value:
         //
         if (dmfDeviceContext->IsFilterDevice)
         {
+#if !defined(DMF_WIN32_MODE)
             // Completes this Request with error if it cannot passthru.
             //
             DMF_RequestPassthru(device,
                                 Request);
+#else
+            DmfAssert(FALSE);
+#endif
         }
         else
         {
@@ -1432,6 +1444,7 @@ Return Value:
         //
         if (dmfDeviceContext->IsFilterDevice)
         {
+#if !defined(DMF_WIN32_MODE)
             // Completes this Request with error if it cannot passthru.
             // File Create must have a completion routine passed to avoid Verifier issue.
             //
@@ -1439,6 +1452,9 @@ Return Value:
                                               Request,
                                               DmfContainerEvtWdfRequestCompletionRoutine_FileCreate,
                                               dmfDeviceContext);
+#else
+            DmfAssert(FALSE);
+#endif
         }
         else
         {
@@ -1513,7 +1529,7 @@ Return Value:
     if ((! handled) && 
         (! dmfDeviceContext->IsFilterDevice))
     {
-        TraceEvents(TRACE_LEVEL_ERROR, DMF_TRACE, "Unhandled Request: FileObject=0x%p", FileObject);
+        TraceEvents(TRACE_LEVEL_VERBOSE, DMF_TRACE, "Unhandled Request: FileObject=0x%p", FileObject);
     }
 
 Exit:
@@ -1569,7 +1585,7 @@ Return Value:
     if ((!handled) &&
         (!dmfDeviceContext->IsFilterDevice))
     {
-        TraceEvents(TRACE_LEVEL_ERROR, DMF_TRACE, "Unhandled Request: FileObject=0x%p", FileObject);
+        TraceEvents(TRACE_LEVEL_VERBOSE, DMF_TRACE, "Unhandled Request: FileObject=0x%p", FileObject);
     }
 
     FuncExitVoid(DMF_TRACE);

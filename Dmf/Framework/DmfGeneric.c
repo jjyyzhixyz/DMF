@@ -556,7 +556,9 @@ Return Value:
     NTSTATUS ntStatus;
     DMF_OBJECT* dmfObject;
     WDFDEVICE device;
+#if !defined(DMF_WIN32_MODE)
     POWER_ACTION powerAction;
+#endif
 
     dmfObject = DMF_ModuleToObject(DmfModule);
 
@@ -572,6 +574,12 @@ Return Value:
     //
     if (DMF_MODULE_OPEN_OPTION_OPEN_D0EntrySystemPowerUp == dmfObject->ModuleDescriptor.OpenOption)
     {
+#if defined(DMF_WIN32_MODE)
+        DmfAssert(FALSE);
+        ntStatus = STATUS_UNSUCCESSFUL;
+        // TODO: Add WdfDeviceGetSystemPowerAction(device)
+        //
+#else
         powerAction = WdfDeviceGetSystemPowerAction(device);
 
         // Open the module on first boot (WdfPowerDeviceD3Final)
@@ -607,6 +615,7 @@ Return Value:
             //
             ntStatus = STATUS_SUCCESS;
         }
+#endif
     }
     else if (DMF_MODULE_OPEN_OPTION_OPEN_D0Entry == dmfObject->ModuleDescriptor.OpenOption)
     {
@@ -779,7 +788,9 @@ Return Value:
     DMF_OBJECT* dmfObject;
     NTSTATUS ntStatus;
     WDFDEVICE device;
+#if !defined(DMF_WIN32_MODE)
     POWER_ACTION powerAction;
+#endif
 
     dmfObject = DMF_ModuleToObject(DmfModule);
 
@@ -795,6 +806,11 @@ Return Value:
 
     if (DMF_MODULE_OPEN_OPTION_OPEN_D0EntrySystemPowerUp == dmfObject->ModuleDescriptor.OpenOption)
     {
+#if defined(DMF_WIN32_MODE)
+        // TODO:
+        //
+        DmfAssert(FALSE);
+#else
         powerAction = WdfDeviceGetSystemPowerAction(device);
 
         if (TargetState == WdfPowerDeviceD3Final ||
@@ -804,6 +820,7 @@ Return Value:
             //
             DMF_Internal_Close(DmfModule);
         }
+#endif
     }
     else if (DMF_MODULE_OPEN_OPTION_OPEN_D0Entry == dmfObject->ModuleDescriptor.OpenOption)
     {

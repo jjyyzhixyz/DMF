@@ -456,7 +456,7 @@ Return Value:
     //
     if (moduleDescriptor->ModuleOptions & DMF_MODULE_OPTIONS_PASSIVE)
     {
-        TraceInformation(DMF_TRACE, "DMF_MODULE_OPTIONS_PASSIVE");
+        TraceVerbose(DMF_TRACE, "DMF_MODULE_OPTIONS_PASSIVE");
 
         DmfAssert(! (moduleDescriptor->ModuleOptions & DMF_MODULE_OPTIONS_DISPATCH));
 
@@ -477,7 +477,7 @@ Return Value:
     }
     else
     {
-        TraceInformation(DMF_TRACE, "DMF_MODULE_OPTIONS_DISPATCH");
+        TraceVerbose(DMF_TRACE, "DMF_MODULE_OPTIONS_DISPATCH");
 
         // Create the Generic DISPATCH_LEVEL Lock for the Auxiliary Synchronization and one device lock.
         //
@@ -648,6 +648,8 @@ Return Value:
     return dmfModuleFeature;
 }
 
+#if !defined(DMF_WIN32_MODE)
+
 _IRQL_requires_max_(DISPATCH_LEVEL)
 VOID
 DMF_RequestPassthru(
@@ -756,6 +758,8 @@ Return Value:
         TraceEvents(TRACE_LEVEL_INFORMATION, DMF_TRACE, "Passthru Request: Request=%p", Request);
     }
 }
+
+#endif
 
 // eof: DmfHelpers.c
 //

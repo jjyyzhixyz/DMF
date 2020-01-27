@@ -2727,7 +2727,7 @@ DMF_ModuleCollectionConfigAddAttributes(
     _In_ DMF_MODULE_ATTRIBUTES* ModuleAttributes,
     _In_opt_ WDF_OBJECT_ATTRIBUTES* ObjectAttributes,
     _In_opt_ DMFMODULE* ResultantDmfModule
-)
+    )
 /*++
 
 Routine Description:
@@ -2964,6 +2964,7 @@ Return Value:
     //
     if (ModuleCollectionConfig->BranchTrackModuleConfig != NULL)
     {
+#if !defined(DMF_WIN32_MODE)
         DMF_MODULE_ATTRIBUTES moduleAttributes;
 
         DMF_BranchTrack_ATTRIBUTES_INIT(&moduleAttributes);
@@ -2976,6 +2977,9 @@ Return Value:
                                                 &moduleAttributes,
                                                 WDF_NO_OBJECT_ATTRIBUTES,
                                                 NULL);
+#else
+        DmfAssert(FALSE);
+#endif
     }
 
 #if !defined(DMF_USER_MODE)
@@ -3202,7 +3206,6 @@ Return Value:
     PAGED_CODE();
 
     FuncEntry(DMF_TRACE);
-    TraceInformation(DMF_TRACE, "%!FUNC!");
 
     DmfAssert(ModuleCollectionConfig->DmfPrivate.ClientDriverWdfDevice != NULL);
 
@@ -3280,6 +3283,7 @@ Return Value:
     //
     if (ModuleCollectionConfig->BranchTrackModuleConfig != NULL)
     {
+#if !defined(DMF_WIN32_MODE)
         // The Client Driver has enabled BranchTrack. Check if the User has enabled BranchTrack.
         //
         ULONG shouldBranchTrackBeInstantiatedAutomatically = DMF_ModuleBranchTrack_HasClientEnabledBranchTrack(ModuleCollectionConfig->DmfPrivate.ClientDriverWdfDevice);
@@ -3301,6 +3305,9 @@ Return Value:
             //
             numberOfClientModulesToCreate--;
         }
+#else
+        DmfAssert(FALSE);
+#endif
     }
 
     // LiveKernelDump Module enabled if Config structure is set by Client.
@@ -3664,7 +3671,6 @@ Return Value:
     PAGED_CODE();
 
     FuncEntry(DMF_TRACE);
-    TraceInformation(DMF_TRACE, "%!FUNC!");
 
     ntStatus = STATUS_UNSUCCESSFUL;
     moduleCollectionHandle = DMF_CollectionToHandle(DmfCollection);
@@ -3716,7 +3722,11 @@ Return Value:
     //
     if (ModuleCollectionConfig->DmfPrivate.BranchTrackEnabled)
     {
+#if !defined(DMF_WIN32_MODE)
         DMF_ModuleBranchTrack_ModuleCollectionInitialize(moduleCollectionHandle);
+#else
+        DmfAssert(FALSE);
+#endif
     }
 
 #if !defined(DMF_USER_MODE)
@@ -3794,7 +3804,6 @@ Return Value:
     PAGED_CODE();
 
     FuncEntry(DMF_TRACE);
-    TraceInformation(DMF_TRACE, "%!FUNC!");
 
     DmfAssert(Device != NULL);
     DmfAssert(DmfDeviceInitPointer != NULL);
@@ -3820,6 +3829,7 @@ Return Value:
     isControlDevice = DMF_DmfDeviceInitIsControlDevice(dmfDeviceInit);
     isFilterDriver = DMF_DmfDeviceInitIsFilterDriver(dmfDeviceInit);
 
+#if !defined(DMF_WIN32_MODE)
     // If Default queue is not created by the client, then create one here.
     // Module which implement IoQueue callbacks will need a default queue.
     //
@@ -3844,6 +3854,7 @@ Return Value:
             goto Exit;
         }
     }
+#endif
 
     // Add DMF_DEVICE_CONTEXT as context to Client's Device object.
     //

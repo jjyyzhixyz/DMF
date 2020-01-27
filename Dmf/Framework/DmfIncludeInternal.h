@@ -643,6 +643,8 @@ DMF_RequestPassthru(
     _In_ WDFREQUEST Request
     );
 
+#if !defined(DMF_WIN32_MODE)
+
 _IRQL_requires_max_(DISPATCH_LEVEL)
 VOID
 DMF_RequestPassthruWithCompletion(
@@ -651,6 +653,8 @@ DMF_RequestPassthruWithCompletion(
     _In_ PFN_WDF_REQUEST_COMPLETION_ROUTINE CompletionRoutine,
     __drv_aliasesMem WDFCONTEXT CompletionContext
     );
+
+#endif
 
 // DmfInternal.h
 //

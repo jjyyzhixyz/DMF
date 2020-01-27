@@ -22,7 +22,7 @@ Environment:
 // The Dmf Library and the Dmf Library Modules this driver uses.
 //
 #include <initguid.h>
-#include "DmfModules.Library.h"
+
 #include "DmfModules.Library.Tests.h"
 
 #include "Trace.h"

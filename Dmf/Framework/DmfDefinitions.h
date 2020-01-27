@@ -21,6 +21,10 @@ Environment:
 
 #pragma once
 
+#if defined(DMF_WIN32_MODE)
+#define DMF_USER_MODE
+#endif
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 // Compiler warning filters.
@@ -99,7 +103,9 @@ extern "C"
 #if defined(DMF_USER_MODE)
     #include <windows.h>
     #include <stdio.h>
-    #include <wdf.h>
+    #if !defined(DMF_WIN32_MODE)
+        #include <wdf.h>
+    #endif
     #include <Objbase.h>
     // NOTE: This file includes poclass.h. Do not include that again
     //       otherwise, redefinition errors will occur.
@@ -117,35 +123,64 @@ extern "C"
     #include <ndisguid.h>
     // TODO: Add support for USB in User Mode drivers.
     //
-    // Turn this on to debug asserts in UMDF.
-    // Normal assert() causes a crash in UMDF which causes UMDF to just disable the driver
-    // without showing what assert failed.
-    //
-    #if defined(DEBUG)
-        #if defined(USE_ASSERT_BREAK)
-            // It means, check a condition...If it is false, break into debugger.
-            //
-            #pragma warning(disable:4127)
-            #if defined(ASSERT)
-                #undef ASSERT
-            #endif // defined(ASSERT)
-            #define ASSERT(X)   ((! (X)) ? DebugBreak() : TRUE)
+    #if !defined(DMF_WIN32_MODE)
+        // Turn this on to debug asserts in UMDF.
+        // Normal assert() causes a crash in UMDF which causes UMDF to just disable the driver
+        // without showing what assert failed.
+        //
+        #if defined(DEBUG)
+            #if defined(USE_ASSERT_BREAK)
+                // It means, check a condition...If it is false, break into debugger.
+                //
+                #pragma warning(disable:4127)
+                #if defined(ASSERT)
+                    #undef ASSERT
+                #endif // defined(ASSERT)
+                #define ASSERT(X)   ((! (X)) ? DebugBreak() : TRUE)
+            #else
+                #if !defined(ASSERT)
+                    // It means, use native assert().
+                    //
+                    #include <assert.h>
+                    #define ASSERT(X)   assert(X)
+                #endif // !defined(ASSERT)
+            #endif // defined(USE_ASSERT_BREAK)
         #else
             #if !defined(ASSERT)
-                // It means, use native assert().
+                // It means, do not assert at all.
                 //
-                #include <assert.h>
-                #define ASSERT(X)   assert(X)
+                #define ASSERT(X) TRUE
             #endif // !defined(ASSERT)
-        #endif // defined(USE_ASSERT_BREAK)
+        #endif // defined(DEBUG)
     #else
-        #if !defined(ASSERT)
-            // It means, do not assert at all.
-            //
-            #define ASSERT(X) TRUE
-        #endif // !defined(ASSERT)
-    #endif // defined(DEBUG)
+        #if defined(DEBUG)
+            #if defined(USE_ASSERT_BREAK)
+                // It means, check a condition...If it is false, break into debugger.
+                //
+                #pragma warning(disable:4127)
+                #if defined(ASSERT)
+                    #undef ASSERT
+                #endif // defined(ASSERT)
+                #define ASSERT(X)   ((! (X)) ? DebugBreak() : TRUE)
+            #else
+                #if !defined(ASSERT)
+                    // It means, use native assert().
+                    //
+                    #include <assert.h>
+                    #define ASSERT(X)   assert(X)
+                #endif // !defined(ASSERT)
+            #endif // defined(USE_ASSERT_BREAK)
+        #else
+            #if !defined(ASSERT)
+                // It means, do not assert at all.
+                //
+                #define ASSERT(X) TRUE
+            #endif // !defined(ASSERT)
+        #endif // defined(DEBUG)
+    #endif
 #else
+    // Kernel-mode
+    //
     #include <ntifs.h>
     #include <wdm.h>
     #include <ntddk.h>
@@ -176,17 +211,15 @@ extern "C"
     #include "usbdlib.h"
     #include <wdfusb.h>
     #include <wpprecorder.h>
-#if IS_WIN10_RS3_OR_LATER
-    #include <lkmdtel.h>
-#endif // IS_WIN10_RS3_OR_LATER
+    #if IS_WIN10_RS3_OR_LATER
+        #include <lkmdtel.h>
+    #endif // IS_WIN10_RS3_OR_LATER
     #include <intrin.h>
 #endif // defined(DMF_USER_MODE)
-#include <hidusage.h>
-#include <hidpi.h>
 
 // DMF Asserts definitions 
 //
-#if defined(DMF_USER_MODE)
+#if defined(DMF_USER_MODE) && !defined(DMF_WIN32_MODE)
     #if DBG
         #if defined(NO_USE_ASSERT_BREAK)
             #include <assert.h>
@@ -203,6 +236,23 @@ extern "C"
             OutputDebugStringA(Message);                                    \
             DbgBreakPoint();                                                \
         }
+#elif defined(DMF_WIN32_MODE)
+    #if DBG
+        #if defined(NO_USE_ASSERT_BREAK)
+            #include <assert.h>
+            #define DmfAssertMessage(Message, Expression) (!(Expression) ? assert(Expression), FALSE : TRUE)
+        #else
+            #define DmfAssertMessage(Message, Expression) (!(Expression) ? DebugBreak(), printf(Message), FALSE : TRUE)
+        #endif
+    #else
+        #define DmfAssertMessage(Message, Expression) TRUE        
+    #endif
+    #define DmfVerifierAssert(Message, Expression)                          \
+        if (!(Expression))                                                  \
+        {                                                                   \
+            printf(Message);                                                \
+            DebugBreak();                                                   \
+        }
 #else
     #define DmfAssertMessage(Message, Expression) ASSERTMSG(Message, Expression)
     #define DmfVerifierAssert(Message, Expression)                          \
@@ -213,6 +263,15 @@ extern "C"
 #endif
 
 #define DmfAssert(Expression) DmfAssertMessage(#Expression, Expression)
+
+// Definitions for platforms that do not support WDF.
+//
+#include "DmfPlatform.h"
+
+// These probably need to be deleted for non-Windows platforms.
+//
+#include <hidusage.h>
+#include <hidpi.h>
 
 // NOTE: This is necessary in order to avoid redefinition errors. It is not clear why
 //       this is the case.
@@ -461,7 +520,7 @@ Return Value:
 //
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#if !defined(DMF_USER_MODE)
+#if !defined(DMF_USER_MODE) && !defined(DMF_WIN32_MODE)
 
 #define DMF_DEFAULT_DEVICEADD_WITH_BRANCHTRACK(DmfEvtDeviceAdd, DmfDeviceModulesAdd, BranchTrackInitialize, BranchTrackName, BranchTrackEntriesOverride)   \
                                                                                                                                                            \
@@ -590,6 +649,8 @@ DmfDriverContextCleanup(                                                        
     WPP_CLEANUP(WdfDriverWdmGetDriverObject((WDFDRIVER)DriverObject));                                        \
 }                                                                                                             \
                                                                                                               \
+
+#elif defined(DMF_WIN32_MODE)
 
 #else
 
@@ -1626,7 +1687,7 @@ DMF_Utility_EventLogEntryWriteUserMode(
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 
-#if defined(DMF_USER_MODE) && UMDF_VERSION_MINOR < 23
+#if defined(DMF_USER_MODE) && !defined(DMF_WIN32_MODE) && UMDF_VERSION_MINOR < 23
 
 FORCEINLINE
 VOID

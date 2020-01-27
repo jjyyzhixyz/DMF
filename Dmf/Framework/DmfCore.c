@@ -819,7 +819,7 @@ DmfModuleParentUpdate(
 
 Routine Description:
 
-    Updates Parent-Child references when a child module is created.
+    Updates Parent-Child references when a Child Module is created.
 
 Arguments:
 
@@ -1090,7 +1090,6 @@ Return Value:
     PAGED_CODE();
 
     FuncEntry(DMF_TRACE);
-    TraceInformation(DMF_TRACE, "%!FUNC!");
 
     // For SAL.
     // (To be honest, I think it should have been _InOut_.
@@ -1259,9 +1258,9 @@ Return Value:
     // Initialize child objects.
     //
     ntStatus = DmfModuleChildObjectsInitialize(dmfObject, 
-                                              memoryDmfObject,
-                                              DmfModuleAttributes,
-                                              ModuleDescriptor);
+                                               memoryDmfObject,
+                                               DmfModuleAttributes,
+                                               ModuleDescriptor);
     if (!NT_SUCCESS(ntStatus))
     {
         TraceEvents(TRACE_LEVEL_ERROR, DMF_TRACE, "DmfModuleChildObjectsInitialize fails: ntStatus=%!STATUS!", ntStatus);
@@ -1607,6 +1606,8 @@ Return Value:
     return transportModule;
 }
 
+#if !defined(DMF_WIN32_MODE)
+
 BOOLEAN
 DMF_ModuleRequestCompleteOrForward(
     _In_ DMFMODULE DmfModule,
@@ -1664,6 +1665,8 @@ Exit:
 
     return completed;
 }
+
+#endif
 
 #if !defined(DMF_USER_MODE)
 RECORDER_LOG

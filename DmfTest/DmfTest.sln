@@ -14,6 +14,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DmfUTestPackage", "DmfUTest
 		{E98FB229-86D0-4EAF-8FC1-D20F63F5991C} = {E98FB229-86D0-4EAF-8FC1-D20F63F5991C}
 	EndProjectSection
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Dmf32Test", "Dmf32Test\exe\Dmf32Test.vcxproj", "{88786F14-E5D1-4A2C-9E90-711089117789}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|ARM64 = Debug|ARM64
@@ -82,6 +84,18 @@ Global
 		{759F3EB1-7097-4499-8659-597429CA366C}.Release|win32.Build.0 = Release|Win32
 		{759F3EB1-7097-4499-8659-597429CA366C}.Release|x64.ActiveCfg = Release|x64
 		{759F3EB1-7097-4499-8659-597429CA366C}.Release|x64.Build.0 = Release|x64
+		{88786F14-E5D1-4A2C-9E90-711089117789}.Debug|ARM64.ActiveCfg = Debug|ARM64
+		{88786F14-E5D1-4A2C-9E90-711089117789}.Debug|ARM64.Build.0 = Debug|ARM64
+		{88786F14-E5D1-4A2C-9E90-711089117789}.Debug|win32.ActiveCfg = Debug|Win32
+		{88786F14-E5D1-4A2C-9E90-711089117789}.Debug|win32.Build.0 = Debug|Win32
+		{88786F14-E5D1-4A2C-9E90-711089117789}.Debug|x64.ActiveCfg = Debug|x64
+		{88786F14-E5D1-4A2C-9E90-711089117789}.Debug|x64.Build.0 = Debug|x64
+		{88786F14-E5D1-4A2C-9E90-711089117789}.Release|ARM64.ActiveCfg = Release|ARM64
+		{88786F14-E5D1-4A2C-9E90-711089117789}.Release|ARM64.Build.0 = Release|ARM64
+		{88786F14-E5D1-4A2C-9E90-711089117789}.Release|win32.ActiveCfg = Release|Win32
+		{88786F14-E5D1-4A2C-9E90-711089117789}.Release|win32.Build.0 = Release|Win32
+		{88786F14-E5D1-4A2C-9E90-711089117789}.Release|x64.ActiveCfg = Release|x64
+		{88786F14-E5D1-4A2C-9E90-711089117789}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

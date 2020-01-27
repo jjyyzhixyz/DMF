@@ -73,7 +73,9 @@ extern "C"
 #include "Dmf_NotifyUserWithRequest.h"
 #include "Dmf_VirtualHidDeviceVhf.h"
 #include "Dmf_VirtualHidMini.h"
+#if !defined(DMF_WIN32_MODE)
 #include "Dmf_Wmi.h"
+#endif
 #include "Dmf_ThreadedBufferQueue.h"
 #include "Dmf_CmApi.h"
 #include "Dmf_SymbolicLinkTarget.h"
