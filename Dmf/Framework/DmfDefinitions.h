@@ -77,7 +77,7 @@ extern "C"
 
 // Check that the Windows version is 19H1 or earlier. The supported versions are defined in sdkddkver.h.
 //
-#define IS_WIN10_19H1_OR_EARLIER (NTDDI_WIN10_19H1 && (NTDDI_VERSION <= NTDDI_WIN10_19H1))
+#define IS_WIN10_19H1_OR_EARLIER (!(NTDDI_WIN10_19H1 && (NTDDI_VERSION > NTDDI_WIN10_19H1)))
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
@@ -1350,6 +1350,19 @@ DMF_ModuleConfigRetrieve(
     _In_ size_t ModuleConfigSize
     );
 
+_IRQL_requires_max_(DISPATCH_LEVEL)
+_Must_inspect_result_
+NTSTATUS
+DMF_ModuleReference(
+    _In_ DMFMODULE DmfModule
+    );
+
+_IRQL_requires_max_(DISPATCH_LEVEL)
+VOID
+DMF_ModuleDereference(
+    _In_ DMFMODULE DmfModule
+    );
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Filter Driver Support (FilterControl API)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1363,7 +1376,7 @@ DMF_FilterControl_DeviceCreate(
     _In_ WDFDEVICE Device,
     _In_opt_ DMF_CONFIG_BranchTrack* FilterBranchTrackConfig,
     _In_opt_ PWDF_IO_QUEUE_CONFIG QueueConfig,
-    _In_ PWCHAR ControlDeviceName
+    _In_ WCHAR* ControlDeviceName
     );
 
 _IRQL_always_function_max_(PASSIVE_LEVEL)

@@ -1829,7 +1829,7 @@ Return Value:
     // It is possible for a Module to be created but not open if the Module uses a
     // notification to open but the notification has not happened yet.
     //
-    DMF_HandleValidate_IsCreatedOrOpenedOrClosed(dmfObject);
+    DMF_HandleValidate_IsAvailable(dmfObject);
 
     // Tell Client Driver this dispatch is still unhandled.
     //
@@ -1877,7 +1877,7 @@ Return Value:
 
     FuncEntryArguments(DMF_TRACE, "DmfModule=0x%p dmfObject=0x%p [%s]", DmfModule, dmfObject, dmfObject->ClientModuleInstanceName);
 
-    DMF_HandleValidate_IsCreatedOrOpenedOrClosed(dmfObject);
+    DMF_HandleValidate_IsAvailable(dmfObject);
 
     // Tell Client Driver this dispatch is still unhandled.
     //
@@ -1925,7 +1925,7 @@ Return Value:
 
     FuncEntryArguments(DMF_TRACE, "DmfModule=0x%p dmfObject=0x%p [%s]", DmfModule, dmfObject, dmfObject->ClientModuleInstanceName);
 
-    DMF_HandleValidate_IsCreatedOrOpenedOrClosed(dmfObject);
+    DMF_HandleValidate_IsAvailable(dmfObject);
 
     // Tell Client Driver this dispatch is still unhandled.
     //
