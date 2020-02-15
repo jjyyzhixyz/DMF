@@ -127,7 +127,7 @@ WdfObjectAllocateContext(
         goto Exit;
     }
 
-    platformContext->ContextData = DMF_Platform_Allocate(ContextAttributes->Size);
+    platformContext->ContextData = DMF_Platform_Allocate(ContextAttributes->ContextTypeInfo->ContextSize);
     if (platformContext->ContextData == NULL)
     {
         DMF_Platform_Free(platformContext);
@@ -144,7 +144,7 @@ WdfObjectAllocateContext(
     InsertTailList(&platformObject->ContextList,
                    &platformContext->ListEntry);
 
-    printf("\nAdd Context[%s] to 0x%p", platformContext->ContextTypeInfo.ContextName, platformObject);
+    //printf("\nAdd Context[%s] to 0x%p", platformContext->ContextTypeInfo.ContextName, platformObject);
 
     if (Context != NULL)
     {
@@ -174,7 +174,7 @@ WdfObjectGetTypedContextWorker(
     returnValue = NULL;
     platformObject = (DMF_PLATFORM_OBJECT*)Handle;
     listEntry = platformObject->ContextList.Flink;
-    printf("\nLookfor Context[%s] in 0x%p", TypeInfo->ContextName, platformObject);
+    //printf("\nLookfor Context[%s] in 0x%p", TypeInfo->ContextName, platformObject);
     while (listEntry != &platformObject->ContextList)
     {
         platformContext = CONTAINING_RECORD(listEntry,
@@ -183,12 +183,12 @@ WdfObjectGetTypedContextWorker(
         if (TypeInfo->ContextName == platformContext->ContextTypeInfo.ContextName)
         {
             returnValue = platformContext->ContextData;
-            printf("\nFound Context[%s] to 0x%p", platformContext->ContextTypeInfo.ContextName, platformObject);
+            //printf("\nFound Context[%s] to 0x%p", platformContext->ContextTypeInfo.ContextName, platformObject);
             break;
         }
         else
         {
-            printf("\nSkip Context[%s]", platformContext->ContextTypeInfo.ContextName);
+            //printf("\nSkip Context[%s]", platformContext->ContextTypeInfo.ContextName);
         }
         listEntry = listEntry->Flink;
     }
@@ -208,6 +208,7 @@ WdfObjectDelete(
     LIST_ENTRY* listEntry;
 
     platformObject = (DMF_PLATFORM_OBJECT*)Object;
+    EnterCriticalSection(&platformObject->ChildListLock);
     listEntry = platformObject->ChildList.Flink;
     while (listEntry != &platformObject->ChildList)
     {
@@ -217,6 +218,7 @@ WdfObjectDelete(
         WdfObjectDelete(childObject);
         listEntry = listEntry->Flink;
     }
+    LeaveCriticalSection(&platformObject->ChildListLock);
 
     // TODO: Call object specific deletion function.
     //
