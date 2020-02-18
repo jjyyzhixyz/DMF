@@ -179,6 +179,7 @@ typedef struct
     // Maintains a list of child objects.
     //
     LIST_ENTRY ChildList;
+    LONG NumberOfChildren;
     CRITICAL_SECTION ChildListLock;
     // Allows this structure to be inserted into the parent's list
     // of child objects so that the tree of objects can be deleted

@@ -215,13 +215,21 @@ WdfObjectDelete(
         childObject = CONTAINING_RECORD(listEntry,
                                         DMF_PLATFORM_OBJECT,
                                         ChildListEntry);
-        WdfObjectDelete(childObject);
+        printf("\nDelete Child=0x%p from Parent=0x%p Children=%d", childObject, Object, platformObject->NumberOfChildren);
         listEntry = listEntry->Flink;
+        WdfObjectDelete(childObject);
+        platformObject->NumberOfChildren--;
+        DmfAssert(platformObject->NumberOfChildren >= 0);
     }
     LeaveCriticalSection(&platformObject->ChildListLock);
 
     // TODO: Call object specific deletion function.
     //
+    printf("\nDelete Data=0x%p platformObject=0x%p", platformObject->Data, platformObject);
+    if (platformObject->ObjectAttributes.ParentObject != NULL)
+    {
+        RemoveEntryList(&platformObject->ChildListEntry);
+    }
     DMF_Platform_Free(platformObject->Data);
     DMF_Platform_Free(platformObject);
 }
@@ -263,13 +271,12 @@ DmfPlatformObjectCreate(
 
     if (Parent != NULL)
     {
-#if 0
         EnterCriticalSection(&Parent->ChildListLock);
-        printf("\nAdd Child[0x%p] to 0x%p", platformObject, Parent);
         InsertTailList(&Parent->ChildList,
                        &platformObject->ChildListEntry);
+        Parent->NumberOfChildren++;
+        printf("\nAdd Child[0x%p] to 0x%p Children=%d", platformObject, Parent, Parent->NumberOfChildren);
         LeaveCriticalSection(&Parent->ChildListLock);
-#endif
     }
 
 Exit:
