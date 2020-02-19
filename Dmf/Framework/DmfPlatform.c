@@ -32,44 +32,9 @@ extern "C"
 {
 #endif // defined(__cplusplus)
 
-#if defined(DMF_WIN32_MODE)
-
-void*
-DMF_Platform_Allocate(
-    size_t Size
-    )
-{
-    void* returnValue;
-    returnValue = malloc(Size);
-    if (returnValue != NULL)
-    {
-        ZeroMemory(returnValue,
-                   Size);
-    }
-
-    return returnValue;
-}
-
-void
-DMF_Platform_Free(
-    void* Pointer
-    )
-{
-    free(Pointer);
-}
-
-#elif defined(DMF_USER_MODE)
-    // Use native primitives.
-    //
-#elif !defined(DMF_USER_MODE)
-    // Use native primitives.
-    //
-#endif
-
-// These are used for all custom platforms
+// TODO: Or with definitions of platforms that need platform support.
 //
-
-#if defined(DMF_WIN32_MODE)
+#if defined(DMF_WIN32_MODE) || defined(DMF_XXX_MODE)
 
 ///////////////////////////////////////////////////////////////////////////////////
 // WDFOBJECT
@@ -144,8 +109,6 @@ WdfObjectAllocateContext(
     InsertTailList(&platformObject->ContextList,
                    &platformContext->ListEntry);
 
-    //printf("\nAdd Context[%s] to 0x%p", platformContext->ContextTypeInfo.ContextName, platformObject);
-
     if (Context != NULL)
     {
         *Context = platformContext->ContextData;
@@ -174,7 +137,6 @@ WdfObjectGetTypedContextWorker(
     returnValue = NULL;
     platformObject = (DMF_PLATFORM_OBJECT*)Handle;
     listEntry = platformObject->ContextList.Flink;
-    //printf("\nLookfor Context[%s] in 0x%p", TypeInfo->ContextName, platformObject);
     while (listEntry != &platformObject->ContextList)
     {
         platformContext = CONTAINING_RECORD(listEntry,
@@ -183,12 +145,7 @@ WdfObjectGetTypedContextWorker(
         if (TypeInfo->ContextName == platformContext->ContextTypeInfo.ContextName)
         {
             returnValue = platformContext->ContextData;
-            //printf("\nFound Context[%s] to 0x%p", platformContext->ContextTypeInfo.ContextName, platformObject);
             break;
-        }
-        else
-        {
-            //printf("\nSkip Context[%s]", platformContext->ContextTypeInfo.ContextName);
         }
         listEntry = listEntry->Flink;
     }
@@ -208,24 +165,22 @@ WdfObjectDelete(
     LIST_ENTRY* listEntry;
 
     platformObject = (DMF_PLATFORM_OBJECT*)Object;
-    EnterCriticalSection(&platformObject->ChildListLock);
+    DMF_Platform_CriticalSectionEnter(&platformObject->ChildListLock);
     listEntry = platformObject->ChildList.Flink;
     while (listEntry != &platformObject->ChildList)
     {
         childObject = CONTAINING_RECORD(listEntry,
                                         DMF_PLATFORM_OBJECT,
                                         ChildListEntry);
-        printf("\nDelete Child=0x%p from Parent=0x%p Children=%d", childObject, Object, platformObject->NumberOfChildren);
         listEntry = listEntry->Flink;
         WdfObjectDelete(childObject);
         platformObject->NumberOfChildren--;
         DmfAssert(platformObject->NumberOfChildren >= 0);
     }
-    LeaveCriticalSection(&platformObject->ChildListLock);
+    DMF_Platform_CriticalSectionLeave(&platformObject->ChildListLock);
 
     // TODO: Call object specific deletion function.
     //
-    printf("\nDelete Data=0x%p platformObject=0x%p", platformObject->Data, platformObject);
     if (platformObject->ObjectAttributes.ParentObject != NULL)
     {
         RemoveEntryList(&platformObject->ChildListEntry);
@@ -271,12 +226,11 @@ DmfPlatformObjectCreate(
 
     if (Parent != NULL)
     {
-        EnterCriticalSection(&Parent->ChildListLock);
+        DMF_Platform_CriticalSectionEnter(&Parent->ChildListLock);
         InsertTailList(&Parent->ChildList,
                        &platformObject->ChildListEntry);
         Parent->NumberOfChildren++;
-        printf("\nAdd Child[0x%p] to 0x%p Children=%d", platformObject, Parent, Parent->NumberOfChildren);
-        LeaveCriticalSection(&Parent->ChildListLock);
+        DMF_Platform_CriticalSectionLeave(&Parent->ChildListLock);
     }
 
 Exit:
@@ -468,8 +422,7 @@ WdfWaitLockCreate(
     NTSTATUS ntStatus;
     DMF_PLATFORM_OBJECT* platformObject;
     DMF_PLATFORM_OBJECT* parentObject;
-
-    UNREFERENCED_PARAMETER(LockAttributes);
+    BOOLEAN waitEventCreated;
 
     ntStatus = STATUS_UNSUCCESSFUL;
 
@@ -498,11 +451,13 @@ WdfWaitLockCreate(
     DMF_PLATFORM_WAITLOCK* platformWaitLock = (DMF_PLATFORM_WAITLOCK*)platformObject->Data;
 
     platformObject->PlatformObjectType = DmfPlatformObjectTypeWaitLock;
-    platformWaitLock->Event = CreateEvent(NULL,
-                                            FALSE,
-                                            FALSE,
-                                            NULL);
-    if (platformWaitLock->Event == NULL)
+
+#if defined(DMF_WIN32_MODE)
+    waitEventCreated = WdfWaitLockCreate_Win32(platformWaitLock);
+#else
+    #error Must define WdfWaitLockCreate_Xxx() for platform.
+#endif
+    if (! waitEventCreated)
     {
         DMF_Platform_Free(platformObject->Data);
         DMF_Platform_Free(platformObject);
@@ -559,8 +514,13 @@ WdfWaitLockAcquire(
     {
         timeoutMs = WDF_REL_TIMEOUT_IN_MS(*Timeout);
     }
-    returnValue = WaitForSingleObject(platformWaitLock->Event,
-                                      (DWORD)timeoutMs);
+
+#if defined(DMF_WIN32_MODE)
+    returnValue = WdfWaitLockAcquire_Win32(platformWaitLock,
+                                           (DWORD)timeoutMs);
+#else
+    #error Must define WdfTimerCreate_Xxx() for platform.
+#endif
     if (returnValue == WAIT_OBJECT_0)
     {
         ntStatus = STATUS_SUCCESS;
@@ -593,7 +553,11 @@ WdfWaitLockRelease(
     DmfAssert(platformObject->PlatformObjectType == DmfPlatformObjectTypeWaitLock);
     platformWaitLock = (DMF_PLATFORM_WAITLOCK*)platformObject->Data;
 
-    SetEvent(platformWaitLock->Event);
+#if defined(DMF_WIN32_MODE)
+    WdfWaitLockRelease_Win32(platformWaitLock);
+#else
+    #error Must define WdfTimerCreate_Xxx() for platform.
+#endif
 }
 
 _Must_inspect_result_
@@ -609,6 +573,7 @@ WdfSpinLockCreate(
     NTSTATUS ntStatus;
     DMF_PLATFORM_OBJECT* platformObject;
     DMF_PLATFORM_OBJECT* parentObject;
+    BOOLEAN spinLockCreated;
 
     UNREFERENCED_PARAMETER(SpinLockAttributes);
 
@@ -640,7 +605,15 @@ WdfSpinLockCreate(
 
     platformObject->PlatformObjectType = DmfPlatformObjectTypeSpinLock;
 
-    InitializeCriticalSection(&platformSpinLock->SpinLock);
+#if defined(DMF_WIN32_MODE)
+    spinLockCreated = WdfSpinLockCreate_Win32(platformSpinLock);
+#else
+    #error Must define WdfspinLockCreate_Xxx() for platform.
+#endif
+    if (!spinLockCreated)
+    {
+        goto Exit;
+    }
 
     if (SpinLockAttributes != NULL)
     {
@@ -677,7 +650,11 @@ WdfSpinLockAcquire(
     DmfAssert(platformObject->PlatformObjectType == DmfPlatformObjectTypeSpinLock);
     platformSpinLock = (DMF_PLATFORM_SPINLOCK*)platformObject->Data;
 
-    EnterCriticalSection(&platformSpinLock->SpinLock);
+#if defined(DMF_WIN32_MODE)
+    WdfSpinLockAcquire_Win32(platformSpinLock);
+#else
+    #error Must define WdfspinLockAcquire_Xxx() for platform.
+#endif
 }
 
 _IRQL_requires_max_(DISPATCH_LEVEL)
@@ -698,21 +675,17 @@ WdfSpinLockRelease(
     DmfAssert(platformObject->PlatformObjectType == DmfPlatformObjectTypeSpinLock);
     platformSpinLock = (DMF_PLATFORM_SPINLOCK*)platformObject->Data;
 
-    LeaveCriticalSection(&platformSpinLock->SpinLock);
+#if defined(DMF_WIN32_MODE)
+    WdfSpinLockRelease_Win32(platformSpinLock);
+#else
+    #error Must define WdfspinLockRelease_Xxx() for platform.
+#endif
 }
 
 ///////////////////////////////////////////////////////////////////////////////////
 // WDFTIMER
 ///////////////////////////////////////////////////////////////////////////////////
 //
-
-VOID 
-CALLBACK 
-TimerCallback(
-    __in PTP_CALLBACK_INSTANCE Instance,
-    __in_opt PVOID Parameter,
-    __in PTP_TIMER Timer
-    );
 
 _Must_inspect_result_
 _IRQL_requires_max_(DISPATCH_LEVEL)
@@ -729,6 +702,7 @@ WdfTimerCreate(
     NTSTATUS ntStatus;
     DMF_PLATFORM_OBJECT* platformObject;
     DMF_PLATFORM_OBJECT* parentObject;
+    BOOLEAN timerCreated;
 
     ntStatus = STATUS_UNSUCCESSFUL;
 
@@ -757,10 +731,14 @@ WdfTimerCreate(
     DMF_PLATFORM_TIMER* platformTimer = (DMF_PLATFORM_TIMER*)platformObject->Data;
 
     platformObject->PlatformObjectType = DmfPlatformObjectTypeTimer;
-    platformTimer->PtpTimer = CreateThreadpoolTimer(TimerCallback,
-                                                    (PVOID)platformObject,
-                                                    nullptr);
-    if (platformTimer->PtpTimer == NULL)
+
+#if defined(DMF_WIN32_MODE)
+    timerCreated = WdfTimerCreate_Win32(platformTimer,
+                                        platformObject);
+#else
+    #error Must define WdfTimerCreate_Xxx() for platform.
+#endif
+    if (! timerCreated)
     {
         DMF_Platform_Free(platformObject->Data);
         DMF_Platform_Free(platformObject);
@@ -799,25 +777,22 @@ WdfTimerStart(
 {
     DMF_PLATFORM_OBJECT* platformObject;
     DMF_PLATFORM_TIMER* platformTimer;
-    ULARGE_INTEGER dueTimeInteger;
-    FILETIME dueTimeFile;
+    BOOLEAN returnValue;
 
     platformObject = (DMF_PLATFORM_OBJECT*)Timer;
     DmfAssert(platformObject->PlatformObjectType == DmfPlatformObjectTypeTimer);
     platformTimer = (DMF_PLATFORM_TIMER*)platformObject->Data;
 
-    dueTimeInteger.QuadPart = DueTime;
-    dueTimeFile.dwHighDateTime = dueTimeInteger.HighPart;
-    dueTimeFile.dwLowDateTime = dueTimeInteger.LowPart;
-
-    SetThreadpoolTimer(platformTimer->PtpTimer,
-                       &dueTimeFile,
-                       0,
-                       0);
+#if defined(DMF_WIN32_MODE)
+    returnValue = WdfTimerStart_Win32(platformTimer,
+                                      DueTime);
+#else
+    #error Must define WdfTimerStart_Xxx() for platform.
+#endif
 
     // Always tell caller timer was not in queue.
     //
-    return FALSE;
+    return returnValue;
 }
 
 _When_(Wait == __true, _IRQL_requires_max_(PASSIVE_LEVEL))
@@ -832,22 +807,20 @@ WdfTimerStop(
 {
     DMF_PLATFORM_OBJECT* platformObject;
     DMF_PLATFORM_TIMER* platformTimer;
+    BOOLEAN returnValue;
 
     platformObject = (DMF_PLATFORM_OBJECT*)Timer;
     DmfAssert(platformObject->PlatformObjectType == DmfPlatformObjectTypeTimer);
     platformTimer = (DMF_PLATFORM_TIMER*)platformObject->Data;
 
-    SetThreadpoolTimer(platformTimer->PtpTimer,
-                       NULL,
-                       0,
-                       0);
-    if (Wait)
-    {
-        WaitForThreadpoolTimerCallbacks(platformTimer->PtpTimer, 
-                                        TRUE);
-    }
+#if defined(DMF_WIN32_MODE)
+    returnValue = WdfTimerStop_Win32(platformTimer,
+                                     Wait);
+#else
+    #error Must define WdfTimerStop_Xxx() for platform.
+#endif
 
-    return TRUE;
+    return returnValue;
 }
 
 _IRQL_requires_max_(DISPATCH_LEVEL)
@@ -863,55 +836,10 @@ WdfTimerGetParentObject(
     return platformObject->ObjectAttributes.ParentObject;
 }
 
-VOID 
-CALLBACK 
-TimerCallback(
-    __in PTP_CALLBACK_INSTANCE Instance,
-    __in_opt PVOID Parameter,
-    __in PTP_TIMER Timer
-    )
-{
-    DMF_PLATFORM_OBJECT* platformObject;
-    DMF_PLATFORM_TIMER* platformTimer;
-
-    UNREFERENCED_PARAMETER(Timer);
-    UNREFERENCED_PARAMETER(Instance);
-        
-    // Parameter should never be NULL. If it is, let it blow up and let us fix it.
-    //
-    platformObject = reinterpret_cast<DMF_PLATFORM_OBJECT*>(Parameter);
-    platformTimer = (DMF_PLATFORM_TIMER*)platformObject->Data;
-
-    platformTimer->Config.EvtTimerFunc((WDFTIMER)platformObject);
-
-    if (platformTimer->Config.Period > 0)
-    {
-        WdfTimerStart((WDFTIMER)platformObject,
-                      platformTimer->Config.Period);
-    }
-}
-
 ///////////////////////////////////////////////////////////////////////////////////
 // WDFWORKITEM
 ///////////////////////////////////////////////////////////////////////////////////
 //
-
-_Function_class_(EVT_WDF_TIMER)
-_IRQL_requires_same_
-_IRQL_requires_max_(DISPATCH_LEVEL)
-VOID
-WorkitemCallback(
-    _In_
-    WDFTIMER Timer
-    )
-{
-    DMF_PLATFORM_OBJECT* platformObject;
-    DMF_PLATFORM_WORKITEM* platformWorkItem;
-
-    platformObject = (DMF_PLATFORM_OBJECT*)WdfTimerGetParentObject(Timer);;
-    platformWorkItem = (DMF_PLATFORM_WORKITEM*)platformObject->Data;
-    platformWorkItem->Config.EvtWorkItemFunc((WDFWORKITEM)platformObject);
-}
 
 _Must_inspect_result_
 _IRQL_requires_max_(DISPATCH_LEVEL)
@@ -928,7 +856,7 @@ WdfWorkItemCreate(
     NTSTATUS ntStatus;
     DMF_PLATFORM_OBJECT* platformObject;
     DMF_PLATFORM_OBJECT* parentObject;
-    WDF_TIMER_CONFIG timerConfig;
+    BOOLEAN workitemCreated;
 
     ntStatus = STATUS_UNSUCCESSFUL;
 
@@ -956,13 +884,21 @@ WdfWorkItemCreate(
 
     DMF_PLATFORM_WORKITEM* platformWorkItem = (DMF_PLATFORM_WORKITEM*)platformObject->Data;
 
-    WDF_TIMER_CONFIG_INIT(&timerConfig, 
-                          WorkitemCallback);
     platformObject->PlatformObjectType = DmfPlatformObjectTypeWorkItem;
-    ntStatus = WdfTimerCreate(&timerConfig,
-                              Attributes,
-                              &platformWorkItem->Timer);
-    if (!NT_SUCCESS(ntStatus))
+    if (Attributes != NULL)
+    {
+        memcpy(&platformObject->ObjectAttributes,
+               Attributes,
+               sizeof(WDF_OBJECT_ATTRIBUTES));
+    }
+
+#if defined(DMF_WIN32_MODE)
+    workitemCreated = WdfWorkitemCreate_Win32(platformWorkItem,
+                                              platformObject);
+#else
+    #error Must define WdfTimerStop_Xxx() for platform.
+#endif
+    if (!workitemCreated)
     {
         DMF_Platform_Free(platformObject->Data);
         DMF_Platform_Free(platformObject);
@@ -972,13 +908,6 @@ WdfWorkItemCreate(
     memcpy(&platformWorkItem->Config,
            Config,
            sizeof(WDF_WORKITEM_CONFIG));
-
-    if (Attributes != NULL)
-    {
-        memcpy(&platformObject->ObjectAttributes,
-               Attributes,
-               sizeof(WDF_OBJECT_ATTRIBUTES));
-    }
 
     *WorkItem = (WDFWORKITEM)platformObject;
 
@@ -1006,8 +935,11 @@ WdfWorkItemEnqueue(
 
     // Cause the workitem callback to execute as soon as possible.
     //
-    WdfTimerStart(platformWorkItem->Timer,
-                  0);
+#if defined(DMF_WIN32_MODE)
+    WdfWorkItemEnqueue_Win32(platformWorkItem);
+#else
+    #error Must define WdfTimerStop_Xxx() for platform.
+#endif
 }
 
 _IRQL_requires_max_(DISPATCH_LEVEL)

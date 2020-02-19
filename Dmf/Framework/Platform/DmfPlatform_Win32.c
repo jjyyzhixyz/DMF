@@ -1,0 +1,324 @@
+/*++
+
+    Copyright (c) Microsoft Corporation. All rights reserved.
+    Licensed under the MIT license.
+
+Module Name:
+
+    DmfPlatform_Win32.c
+
+Abstract:
+
+    Win32 platform support for lower edge of DMF.
+
+    NOTE: Make sure to set "compile as C++" option.
+    NOTE: Make sure to #define DMF_USER_MODE in UMDF Drivers.
+
+Environment:
+
+    Win32 Application
+
+--*/
+
+#include "DmfIncludeInternal.h"
+
+#include "DmfPlatform.tmh"
+
+#if defined(__cplusplus)
+extern "C" 
+{
+#endif // defined(__cplusplus)
+
+////////////////////////////////////////////////////////////////////////////
+// Win32 Primitives for Memory Allocation
+////////////////////////////////////////////////////////////////////////////
+//
+
+#if defined(DMF_WIN32_MODE)
+
+void*
+DMF_Platform_Allocate(
+    size_t Size
+    )
+{
+    void* returnValue;
+
+    returnValue = malloc(Size);
+    if (returnValue != NULL)
+    {
+        ZeroMemory(returnValue,
+                   Size);
+    }
+
+    return returnValue;
+}
+
+void
+DMF_Platform_Free(
+    void* Pointer
+    )
+{
+    free(Pointer);
+}
+
+////////////////////////////////////////////////////////////////////////////
+// Win32 Primitives for Timer, Workitem, Locks
+////////////////////////////////////////////////////////////////////////////
+//
+
+typedef CRITICAL_SECTION DMF_PLATFORM_CRITICAL_SECTION;
+
+void
+DMF_Platform_CriticalSectionEnter(
+    _Out_ DMF_PLATFORM_CRITICAL_SECTION* CriticalSection
+    )
+{
+    EnterCriticalSection(CriticalSection);
+}
+
+void
+DMF_Platform_CriticalSectionLeave(
+    DMF_PLATFORM_CRITICAL_SECTION* CriticalSection
+    )
+{
+    LeaveCriticalSection(CriticalSection);
+}
+
+VOID 
+CALLBACK 
+TimerCallback(
+    __in PTP_CALLBACK_INSTANCE Instance,
+    __in_opt PVOID Parameter,
+    __in PTP_TIMER Timer
+    )
+{
+    DMF_PLATFORM_OBJECT* platformObject;
+    DMF_PLATFORM_TIMER* platformTimer;
+
+    UNREFERENCED_PARAMETER(Timer);
+    UNREFERENCED_PARAMETER(Instance);
+
+    // Parameter should never be NULL. If it is, let it blow up and let us fix it.
+    //
+    platformObject = reinterpret_cast<DMF_PLATFORM_OBJECT*>(Parameter);
+    platformTimer = (DMF_PLATFORM_TIMER*)platformObject->Data;
+
+    platformTimer->Config.EvtTimerFunc((WDFTIMER)platformObject);
+
+    if (platformTimer->Config.Period > 0)
+    {
+        WdfTimerStart((WDFTIMER)platformObject,
+                      platformTimer->Config.Period);
+    }
+}
+
+BOOLEAN
+WdfTimerCreate_Win32(
+    _In_ DMF_PLATFORM_TIMER* PlatformTimer,
+    _In_ DMF_PLATFORM_OBJECT* PlatformObject
+    )
+{
+    BOOLEAN returnValue;
+
+    PlatformTimer->PtpTimer = CreateThreadpoolTimer(TimerCallback,
+                                                    (PVOID)PlatformObject,
+                                                    nullptr);
+    if (PlatformTimer->PtpTimer != NULL)
+    {
+        returnValue = TRUE;
+    }
+    else
+    {
+        returnValue = FALSE;
+    }
+
+    return returnValue;
+}
+
+_IRQL_requires_max_(DISPATCH_LEVEL)
+BOOLEAN
+WdfTimerStart_Win32(
+    _In_
+    DMF_PLATFORM_TIMER* PlatformTimer,
+    _In_
+    LONGLONG DueTime
+    )
+{
+    ULARGE_INTEGER dueTimeInteger;
+    FILETIME dueTimeFile;
+
+    dueTimeInteger.QuadPart = DueTime;
+    dueTimeFile.dwHighDateTime = dueTimeInteger.HighPart;
+    dueTimeFile.dwLowDateTime = dueTimeInteger.LowPart;
+
+    SetThreadpoolTimer(PlatformTimer->PtpTimer,
+                       &dueTimeFile,
+                       0,
+                       0);
+
+    // Always tell caller timer was not in queue.
+    //
+    return FALSE;
+}
+
+BOOLEAN
+WdfTimerStop_Win32(
+    _In_
+    DMF_PLATFORM_TIMER* PlatformTimer,
+    _In_
+    BOOLEAN Wait
+    )
+{
+    SetThreadpoolTimer(PlatformTimer->PtpTimer,
+                       NULL,
+                       0,
+                       0);
+    if (Wait)
+    {
+        WaitForThreadpoolTimerCallbacks(PlatformTimer->PtpTimer, 
+                                        TRUE);
+    }
+
+    return TRUE;
+}
+
+_Function_class_(EVT_WDF_TIMER)
+_IRQL_requires_same_
+_IRQL_requires_max_(DISPATCH_LEVEL)
+VOID
+WorkitemCallback(
+    _In_
+    WDFTIMER Timer
+    )
+{
+    DMF_PLATFORM_OBJECT* platformObject;
+    DMF_PLATFORM_WORKITEM* platformWorkItem;
+
+    platformObject = (DMF_PLATFORM_OBJECT*)WdfTimerGetParentObject(Timer);;
+    platformWorkItem = (DMF_PLATFORM_WORKITEM*)platformObject->Data;
+    platformWorkItem->Config.EvtWorkItemFunc((WDFWORKITEM)platformObject);
+}
+
+BOOLEAN
+WdfWorkitemCreate_Win32(
+    _In_ DMF_PLATFORM_WORKITEM* PlatformWorkItem,
+    _In_ DMF_PLATFORM_OBJECT* PlatformObject
+    )
+{
+    BOOLEAN returnValue;
+    WDF_TIMER_CONFIG timerConfig;
+    NTSTATUS ntStatus;
+
+    WDF_TIMER_CONFIG_INIT(&timerConfig, 
+                          WorkitemCallback);
+    ntStatus = WdfTimerCreate(&timerConfig,
+                              &PlatformObject->ObjectAttributes,
+                              &PlatformWorkItem->Timer);
+    if (!NT_SUCCESS(ntStatus))
+    {
+        returnValue = FALSE;
+        goto Exit;
+    }
+
+    returnValue = TRUE;
+
+Exit:
+
+    return returnValue;
+}
+
+_IRQL_requires_max_(DISPATCH_LEVEL)
+BOOLEAN
+WdfWorkItemEnqueue_Win32(
+    _In_
+    DMF_PLATFORM_WORKITEM* PlatformWorkItem
+    )
+{
+    WdfTimerStart(PlatformWorkItem->Timer,
+                  0);
+    return TRUE;
+}
+
+BOOLEAN
+WdfWaitLockCreate_Win32(
+    _Out_ DMF_PLATFORM_WAITLOCK* PlatformWaitLock
+    )
+{
+    BOOLEAN returnValue;
+
+    PlatformWaitLock->Event = CreateEvent(NULL,
+                                          FALSE,
+                                          FALSE,
+                                          NULL);
+    if (PlatformWaitLock->Event != NULL)
+    {
+        returnValue = TRUE;
+    }
+    else
+    {
+        returnValue = FALSE;
+    }
+
+    return returnValue;
+}
+
+DWORD
+WdfWaitLockAcquire_Win32(
+    _Out_ DMF_PLATFORM_WAITLOCK* PlatformWaitLock,
+    _In_ DWORD TimeoutMs
+    )
+{
+    DWORD returnValue;
+
+    returnValue = WaitForSingleObject(PlatformWaitLock->Event,
+                                      (DWORD)TimeoutMs);
+
+    return returnValue;
+}
+
+VOID
+WdfWaitLockRelease_Win32(
+    _Out_ DMF_PLATFORM_WAITLOCK* PlatformWaitLock
+    )
+{
+    SetEvent(PlatformWaitLock->Event);
+}
+
+BOOLEAN
+WdfSpinLockCreate_Win32(
+    _Out_ DMF_PLATFORM_SPINLOCK* PlatformSpinLock
+    )
+{
+    BOOLEAN returnValue;
+
+    InitializeCriticalSection(&PlatformSpinLock->SpinLock);
+
+    returnValue = TRUE;
+
+    return returnValue;
+}
+
+VOID
+WdfSpinLockAcquire_Win32(
+    _Out_ DMF_PLATFORM_SPINLOCK* PlatformSpinLock
+    )
+{
+    EnterCriticalSection(&PlatformSpinLock->SpinLock);
+}
+
+VOID
+WdfSpinLockRelease_Win32(
+    _Out_ DMF_PLATFORM_SPINLOCK* PlatformSpinLock
+    )
+{
+    LeaveCriticalSection(&PlatformSpinLock->SpinLock);
+}
+
+#endif
+
+#if defined(__cplusplus)
+}
+#endif // defined(__cplusplus)
+
+// eof: DmfPlatform.c
+//

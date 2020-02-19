@@ -199,6 +199,7 @@
     <ClCompile Include="..\..\Framework\Modules.Core\Dmf_IoctlHandler.c" />
     <ClCompile Include="..\..\Framework\Modules.Core\Dmf_BufferQueue.c" />
     <ClCompile Include="..\..\Framework\Modules.Core\Dmf_RingBuffer.c" />
+    <ClCompile Include="..\..\Framework\Platform\DmfPlatform_Win32.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Framework\DmfIncludeInternal.h" />
@@ -218,6 +219,7 @@
     <ClInclude Include="..\..\Framework\DmfDefinitions.h" />
     <ClInclude Include="..\..\Framework\Modules.Core\DmfModules.Core.Trace.h" />
     <ClInclude Include="..\..\Framework\Modules.Core\Dmf_RingBuffer.h" />
+    <ClInclude Include="..\..\Framework\Platform\DmfPlatform_Win32.h" />
     <ClInclude Include="..\..\Framework\Platform\wdfcollection.h" />
     <ClInclude Include="..\..\Framework\Platform\wdfcore.h" />
     <ClInclude Include="..\..\Framework\Platform\wdfdevice.h" />
