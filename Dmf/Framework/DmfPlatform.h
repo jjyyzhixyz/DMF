@@ -127,7 +127,7 @@ extern "C"
         LONG NumberOfChildren;
         // TODO: Need this definition to go above as DMF_PLATFORM_CRITICAL_SECTION.
         //
-        CRITICAL_SECTION ListLock;
+        CRITICAL_SECTION ChildListLock;
         // Allows this structure to be inserted into the parent's list
         // of child objects so that the tree of objects can be deleted
         // automatically when the parent is deleted.
@@ -136,6 +136,7 @@ extern "C"
         // Maintains a list of contexts.
         //
         LIST_ENTRY ContextList;
+        CRITICAL_SECTION ContextListLock;
         // Reference count.
         //
         LONG ReferenceCount;

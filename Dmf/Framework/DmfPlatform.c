@@ -106,10 +106,10 @@ WdfObjectAllocateContext(
 
     InitializeListHead(&platformContext->ListEntry);
 
-    DMF_Platform_CriticalSectionEnter(&platformObject->ListLock);
+    DMF_Platform_CriticalSectionEnter(&platformObject->ContextListLock);
     InsertTailList(&platformObject->ContextList,
                    &platformContext->ListEntry);
-    DMF_Platform_CriticalSectionLeave(&platformObject->ListLock);
+    DMF_Platform_CriticalSectionLeave(&platformObject->ContextListLock);
 
     if (Context != NULL)
     {
@@ -138,7 +138,7 @@ WdfObjectGetTypedContextWorker(
 
     returnValue = NULL;
     platformObject = (DMF_PLATFORM_OBJECT*)Handle;
-    DMF_Platform_CriticalSectionEnter(&platformObject->ListLock);
+    DMF_Platform_CriticalSectionEnter(&platformObject->ContextListLock);
     listEntry = platformObject->ContextList.Flink;
     while (listEntry != &platformObject->ContextList)
     {
@@ -152,7 +152,7 @@ WdfObjectGetTypedContextWorker(
         }
         listEntry = listEntry->Flink;
     }
-    DMF_Platform_CriticalSectionLeave(&platformObject->ListLock);
+    DMF_Platform_CriticalSectionLeave(&platformObject->ContextListLock);
 
     return returnValue;
 }
@@ -188,7 +188,7 @@ WdfObjectDelete(
     {
         // Create a list of all the objects to be deleted without the lock held.
         //
-        DMF_Platform_CriticalSectionEnter(&platformObject->ListLock);
+        DMF_Platform_CriticalSectionEnter(&platformObject->ChildListLock);
         listEntry = platformObject->ChildList.Flink;
         while (listEntry != &platformObject->ChildList)
         {
@@ -204,7 +204,7 @@ WdfObjectDelete(
             //
             listEntry = platformObject->ChildList.Flink;
         }
-        DMF_Platform_CriticalSectionLeave(&platformObject->ListLock);
+        DMF_Platform_CriticalSectionLeave(&platformObject->ChildListLock);
 
         // Call the destroy callback.
         //
@@ -218,12 +218,12 @@ WdfObjectDelete(
         if (platformObject->ObjectAttributes.ParentObject != NULL)
         {
             DMF_PLATFORM_OBJECT* parentPlatformObject = (DMF_PLATFORM_OBJECT*)platformObject->ObjectAttributes.ParentObject;
-            DMF_Platform_CriticalSectionEnter(&parentPlatformObject->ListLock);
+            DMF_Platform_CriticalSectionEnter(&parentPlatformObject->ChildListLock);
             DmfAssert(parentPlatformObject->NumberOfChildren >= 0);
             RemoveEntryList(&platformObject->ChildListEntry);
             parentPlatformObject->NumberOfChildren--;
             DmfAssert(parentPlatformObject->NumberOfChildren >= 0);
-            DMF_Platform_CriticalSectionLeave(&parentPlatformObject->ListLock);
+            DMF_Platform_CriticalSectionLeave(&parentPlatformObject->ChildListLock);
         }
         // Free the memory used by this object.
         //
@@ -238,7 +238,8 @@ WdfObjectDelete(
         DMF_Platform_Free(platformObject->Data);
         // Free the object's critical section.
         //
-        DMF_Platform_CriticalSectionDelete(&platformObject->ListLock);
+        DMF_Platform_CriticalSectionDelete(&platformObject->ChildListLock);
+        DMF_Platform_CriticalSectionDelete(&platformObject->ContextListLock);
         // Free the object's main memory.
         //
         DMF_Platform_Free(platformObject);
@@ -271,11 +272,12 @@ DmfPlatformObjectCreate(
     // Initialize the list of contexts.
     //
     InitializeListHead(&platformObject->ContextList);
+    DMF_Platform_CriticalSectionCreate(&platformObject->ContextListLock);
 
     // Initialize the list of children.
     //
     InitializeListHead(&platformObject->ChildList);
-    DMF_Platform_CriticalSectionCreate(&platformObject->ListLock);
+    DMF_Platform_CriticalSectionCreate(&platformObject->ChildListLock);
     
     DmfAssert(platformObject->ChildListEntry.Flink == NULL);
     DmfAssert(platformObject->ChildListEntry.Blink == NULL);
@@ -286,11 +288,11 @@ DmfPlatformObjectCreate(
 
     if (Parent != NULL)
     {
-        DMF_Platform_CriticalSectionEnter(&Parent->ListLock);
+        DMF_Platform_CriticalSectionEnter(&Parent->ChildListLock);
         InsertTailList(&Parent->ChildList,
                        &platformObject->ChildListEntry);
         Parent->NumberOfChildren++;
-        DMF_Platform_CriticalSectionLeave(&Parent->ListLock);
+        DMF_Platform_CriticalSectionLeave(&Parent->ChildListLock);
     }
 
 Exit:
