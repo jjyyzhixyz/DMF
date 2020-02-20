@@ -106,10 +106,10 @@ WdfObjectAllocateContext(
 
     InitializeListHead(&platformContext->ListEntry);
 
-    DMF_Platform_CriticalSectionEnter(&platformObject->ChildListLock);
+    DMF_Platform_CriticalSectionEnter(&platformObject->ListLock);
     InsertTailList(&platformObject->ContextList,
                    &platformContext->ListEntry);
-    DMF_Platform_CriticalSectionLeave(&platformObject->ChildListLock);
+    DMF_Platform_CriticalSectionLeave(&platformObject->ListLock);
 
     if (Context != NULL)
     {
@@ -138,7 +138,7 @@ WdfObjectGetTypedContextWorker(
 
     returnValue = NULL;
     platformObject = (DMF_PLATFORM_OBJECT*)Handle;
-    DMF_Platform_CriticalSectionEnter(&platformObject->ChildListLock);
+    DMF_Platform_CriticalSectionEnter(&platformObject->ListLock);
     listEntry = platformObject->ContextList.Flink;
     while (listEntry != &platformObject->ContextList)
     {
@@ -152,7 +152,7 @@ WdfObjectGetTypedContextWorker(
         }
         listEntry = listEntry->Flink;
     }
-    DMF_Platform_CriticalSectionLeave(&platformObject->ChildListLock);
+    DMF_Platform_CriticalSectionLeave(&platformObject->ListLock);
 
     return returnValue;
 }
@@ -188,19 +188,23 @@ WdfObjectDelete(
     {
         // Create a list of all the objects to be deleted without the lock held.
         //
-        DMF_Platform_CriticalSectionEnter(&platformObject->ChildListLock);
+        DMF_Platform_CriticalSectionEnter(&platformObject->ListLock);
         listEntry = platformObject->ChildList.Flink;
         while (listEntry != &platformObject->ChildList)
         {
+            DmfAssert(platformObject->NumberOfChildren >= 0);
             childObject = CONTAINING_RECORD(listEntry,
                                             DMF_PLATFORM_OBJECT,
                                             ChildListEntry);
-            listEntry = listEntry->Flink;
-            platformObject->NumberOfChildren--;
-            DmfAssert(platformObject->NumberOfChildren >= 0);
+            // NOTE: Number of children is decremented when object is removed from
+            //       list. It is not removed from list now.
+            //
             WdfObjectDelete(childObject);
+            // The first object is the next object in the list (if present).
+            //
+            listEntry = platformObject->ChildList.Flink;
         }
-        DMF_Platform_CriticalSectionLeave(&platformObject->ChildListLock);
+        DMF_Platform_CriticalSectionLeave(&platformObject->ListLock);
 
         // Call the destroy callback.
         //
@@ -213,7 +217,13 @@ WdfObjectDelete(
         //
         if (platformObject->ObjectAttributes.ParentObject != NULL)
         {
+            DMF_PLATFORM_OBJECT* parentPlatformObject = (DMF_PLATFORM_OBJECT*)platformObject->ObjectAttributes.ParentObject;
+            DMF_Platform_CriticalSectionEnter(&parentPlatformObject->ListLock);
+            DmfAssert(parentPlatformObject->NumberOfChildren >= 0);
             RemoveEntryList(&platformObject->ChildListEntry);
+            parentPlatformObject->NumberOfChildren--;
+            DmfAssert(parentPlatformObject->NumberOfChildren >= 0);
+            DMF_Platform_CriticalSectionLeave(&parentPlatformObject->ListLock);
         }
         // Free the memory used by this object.
         //
@@ -228,7 +238,7 @@ WdfObjectDelete(
         DMF_Platform_Free(platformObject->Data);
         // Free the object's critical section.
         //
-        DMF_Platform_CriticalSectionDelete(&platformObject->ChildListLock);
+        DMF_Platform_CriticalSectionDelete(&platformObject->ListLock);
         // Free the object's main memory.
         //
         DMF_Platform_Free(platformObject);
@@ -265,7 +275,7 @@ DmfPlatformObjectCreate(
     // Initialize the list of children.
     //
     InitializeListHead(&platformObject->ChildList);
-    DMF_Platform_CriticalSectionCreate(&platformObject->ChildListLock);
+    DMF_Platform_CriticalSectionCreate(&platformObject->ListLock);
     
     DmfAssert(platformObject->ChildListEntry.Flink == NULL);
     DmfAssert(platformObject->ChildListEntry.Blink == NULL);
@@ -276,11 +286,11 @@ DmfPlatformObjectCreate(
 
     if (Parent != NULL)
     {
-        DMF_Platform_CriticalSectionEnter(&Parent->ChildListLock);
+        DMF_Platform_CriticalSectionEnter(&Parent->ListLock);
         InsertTailList(&Parent->ChildList,
                        &platformObject->ChildListEntry);
         Parent->NumberOfChildren++;
-        DMF_Platform_CriticalSectionLeave(&Parent->ChildListLock);
+        DMF_Platform_CriticalSectionLeave(&Parent->ListLock);
     }
 
 Exit:
@@ -361,9 +371,9 @@ WdfMemoryCreate(
         goto Exit;
     }
 
-    DMF_PLATFORM_MEMORY* platformMemory = (DMF_PLATFORM_MEMORY*)platformObject->Data;
-
     platformObject->PlatformObjectType = DmfPlatformObjectTypeMemory;
+
+    DMF_PLATFORM_MEMORY* platformMemory = (DMF_PLATFORM_MEMORY*)platformObject->Data;
 
     if (Attributes != NULL)
     {
@@ -445,7 +455,8 @@ WdfMemoryCreatePreallocated(
 
     platformObject->PlatformObjectType = DmfPlatformObjectTypeMemory;
 
-    platformMemory = (DMF_PLATFORM_MEMORY*)platformObject;
+    platformMemory = (DMF_PLATFORM_MEMORY*)platformObject->Data;
+
     platformMemory->DataMemory = Buffer;
     platformMemory->NeedToDeallocate = FALSE;
     platformMemory->Size = BufferSize;
@@ -546,9 +557,9 @@ WdfWaitLockCreate(
         goto Exit;
     }
 
-    DMF_PLATFORM_WAITLOCK* platformWaitLock = (DMF_PLATFORM_WAITLOCK*)platformObject->Data;
-
     platformObject->PlatformObjectType = DmfPlatformObjectTypeWaitLock;
+
+    DMF_PLATFORM_WAITLOCK* platformWaitLock = (DMF_PLATFORM_WAITLOCK*)platformObject->Data;
 
 #if defined(DMF_WIN32_MODE)
     waitEventCreated = WdfWaitLockCreate_Win32(platformWaitLock);
@@ -715,9 +726,9 @@ WdfSpinLockCreate(
         goto Exit;
     }
 
-    DMF_PLATFORM_SPINLOCK* platformSpinLock = (DMF_PLATFORM_SPINLOCK*)platformObject->Data;
-
     platformObject->PlatformObjectType = DmfPlatformObjectTypeSpinLock;
+
+    DMF_PLATFORM_SPINLOCK* platformSpinLock = (DMF_PLATFORM_SPINLOCK*)platformObject->Data;
 
 #if defined(DMF_WIN32_MODE)
     spinLockCreated = WdfSpinLockCreate_Win32(platformSpinLock);
@@ -858,9 +869,9 @@ WdfTimerCreate(
         goto Exit;
     }
 
-    DMF_PLATFORM_TIMER* platformTimer = (DMF_PLATFORM_TIMER*)platformObject->Data;
-
     platformObject->PlatformObjectType = DmfPlatformObjectTypeTimer;
+
+    DMF_PLATFORM_TIMER* platformTimer = (DMF_PLATFORM_TIMER*)platformObject->Data;
 
     if (Attributes != NULL)
     {
@@ -1028,9 +1039,9 @@ WdfWorkItemCreate(
         goto Exit;
     }
 
-    DMF_PLATFORM_WORKITEM* platformWorkItem = (DMF_PLATFORM_WORKITEM*)platformObject->Data;
-
     platformObject->PlatformObjectType = DmfPlatformObjectTypeWorkItem;
+
+    DMF_PLATFORM_WORKITEM* platformWorkItem = (DMF_PLATFORM_WORKITEM*)platformObject->Data;
 
     if (Attributes != NULL)
     {
@@ -1168,9 +1179,9 @@ WdfCollectionCreate(
         goto Exit;
     }
 
-    DMF_PLATFORM_COLLECTION* platformCollection = (DMF_PLATFORM_COLLECTION*)platformObject->Data;
-
     platformObject->PlatformObjectType = DmfPlatformObjectTypeCollection;
+
+    DMF_PLATFORM_COLLECTION* platformCollection = (DMF_PLATFORM_COLLECTION*)platformObject->Data;
 
     WDF_OBJECT_ATTRIBUTES spinlockAttributes;
     WDF_OBJECT_ATTRIBUTES_INIT(&spinlockAttributes);
@@ -1569,11 +1580,11 @@ WdfDeviceCreate(
         goto Exit;
     }
 
+    platformObject->PlatformObjectType = DmfPlatformObjectTypeDevice;
+
     // TODO:
     // DMF_PLATFORM_DEVICE* platformDevice = (DMF_PLATFORM_DEVICE*)platformObject->Data;
     //
-
-    platformObject->PlatformObjectType = DmfPlatformObjectTypeDevice;
 
     if (DeviceAttributes != NULL)
     {
@@ -1695,9 +1706,9 @@ WdfIoQueueCreate(
         goto Exit;
     }
 
-    DMF_PLATFORM_QUEUE* platformQueue = (DMF_PLATFORM_QUEUE*)platformObject->Data;
-
     platformObject->PlatformObjectType = DmfPlatformObjectTypeQueue;
+
+    DMF_PLATFORM_QUEUE* platformQueue = (DMF_PLATFORM_QUEUE*)platformObject->Data;
 
     memcpy(&platformQueue->Config,
            Config,
