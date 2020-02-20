@@ -174,7 +174,11 @@ Exit:
     if (dmfDeviceInit != NULL)                                                  
     {                                                                           
         DMF_DmfDeviceInitFree(&dmfDeviceInit);                                  
-    }                                                                           
+    }      
+    if (device != NULL)
+    {
+        WdfObjectDelete(device);
+    }
 }
 
 // eof: DmfInterface.c

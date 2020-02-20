@@ -101,6 +101,11 @@ DMF_Platform_Free(
 
 typedef CRITICAL_SECTION DMF_PLATFORM_CRITICAL_SECTION;
 
+BOOLEAN
+DMF_Platform_CriticalSectionCreate(
+    _Out_ DMF_PLATFORM_CRITICAL_SECTION* CriticalSection
+    );
+
 void
 DMF_Platform_CriticalSectionEnter(
     _Out_ DMF_PLATFORM_CRITICAL_SECTION* CriticalSection
@@ -108,6 +113,11 @@ DMF_Platform_CriticalSectionEnter(
 
 void
 DMF_Platform_CriticalSectionLeave(
+    DMF_PLATFORM_CRITICAL_SECTION* CriticalSection
+    );
+
+void
+DMF_Platform_CriticalSectionDelete(
     DMF_PLATFORM_CRITICAL_SECTION* CriticalSection
     );
 
@@ -134,8 +144,13 @@ WdfTimerStop_Win32(
     BOOLEAN Wait
     );
 
+void
+WdfTimerDelete_Win32(
+    _In_ DMF_PLATFORM_TIMER* PlatformTimer
+    );
+
 BOOLEAN
-WdfWorkitemCreate_Win32(
+WdfWorkItemCreate_Win32(
     _In_ DMF_PLATFORM_WORKITEM* PlatformWorkItem,
     _In_ DMF_PLATFORM_OBJECT* PlatformObject
     );
@@ -145,6 +160,11 @@ BOOLEAN
 WdfWorkItemEnqueue_Win32(
     _In_
     DMF_PLATFORM_WORKITEM* PlatformWorkItem
+    );
+
+void
+WdfWorkItemDelete_Win32(
+    _In_ DMF_PLATFORM_WORKITEM* PlatformWorkItem
     );
 
 BOOLEAN
@@ -163,6 +183,11 @@ WdfWaitLockRelease_Win32(
     _Out_ DMF_PLATFORM_WAITLOCK* PlatformWaitLock
     );
 
+void
+WdfWaitLockDelete_Win32(
+    _Out_ DMF_PLATFORM_WAITLOCK* PlatformWaitLock
+    );
+
 BOOLEAN
 WdfSpinLockCreate_Win32(
     _Out_ DMF_PLATFORM_SPINLOCK* PlatformSpinLock
@@ -175,6 +200,11 @@ WdfSpinLockAcquire_Win32(
 
 VOID
 WdfSpinLockRelease_Win32(
+    _Out_ DMF_PLATFORM_SPINLOCK* PlatformSpinLock
+    );
+
+void
+WdfSpinLockDelete_Win32(
     _Out_ DMF_PLATFORM_SPINLOCK* PlatformSpinLock
     );
 

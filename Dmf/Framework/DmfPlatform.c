@@ -32,7 +32,7 @@ extern "C"
 {
 #endif // defined(__cplusplus)
 
-// TODO: Or with definitions of platforms that need platform support.
+// PLATFORM_TEMPLATE: Or with definitions of platforms that need platform support.
 //
 #if defined(DMF_WIN32_MODE) || defined(DMF_XXX_MODE)
 
@@ -163,42 +163,78 @@ WdfObjectDelete(
     DMF_PLATFORM_OBJECT* platformObject;
     DMF_PLATFORM_OBJECT* childObject;
     LIST_ENTRY* listEntry;
+    LONG newReferenceCount;
 
     platformObject = (DMF_PLATFORM_OBJECT*)Object;
-    DMF_Platform_CriticalSectionEnter(&platformObject->ChildListLock);
-    listEntry = platformObject->ChildList.Flink;
-    while (listEntry != &platformObject->ChildList)
-    {
-        childObject = CONTAINING_RECORD(listEntry,
-                                        DMF_PLATFORM_OBJECT,
-                                        ChildListEntry);
-        listEntry = listEntry->Flink;
-        WdfObjectDelete(childObject);
-        platformObject->NumberOfChildren--;
-        DmfAssert(platformObject->NumberOfChildren >= 0);
-    }
-    DMF_Platform_CriticalSectionLeave(&platformObject->ChildListLock);
 
-    // TODO: Call object specific deletion function.
+    // Decrement reference count.
     //
-    if (platformObject->ObjectAttributes.ParentObject != NULL)
+    newReferenceCount = InterlockedDecrement(&platformObject->ReferenceCount);
+
+    // Always call clean up callback for each decrement.
+    //
+    if (platformObject->ObjectAttributes.EvtCleanupCallback != NULL)
     {
-        RemoveEntryList(&platformObject->ChildListEntry);
+        platformObject->ObjectAttributes.EvtCleanupCallback(platformObject);
     }
-    DMF_Platform_Free(platformObject->Data);
-    DMF_Platform_Free(platformObject);
+
+    // Actually destroy object when reference count is zero.
+    //
+    if (newReferenceCount == 0)
+    {
+        // Create a list of all the objects to be deleted without the lock held.
+        //
+        DMF_Platform_CriticalSectionEnter(&platformObject->ChildListLock);
+        listEntry = platformObject->ChildList.Flink;
+        while (listEntry != &platformObject->ChildList)
+        {
+            childObject = CONTAINING_RECORD(listEntry,
+                                            DMF_PLATFORM_OBJECT,
+                                            ChildListEntry);
+            listEntry = listEntry->Flink;
+            platformObject->NumberOfChildren--;
+            DmfAssert(platformObject->NumberOfChildren >= 0);
+            WdfObjectDelete(childObject);
+        }
+        DMF_Platform_CriticalSectionLeave(&platformObject->ChildListLock);
+
+        // Call the destroy callback.
+        //
+        if (platformObject->ObjectAttributes.EvtDestroyCallback != NULL)
+        {
+            platformObject->ObjectAttributes.EvtDestroyCallback(platformObject);
+        }
+
+        // Remove this object from its parent.
+        //
+        if (platformObject->ObjectAttributes.ParentObject != NULL)
+        {
+            RemoveEntryList(&platformObject->ChildListEntry);
+        }
+        // Free the memory used by this object.
+        //
+        if (platformObject->ObjectDelete != NULL)
+        {
+            // Free the object specific data.
+            //
+            platformObject->ObjectDelete(platformObject);
+        }
+        // Free the container for object specific data.
+        //
+        DMF_Platform_Free(platformObject->Data);
+        // Free the object's critical section.
+        //
+        DMF_Platform_CriticalSectionDelete(&platformObject->ChildListLock);
+        // Free the object's main memory.
+        //
+        DMF_Platform_Free(platformObject);
+    }
 }
 
-///////////////////////////////////////////////////////////////////////////////////
-// WDFMEMORY
-///////////////////////////////////////////////////////////////////////////////////
-//
-
-// TODO: Pass object type and the object specific deletion function.
-//
 DMF_PLATFORM_OBJECT*
 DmfPlatformObjectCreate(
-    DMF_PLATFORM_OBJECT* Parent
+    _In_ DMF_PLATFORM_OBJECT* Parent,
+    _In_ DMF_Platform_ObjectDelete ObjectDeleteCallback
     )
 {
     DMF_PLATFORM_OBJECT* platformObject;
@@ -209,6 +245,15 @@ DmfPlatformObjectCreate(
         goto Exit;
     }
 
+    // TODO: Use this.
+    //
+    platformObject->ReferenceCount = 1;
+
+    // Set object delete callback. It deletes platform specific constructs
+    // allocated when the object is created.
+    //
+    platformObject->ObjectDelete = ObjectDeleteCallback;
+
     // Initialize the list of contexts.
     //
     InitializeListHead(&platformObject->ContextList);
@@ -216,10 +261,11 @@ DmfPlatformObjectCreate(
     // Initialize the list of children.
     //
     InitializeListHead(&platformObject->ChildList);
-    InitializeCriticalSection(&platformObject->ChildListLock);
+    DMF_Platform_CriticalSectionCreate(&platformObject->ChildListLock);
     
     DmfAssert(platformObject->ChildListEntry.Flink == NULL);
     DmfAssert(platformObject->ChildListEntry.Blink == NULL);
+
     // Initialize this object as not a child.
     //
     InitializeListHead(&platformObject->ChildListEntry);
@@ -236,6 +282,26 @@ DmfPlatformObjectCreate(
 Exit:
 
     return platformObject;
+}
+
+///////////////////////////////////////////////////////////////////////////////////
+// WDFMEMORY
+///////////////////////////////////////////////////////////////////////////////////
+//
+
+void
+DmfPlatformWdfMemoryDelete(
+    DMF_PLATFORM_OBJECT* PlatformObject
+    )
+{
+    ASSERT(PlatformObject->PlatformObjectType == DmfPlatformObjectTypeMemory);
+
+    DMF_PLATFORM_MEMORY* platformMemory = (DMF_PLATFORM_MEMORY*)PlatformObject->Data;
+
+    if (platformMemory->NeedToDeallocate)
+    {
+        DMF_Platform_Free(platformMemory->DataMemory);
+    }
 }
 
 _Must_inspect_result_
@@ -277,7 +343,8 @@ WdfMemoryCreate(
         parentObject = NULL;
     }
 
-    platformObject = DmfPlatformObjectCreate(parentObject);
+    platformObject = DmfPlatformObjectCreate(parentObject,
+                                             DmfPlatformWdfMemoryDelete);
     if (platformObject == NULL)
     {
         goto Exit;
@@ -294,6 +361,13 @@ WdfMemoryCreate(
 
     platformObject->PlatformObjectType = DmfPlatformObjectTypeMemory;
 
+    if (Attributes != NULL)
+    {
+        memcpy(&platformObject->ObjectAttributes,
+               Attributes,
+               sizeof(WDF_OBJECT_ATTRIBUTES));
+    }
+
     platformMemory->DataMemory = (CHAR*)DMF_Platform_Allocate(BufferSize);
     if (platformMemory->DataMemory == NULL)
     {
@@ -304,13 +378,6 @@ WdfMemoryCreate(
 
     platformMemory->NeedToDeallocate = TRUE;
     platformMemory->Size = BufferSize;
-
-    if (Attributes != NULL)
-    {
-        memcpy(&platformObject->ObjectAttributes,
-                Attributes,
-                sizeof(WDF_OBJECT_ATTRIBUTES));
-    }
 
     *Memory = (WDFMEMORY)platformObject;
     if (Buffer != NULL)
@@ -343,10 +410,21 @@ WdfMemoryCreatePreallocated(
 {
     NTSTATUS ntStatus;
     DMF_PLATFORM_OBJECT* platformObject;
+    DMF_PLATFORM_OBJECT* parentObject;
 
     ntStatus = STATUS_UNSUCCESSFUL;
 
-    platformObject = DmfPlatformObjectCreate((DMF_PLATFORM_OBJECT*)(Attributes->ParentObject));
+    if (Attributes != NULL)
+    {
+        parentObject = (DMF_PLATFORM_OBJECT*)Attributes->ParentObject;
+    }
+    else
+    {
+        parentObject = NULL;
+    }
+
+    platformObject = DmfPlatformObjectCreate(parentObject,
+                                             DmfPlatformWdfMemoryDelete);
     if (platformObject == NULL)
     {
         goto Exit;
@@ -409,6 +487,21 @@ WdfMemoryGetBuffer(
 ///////////////////////////////////////////////////////////////////////////////////
 //
 
+void
+DmfPlatformWdfWaitLockDelete(
+    DMF_PLATFORM_OBJECT* PlatformObject
+    )
+{
+    ASSERT(PlatformObject->PlatformObjectType == DmfPlatformObjectTypeWaitLock);
+
+    DMF_PLATFORM_WAITLOCK* platformWaitLock = (DMF_PLATFORM_WAITLOCK*)PlatformObject->Data;
+
+#if defined(DMF_WIN32_MODE)
+    WdfWaitLockDelete_Win32(platformWaitLock);
+#elif defined(DMF_XXX_MODE)
+#endif
+}
+
 _Must_inspect_result_
 _IRQL_requires_max_(DISPATCH_LEVEL)
 NTSTATUS
@@ -435,7 +528,8 @@ WdfWaitLockCreate(
         parentObject = NULL;
     }
 
-    platformObject = DmfPlatformObjectCreate(parentObject);
+    platformObject = DmfPlatformObjectCreate(parentObject,
+                                             DmfPlatformWdfWaitLockDelete);
     if (platformObject == NULL)
     {
         goto Exit;
@@ -560,6 +654,21 @@ WdfWaitLockRelease(
 #endif
 }
 
+void
+DmfPlatformWdfSpinLockDelete(
+    DMF_PLATFORM_OBJECT* PlatformObject
+    )
+{
+    ASSERT(PlatformObject->PlatformObjectType == DmfPlatformObjectTypeSpinLock);
+
+    DMF_PLATFORM_SPINLOCK* platformSpinLock = (DMF_PLATFORM_SPINLOCK*)PlatformObject->Data;
+
+#if defined(DMF_WIN32_MODE)
+    WdfSpinLockDelete_Win32(platformSpinLock);
+#elif defined(DMF_XXX_MODE)
+#endif
+}
+
 _Must_inspect_result_
 _IRQL_requires_max_(DISPATCH_LEVEL)
 NTSTATUS
@@ -588,7 +697,8 @@ WdfSpinLockCreate(
         parentObject = NULL;
     }
 
-    platformObject = DmfPlatformObjectCreate(parentObject);
+    platformObject = DmfPlatformObjectCreate(parentObject,
+                                             DmfPlatformWdfSpinLockDelete);
     if (platformObject == NULL)
     {
         goto Exit;
@@ -687,6 +797,21 @@ WdfSpinLockRelease(
 ///////////////////////////////////////////////////////////////////////////////////
 //
 
+void
+DmfPlatformWdfTimerDelete(
+    DMF_PLATFORM_OBJECT* PlatformObject
+    )
+{
+    ASSERT(PlatformObject->PlatformObjectType == DmfPlatformObjectTypeTimer);
+
+    DMF_PLATFORM_TIMER* platformTimer = (DMF_PLATFORM_TIMER*)PlatformObject->Data;
+
+#if defined(DMF_WIN32_MODE)
+    WdfTimerDelete_Win32(platformTimer);
+#elif defined(DMF_XXX_MODE)
+#endif
+}
+
 _Must_inspect_result_
 _IRQL_requires_max_(DISPATCH_LEVEL)
 NTSTATUS
@@ -715,7 +840,8 @@ WdfTimerCreate(
         parentObject = NULL;
     }
 
-    platformObject = DmfPlatformObjectCreate(parentObject);
+    platformObject = DmfPlatformObjectCreate(parentObject,
+                                             DmfPlatformWdfTimerDelete);
     if (platformObject == NULL)
     {
         goto Exit;
@@ -731,6 +857,13 @@ WdfTimerCreate(
     DMF_PLATFORM_TIMER* platformTimer = (DMF_PLATFORM_TIMER*)platformObject->Data;
 
     platformObject->PlatformObjectType = DmfPlatformObjectTypeTimer;
+
+    if (Attributes != NULL)
+    {
+        memcpy(&platformObject->ObjectAttributes,
+               Attributes,
+               sizeof(WDF_OBJECT_ATTRIBUTES));
+    }
 
 #if defined(DMF_WIN32_MODE)
     timerCreated = WdfTimerCreate_Win32(platformTimer,
@@ -748,13 +881,6 @@ WdfTimerCreate(
     memcpy(&platformTimer->Config,
            Config,
            sizeof(WDF_TIMER_CONFIG));
-
-    if (Attributes != NULL)
-    {
-        memcpy(&platformObject->ObjectAttributes,
-               Attributes,
-               sizeof(WDF_OBJECT_ATTRIBUTES));
-    }
 
     *Timer = (WDFTIMER)platformObject;
 
@@ -841,6 +967,21 @@ WdfTimerGetParentObject(
 ///////////////////////////////////////////////////////////////////////////////////
 //
 
+void
+DmfPlatformWdfWorkItemDelete(
+    DMF_PLATFORM_OBJECT* PlatformObject
+    )
+{
+    ASSERT(PlatformObject->PlatformObjectType == DmfPlatformObjectTypeWorkItem);
+
+    DMF_PLATFORM_WORKITEM* platformWorkItem = (DMF_PLATFORM_WORKITEM*)PlatformObject->Data;
+
+#if defined(DMF_WIN32_MODE)
+    WdfWorkItemDelete_Win32(platformWorkItem);
+#elif defined(DMF_XXX_MODE)
+#endif
+}
+
 _Must_inspect_result_
 _IRQL_requires_max_(DISPATCH_LEVEL)
 NTSTATUS
@@ -869,7 +1010,8 @@ WdfWorkItemCreate(
         parentObject = NULL;
     }
 
-    platformObject = DmfPlatformObjectCreate(parentObject);
+    platformObject = DmfPlatformObjectCreate(parentObject,
+                                             DmfPlatformWdfWorkItemDelete);
     if (platformObject == NULL)
     {
         goto Exit;
@@ -885,6 +1027,7 @@ WdfWorkItemCreate(
     DMF_PLATFORM_WORKITEM* platformWorkItem = (DMF_PLATFORM_WORKITEM*)platformObject->Data;
 
     platformObject->PlatformObjectType = DmfPlatformObjectTypeWorkItem;
+
     if (Attributes != NULL)
     {
         memcpy(&platformObject->ObjectAttributes,
@@ -893,7 +1036,7 @@ WdfWorkItemCreate(
     }
 
 #if defined(DMF_WIN32_MODE)
-    workitemCreated = WdfWorkitemCreate_Win32(platformWorkItem,
+    workitemCreated = WdfWorkItemCreate_Win32(platformWorkItem,
                                               platformObject);
 #else
     #error Must define WdfTimerStop_Xxx() for platform.
@@ -1005,7 +1148,10 @@ WdfCollectionCreate(
         parentObject = NULL;
     }
 
-    platformObject = DmfPlatformObjectCreate(parentObject);
+    // TODO: It seems we don't need to delete anything specifically.
+    //
+    platformObject = DmfPlatformObjectCreate(parentObject,
+                                             NULL);
     if (platformObject == NULL)
     {
         goto Exit;
@@ -1403,7 +1549,10 @@ WdfDeviceCreate(
         parentObject = NULL;
     }
 
-    platformObject = DmfPlatformObjectCreate(parentObject);
+    // TODO: It seems we don't need to delete anything specifically.
+    //
+    platformObject = DmfPlatformObjectCreate(parentObject,
+                                             NULL);
     if (platformObject == NULL)
     {
         goto Exit;
@@ -1511,12 +1660,25 @@ WdfIoQueueCreate(
 {
     NTSTATUS ntStatus;
     DMF_PLATFORM_OBJECT* platformObject;
+    DMF_PLATFORM_OBJECT* parentObject;
 
     UNREFERENCED_PARAMETER(Device);
 
     ntStatus = STATUS_UNSUCCESSFUL;
 
-    platformObject = DmfPlatformObjectCreate((DMF_PLATFORM_OBJECT*)(QueueAttributes->ParentObject));
+    if (QueueAttributes != NULL)
+    {
+        parentObject = (DMF_PLATFORM_OBJECT*)(QueueAttributes->ParentObject);
+    }
+    else
+    {
+        parentObject = NULL;
+    }
+
+    // TODO: It seems we don't need to delete anything specifically.
+    //
+    platformObject = DmfPlatformObjectCreate(parentObject,
+                                             NULL);
     if (platformObject == NULL)
     {
         goto Exit;

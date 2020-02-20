@@ -96,9 +96,17 @@ extern "C"
         DmfPlatformObjectTypeQueue,
     } DmfPlatformObjectType;
 
+    // Forward declaration for DMF Platform Object.
+    //
+    typedef struct _DMF_PLATFORM_OBJECT_ DMF_PLATFORM_OBJECT;
+
+    // Delete callback for each type of data.
+    //
+    typedef void (*DMF_Platform_ObjectDelete)(_In_ DMF_PLATFORM_OBJECT* PlatformObject);
+
     // NOTE: This is analogous to WDFOBJECT.
     //
-    typedef struct
+    struct _DMF_PLATFORM_OBJECT_
     {
         DmfPlatformObjectType PlatformObjectType;
         // Pointer to:
@@ -117,6 +125,8 @@ extern "C"
         //
         LIST_ENTRY ChildList;
         LONG NumberOfChildren;
+        // TODO: Need this definition to go above as DMF_PLATFORM_CRITICAL_SECTION.
+        //
         CRITICAL_SECTION ChildListLock;
         // Allows this structure to be inserted into the parent's list
         // of child objects so that the tree of objects can be deleted
@@ -126,7 +136,13 @@ extern "C"
         // Maintains a list of contexts.
         //
         LIST_ENTRY ContextList;
-    } DMF_PLATFORM_OBJECT;
+        // Reference count.
+        //
+        LONG ReferenceCount;
+        // Deletion callback for custom object data.
+        //
+        DMF_Platform_ObjectDelete ObjectDelete;
+    };
 
 #endif
 
