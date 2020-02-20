@@ -106,8 +106,10 @@ WdfObjectAllocateContext(
 
     InitializeListHead(&platformContext->ListEntry);
 
+    DMF_Platform_CriticalSectionEnter(&platformObject->ChildListLock);
     InsertTailList(&platformObject->ContextList,
                    &platformContext->ListEntry);
+    DMF_Platform_CriticalSectionLeave(&platformObject->ChildListLock);
 
     if (Context != NULL)
     {
@@ -136,6 +138,7 @@ WdfObjectGetTypedContextWorker(
 
     returnValue = NULL;
     platformObject = (DMF_PLATFORM_OBJECT*)Handle;
+    DMF_Platform_CriticalSectionEnter(&platformObject->ChildListLock);
     listEntry = platformObject->ContextList.Flink;
     while (listEntry != &platformObject->ContextList)
     {
@@ -149,6 +152,7 @@ WdfObjectGetTypedContextWorker(
         }
         listEntry = listEntry->Flink;
     }
+    DMF_Platform_CriticalSectionLeave(&platformObject->ChildListLock);
 
     return returnValue;
 }
