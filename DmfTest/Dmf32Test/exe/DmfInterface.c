@@ -133,7 +133,9 @@ main()
     PDMFDEVICE_INIT dmfDeviceInit;                                              
     DMF_EVENT_CALLBACKS dmfCallbacks;                                           
     PWDFDEVICE_INIT deviceInit;
-                                                                                
+    
+    DMF_PlatformInitialize();
+
     deviceInit = (PWDFDEVICE_INIT)&deviceInit;
     dmfDeviceInit = DMF_DmfDeviceInitAllocate(deviceInit);                      
                                                                                 

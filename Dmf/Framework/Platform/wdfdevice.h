@@ -25,9 +25,6 @@ Revision History:
 //       (.x or .y) and use stubwork to regenerate the header
 //
 
-#pragma warning(push)
-#pragma warning(disable: 4100)
-
 #ifndef _WDFDEVICE_H_
 #define _WDFDEVICE_H_
 
@@ -223,7 +220,13 @@ typedef enum _WDF_DEVICE_POWER_STATE {
     WdfDevStatePowerNotifyingD0EntryToWakeInterrupts = 0x35A,
     WdfDevStatePowerNotifyingD0ExitToWakeInterruptsNP = 0x35B | WdfDevStateNP,
     WdfDevStatePowerNotifyingD0EntryToWakeInterruptsNP = 0x35C | WdfDevStateNP,
-    WdfDevStatePowerNull = 0x35D,
+    WdfDevStatePowerInitialPowerUpFailedPowerDown = 0x35D,
+    WdfDevStatePowerUpFailedPowerDown = 0x35E,
+    WdfDevStatePowerUpFailedPowerDownNP = 0x35F | WdfDevStateNP,
+    WdfDevStatePowerInitialSelfManagedIoFailedStarted = 0x360,
+    WdfDevStatePowerStartSelfManagedIoFailedStarted = 0x361,
+    WdfDevStatePowerStartSelfManagedIoFailedStartedNP = 0x362 | WdfDevStateNP,
+    WdfDevStatePowerNull = 0x363,
 } WDF_DEVICE_POWER_STATE, *PWDF_DEVICE_POWER_STATE;
 
 // end_wpp
@@ -593,7 +596,7 @@ WDF_FILEOBJECT_CONFIG_INIT(
     _In_opt_ PFN_WDF_FILE_CLEANUP EvtFileCleanup
     )
 {
-    FileEventCallbacks->Size = sizeof(WDF_FILEOBJECT_CONFIG);
+    FileEventCallbacks->Size = WDF_STRUCTURE_SIZE(WDF_FILEOBJECT_CONFIG);
 
     FileEventCallbacks->EvtDeviceFileCreate  = EvtDeviceFileCreate;
     FileEventCallbacks->EvtFileClose   = EvtFileClose;
@@ -1143,7 +1146,7 @@ WDF_POWER_POLICY_EVENT_CALLBACKS_INIT(
 {
     RtlZeroMemory(Callbacks, sizeof(WDF_POWER_POLICY_EVENT_CALLBACKS));
 
-    Callbacks->Size = sizeof(WDF_POWER_POLICY_EVENT_CALLBACKS);
+    Callbacks->Size = WDF_STRUCTURE_SIZE(WDF_POWER_POLICY_EVENT_CALLBACKS);
 }
 
 VOID
@@ -1153,7 +1156,7 @@ WDF_PNPPOWER_EVENT_CALLBACKS_INIT(
     )
 {
     RtlZeroMemory(Callbacks, sizeof(WDF_PNPPOWER_EVENT_CALLBACKS));
-    Callbacks->Size = sizeof(WDF_PNPPOWER_EVENT_CALLBACKS);
+    Callbacks->Size = WDF_STRUCTURE_SIZE(WDF_PNPPOWER_EVENT_CALLBACKS);
 }
 
 
@@ -1225,32 +1228,32 @@ typedef struct _WDF_DEVICE_POWER_POLICY_IDLE_SETTINGS {
 
     //
     // This field is applicable only when IdleCaps == IdleCannotWakeFromS0
-    // If WdfTrue,device is powered up on System Wake even if device is idle 
+    // If WdfTrue,device is powered up on System Wake even if device is idle
     // If WdfFalse, device is not powered up on system wake if it is idle
-    // If WdfUseDefault, the behavior is same as WdfFalse 
-    // 
+    // If WdfUseDefault, the behavior is same as WdfFalse
+    //
     WDF_TRI_STATE PowerUpIdleDeviceOnSystemWake;
 
     //
     // This field determines how the IdleTimeout field is used.
     //
-    // If the value is DriverManagedIdleTimeout, then the idle timeout value 
+    // If the value is DriverManagedIdleTimeout, then the idle timeout value
     // is determined by the IdleTimeout field of this structure.
     //
-    // If the value is SystemManagedIdleTimeout, then the timeout value is 
-    // determined by the power framework (PoFx) on operating systems where 
+    // If the value is SystemManagedIdleTimeout, then the timeout value is
+    // determined by the power framework (PoFx) on operating systems where
     // the PoFx is available (i.e. Windows 8 and later). The IdleTimeout field
     // is ignored on these operating systems. On operating systems where the
     // PoFx is not available, the behavior is same as DriverManagedIdleTimeout.
     //
     // If the value is SystemManagedIdleTimeoutWithHint, then the timeout value
-    // is determined by the power framework (PoFx) on operating systems where 
-    // the PoFx is available (i.e. Windows 8 and later). In addition, the value 
+    // is determined by the power framework (PoFx) on operating systems where
+    // the PoFx is available (i.e. Windows 8 and later). In addition, the value
     // specified in the IdleTimeout field is provided as a hint to the PoFx in
     // determining when the device should be allowed to enter a low-power state.
     // Since it is only a hint, the actual duration after which the PoFx allows
     // the device to enter a low-power state might be greater than or less than
-    // the IdleTimeout value. On operating systems where the PoFx is not 
+    // the IdleTimeout value. On operating systems where the PoFx is not
     // available, the behavior is same as DriverManagedIdleTimeout.
     //
     WDF_POWER_POLICY_IDLE_TIMEOUT_TYPE IdleTimeoutType;
@@ -1290,7 +1293,7 @@ WDF_DEVICE_POWER_POLICY_IDLE_SETTINGS_INIT(
 {
     RtlZeroMemory(Settings, sizeof(WDF_DEVICE_POWER_POLICY_IDLE_SETTINGS));
 
-    Settings->Size = sizeof(WDF_DEVICE_POWER_POLICY_IDLE_SETTINGS);
+    Settings->Size = WDF_STRUCTURE_SIZE(WDF_DEVICE_POWER_POLICY_IDLE_SETTINGS);
 
     Settings->IdleTimeout = IdleTimeoutDefaultValue;
     Settings->UserControlOfIdleSettings = IdleAllowUserControl;
@@ -1371,7 +1374,7 @@ WDF_DEVICE_POWER_POLICY_WAKE_SETTINGS_INIT(
 {
     RtlZeroMemory(Settings, sizeof(WDF_DEVICE_POWER_POLICY_WAKE_SETTINGS));
 
-    Settings->Size = sizeof(WDF_DEVICE_POWER_POLICY_WAKE_SETTINGS);
+    Settings->Size = WDF_STRUCTURE_SIZE(WDF_DEVICE_POWER_POLICY_WAKE_SETTINGS);
 
     Settings->Enabled = WdfUseDefault;
     Settings->DxState = PowerDeviceMaximum;
@@ -1430,7 +1433,7 @@ WDF_DEVICE_STATE_INIT(
 {
     RtlZeroMemory(PnpDeviceState, sizeof(WDF_DEVICE_STATE));
 
-    PnpDeviceState->Size = sizeof(WDF_DEVICE_STATE);
+    PnpDeviceState->Size = WDF_STRUCTURE_SIZE(WDF_DEVICE_STATE);
 
     //
     // Initializes all of the fields to the WdfUseDefault enum value
@@ -1479,7 +1482,7 @@ WDF_DEVICE_PNP_CAPABILITIES_INIT(
 {
     RtlZeroMemory(Caps, sizeof(WDF_DEVICE_PNP_CAPABILITIES));
 
-    Caps->Size = sizeof(WDF_DEVICE_PNP_CAPABILITIES);
+    Caps->Size = WDF_STRUCTURE_SIZE(WDF_DEVICE_PNP_CAPABILITIES);
 
     Caps->LockSupported = WdfUseDefault;
     Caps->EjectSupported = WdfUseDefault;
@@ -1548,7 +1551,7 @@ WDF_DEVICE_POWER_CAPABILITIES_INIT(
 
     RtlZeroMemory(Caps, sizeof(WDF_DEVICE_POWER_CAPABILITIES));
 
-    Caps->Size = sizeof(WDF_DEVICE_POWER_CAPABILITIES);
+    Caps->Size = WDF_STRUCTURE_SIZE(WDF_DEVICE_POWER_CAPABILITIES);
 
     Caps->DeviceD1 = WdfUseDefault;
     Caps->DeviceD2 = WdfUseDefault;
@@ -1586,7 +1589,7 @@ typedef struct _WDF_REMOVE_LOCK_OPTIONS {
     // Bit field combination of values from the WDF_REMOVE_LOCK_OPTIONS_FLAGS
     // enumeration
     //
-    ULONG Flags;  
+    ULONG Flags;
 } WDF_REMOVE_LOCK_OPTIONS, *PWDF_REMOVE_LOCK_OPTIONS;
 
 
@@ -1602,11 +1605,9 @@ WDF_REMOVE_LOCK_OPTIONS_INIT(
 {
     RtlZeroMemory(RemoveLockOptions, sizeof(WDF_REMOVE_LOCK_OPTIONS));
 
-    RemoveLockOptions->Size = sizeof(WDF_REMOVE_LOCK_OPTIONS);
+    RemoveLockOptions->Size = WDF_STRUCTURE_SIZE(WDF_REMOVE_LOCK_OPTIONS);
     RemoveLockOptions->Flags = Flags;
 }
-
-#if !defined(DMF_WIN32_MODE)
 
 typedef
 _Function_class_(EVT_WDFDEVICE_WDM_IRP_PREPROCESS)
@@ -1633,7 +1634,7 @@ EVT_WDFDEVICE_WDM_IRP_DISPATCH(
     _In_
     UCHAR MajorFunction,
     _In_
-    UCHAR MinorFunction,   
+    UCHAR MinorFunction,
     _In_
     ULONG Code,
     _In_
@@ -1645,8 +1646,6 @@ EVT_WDFDEVICE_WDM_IRP_DISPATCH(
     );
 
 typedef EVT_WDFDEVICE_WDM_IRP_DISPATCH *PFN_WDFDEVICE_WDM_IRP_DISPATCH;
-
-#endif
 
 //
 // This is called to pre-process a request using METHOD_NEITHER
@@ -1664,8 +1663,6 @@ EVT_WDF_IO_IN_CALLER_CONTEXT(
     );
 
 typedef EVT_WDF_IO_IN_CALLER_CONTEXT *PFN_WDF_IO_IN_CALLER_CONTEXT;
-
-#if !defined(DMF_WIN32_MODE)
 
 typedef
 _Function_class_(EVT_WDFDEVICE_WDM_POST_PO_FX_REGISTER_DEVICE)
@@ -1695,66 +1692,64 @@ EVT_WDFDEVICE_WDM_PRE_PO_FX_UNREGISTER_DEVICE(
 
 typedef EVT_WDFDEVICE_WDM_PRE_PO_FX_UNREGISTER_DEVICE *PFN_WDFDEVICE_WDM_PRE_PO_FX_UNREGISTER_DEVICE;
 
-#endif
-
 typedef struct _WDF_POWER_FRAMEWORK_SETTINGS {
     //
     // Size of the structure, in bytes.
     //
     ULONG Size;
-#if !defined(DMF_WIN32_MODE)
+
     //
-    // Client driver's callback function that is invoked after KMDF has 
+    // Client driver's callback function that is invoked after KMDF has
     // registered with the power framework. This field can be NULL if the
     // client driver does not wish to specify this callback.
     //
     PFN_WDFDEVICE_WDM_POST_PO_FX_REGISTER_DEVICE EvtDeviceWdmPostPoFxRegisterDevice;
 
     //
-    // Client driver's callback function that is invoked before KMDF 
-    // unregisters with the power framework. This field can be NULL if the 
+    // Client driver's callback function that is invoked before KMDF
+    // unregisters with the power framework. This field can be NULL if the
     // client driver does not wish to specify this callback.
     //
     PFN_WDFDEVICE_WDM_PRE_PO_FX_UNREGISTER_DEVICE EvtDeviceWdmPrePoFxUnregisterDevice;
 
     //
     // Pointer to a PO_FX_COMPONENT structure that describes the only component
-    // in the single-component device. This field can be NULL if the client 
+    // in the single-component device. This field can be NULL if the client
     // driver wants KMDF to use the default specification for this component
     // (i.e. support for F0 only).
     //
     PPO_FX_COMPONENT Component;
 
     //
-    // Client driver's PO_FX_COMPONENT_ACTIVE_CONDITION_CALLBACK callback 
-    // function. This field can be NULL if the client driver does not wish to 
+    // Client driver's PO_FX_COMPONENT_ACTIVE_CONDITION_CALLBACK callback
+    // function. This field can be NULL if the client driver does not wish to
     // specify this callback.
     //
     PPO_FX_COMPONENT_ACTIVE_CONDITION_CALLBACK ComponentActiveConditionCallback;
 
     //
-    // Client driver's PO_FX_COMPONENT_IDLE_CONDITION_CALLBACK callback 
+    // Client driver's PO_FX_COMPONENT_IDLE_CONDITION_CALLBACK callback
     // function. This field can be NULL if the client driver does not wish to
     // specify this callback.
     //
     PPO_FX_COMPONENT_IDLE_CONDITION_CALLBACK ComponentIdleConditionCallback;
 
     //
-    // Client driver's PO_FX_COMPONENT_IDLE_STATE_CALLBACK callback function. 
-    // This field can be NULL if the client driver does not wish to specify 
+    // Client driver's PO_FX_COMPONENT_IDLE_STATE_CALLBACK callback function.
+    // This field can be NULL if the client driver does not wish to specify
     // this callback.
     //
     PPO_FX_COMPONENT_IDLE_STATE_CALLBACK ComponentIdleStateCallback;
 
     //
-    // Client driver's PO_FX_POWER_CONTROL_CALLBACK callback function. This 
-    // field can be NULL if the client driver does not wish to specify this 
+    // Client driver's PO_FX_POWER_CONTROL_CALLBACK callback function. This
+    // field can be NULL if the client driver does not wish to specify this
     // callback.
     //
     PPO_FX_POWER_CONTROL_CALLBACK PowerControlCallback;
-#endif
+
     //
-    // Context value that is passed in to the ComponentIdleStateCallback and 
+    // Context value that is passed in to the ComponentIdleStateCallback and
     // PowerControlCallback callback functions.
     //
     PVOID PoFxDeviceContext;
@@ -1765,10 +1760,10 @@ FORCEINLINE
 WDF_POWER_FRAMEWORK_SETTINGS_INIT(
     _Out_ PWDF_POWER_FRAMEWORK_SETTINGS PowerFrameworkSettings
     )
-{    
+{
     RtlZeroMemory(PowerFrameworkSettings,
                   sizeof(WDF_POWER_FRAMEWORK_SETTINGS));
-    PowerFrameworkSettings->Size = sizeof(WDF_POWER_FRAMEWORK_SETTINGS);
+    PowerFrameworkSettings->Size = WDF_STRUCTURE_SIZE(WDF_POWER_FRAMEWORK_SETTINGS);
 }
 
 
@@ -1779,45 +1774,45 @@ typedef struct _WDF_IO_TYPE_CONFIG {
     ULONG Size;
 
     //
-    // <KMDF_DOC/> 
-    // Identifies the method that the driver will use to access data buffers 
+    // <KMDF_DOC/>
+    // Identifies the method that the driver will use to access data buffers
     // that it receives for read and write requests.
     //
     // <UMDF_DOC/>
-    // Identifies the method that the driver will "prefer" to use to access data 
+    // Identifies the method that the driver will "prefer" to use to access data
     // buffers that it receives for read and write requests. Note that UMDF
-    // driver provides just a preference, and not a guarantee.Therefore,  
-    // even if a driver specified direct access method, UMDF might use the 
-    // buffered access method for one or more of the device's requests to 
-    // improve performance. For example, UMDF uses buffered access for small 
-    // buffers, if it can copy the data to the driver's buffer faster than it 
+    // driver provides just a preference, and not a guarantee.Therefore,
+    // even if a driver specified direct access method, UMDF might use the
+    // buffered access method for one or more of the device's requests to
+    // improve performance. For example, UMDF uses buffered access for small
+    // buffers, if it can copy the data to the driver's buffer faster than it
     // can map the buffers for direct access.
     //
     WDF_DEVICE_IO_TYPE ReadWriteIoType;
 
     //
-    // <UMDF_ONLY/>  
-    // Identifies the method that the driver will "prefer" to use to access data 
+    // <UMDF_ONLY/>
+    // Identifies the method that the driver will "prefer" to use to access data
     // buffers that it receives for IOCTL requests. Note that UMDF
     // driver provides just a preference, and not a guarantee. Therefore,
-    // even if a driver specified direct access method, UMDF might use the 
-    // buffered access method for one or more of the device's requests to 
-    // improve performance. For example, UMDF uses buffered access for small 
+    // even if a driver specified direct access method, UMDF might use the
+    // buffered access method for one or more of the device's requests to
+    // improve performance. For example, UMDF uses buffered access for small
     // buffers, if it can copy the data to the driver's buffer faster than it
     // can map the buffers for direct access.
-    //    
+    //
     WDF_DEVICE_IO_TYPE DeviceControlIoType;
 
     //
     // <UMDF_ONLY/>
-    // Optional, Provides the smallest buffer size (in bytes) for which 
-    // UMDF will use direct access for the buffers. For example, set 
-    // DirectTransferThreshold to "12288" to indicate that UMDF should use buffered 
-    // access for all buffers that are smaller than 12 kilobytes, and direct 
-    // access for buffers equal to or greater than that. Typically, you 
+    // Optional, Provides the smallest buffer size (in bytes) for which
+    // UMDF will use direct access for the buffers. For example, set
+    // DirectTransferThreshold to "12288" to indicate that UMDF should use buffered
+    // access for all buffers that are smaller than 12 kilobytes, and direct
+    // access for buffers equal to or greater than that. Typically, you
     // do not need to provide this value because UMDF uses a value that provides
-    // the best performance. Note that there are other requirements that must be 
-    // met in order to get direct access of buffers. See Docs for details. 
+    // the best performance. Note that there are other requirements that must be
+    // met in order to get direct access of buffers. See Docs for details.
     //
     ULONG DirectTransferThreshold;
 
@@ -1830,7 +1825,7 @@ WDF_IO_TYPE_CONFIG_INIT(
     )
 {
     RtlZeroMemory(IoTypeConfig, sizeof(WDF_IO_TYPE_CONFIG));
-    IoTypeConfig->Size = sizeof(WDF_IO_TYPE_CONFIG);
+    IoTypeConfig->Size = WDF_STRUCTURE_SIZE(WDF_IO_TYPE_CONFIG);
     IoTypeConfig->ReadWriteIoType = WdfDeviceIoBuffered;
     IoTypeConfig->DeviceControlIoType = WdfDeviceIoBuffered;
 }
@@ -1846,17 +1841,17 @@ typedef struct _WDF_DEVICE_PROPERTY_DATA {
     _In_      ULONG Size;
 
     //
-    // A pointer to a DEVPROPKEY structure that specifies the device 
+    // A pointer to a DEVPROPKEY structure that specifies the device
     // property key.
     //
     _In_  const DEVPROPKEY * PropertyKey;
 
-    // 
+    //
     // A locale identifier. Set this parameter either to a language-specific
     // LCID value or to LOCALE_NEUTRAL. The LOCALE_NEUTRAL LCID specifies
     // that the property is language-neutral (that is, not specific to any
     // language). Do not set this parameter to LOCALE_SYSTEM_DEFAULT or
-    // LOCALE_USER_DEFAULT. For more information about language-specific 
+    // LOCALE_USER_DEFAULT. For more information about language-specific
     // LCID values, see LCID Structure.
     //
     _In_ LCID Lcid;
@@ -1865,7 +1860,7 @@ typedef struct _WDF_DEVICE_PROPERTY_DATA {
     // Set this parameter to PLUGPLAY_PROPERTY_PERSISTENT if the property
     // value set by this routine should persist across computer restarts.
     // Otherwise, set Flags to zero. Ignored for Query DDIs.
-    // 
+    //
     _In_ ULONG Flags;
 
 } WDF_DEVICE_PROPERTY_DATA, *PWDF_DEVICE_PROPERTY_DATA;
@@ -1877,13 +1872,11 @@ WDF_DEVICE_PROPERTY_DATA_INIT (
     _In_ const DEVPROPKEY* PropertyKey
     )
 {
-    RtlZeroMemory(PropertyData, sizeof(* PropertyData));
+    RtlZeroMemory(PropertyData, sizeof(WDF_DEVICE_PROPERTY_DATA));
 
-    PropertyData->Size = sizeof(*PropertyData);
+    PropertyData->Size = WDF_STRUCTURE_SIZE(WDF_DEVICE_PROPERTY_DATA);
     PropertyData->PropertyKey = PropertyKey;
 }
-
-#if !defined(DMF_WIN32_MODE)
 
 //
 // VOID
@@ -1942,6 +1935,7 @@ VOID
 
 _IRQL_requires_max_(DISPATCH_LEVEL)
 VOID
+FORCEINLINE
 WdfDeviceGetDeviceState(
     _In_
     WDFDEVICE Device,
@@ -1970,6 +1964,7 @@ VOID
 
 _IRQL_requires_max_(DISPATCH_LEVEL)
 VOID
+FORCEINLINE
 WdfDeviceSetDeviceState(
     _In_
     WDFDEVICE Device,
@@ -1996,6 +1991,7 @@ WDFDEVICE
 
 _IRQL_requires_max_(DISPATCH_LEVEL)
 WDFDEVICE
+FORCEINLINE
 WdfWdmDeviceGetWdfDeviceHandle(
     _In_
     PDEVICE_OBJECT DeviceObject
@@ -2020,6 +2016,7 @@ PDEVICE_OBJECT
 
 _IRQL_requires_max_(DISPATCH_LEVEL)
 PDEVICE_OBJECT
+FORCEINLINE
 WdfDeviceWdmGetDeviceObject(
     _In_
     WDFDEVICE Device
@@ -2044,6 +2041,7 @@ PDEVICE_OBJECT
 
 _IRQL_requires_max_(DISPATCH_LEVEL)
 PDEVICE_OBJECT
+FORCEINLINE
 WdfDeviceWdmGetAttachedDevice(
     _In_
     WDFDEVICE Device
@@ -2068,6 +2066,7 @@ PDEVICE_OBJECT
 
 _IRQL_requires_max_(DISPATCH_LEVEL)
 PDEVICE_OBJECT
+FORCEINLINE
 WdfDeviceWdmGetPhysicalDevice(
     _In_
     WDFDEVICE Device
@@ -2096,6 +2095,7 @@ NTSTATUS
 _Must_inspect_result_
 _IRQL_requires_max_(DISPATCH_LEVEL)
 NTSTATUS
+FORCEINLINE
 WdfDeviceWdmDispatchPreprocessedIrp(
     _In_
     WDFDEVICE Device,
@@ -2128,6 +2128,7 @@ NTSTATUS
 _Must_inspect_result_
 _IRQL_requires_max_(DISPATCH_LEVEL)
 NTSTATUS
+FORCEINLINE
 WdfDeviceWdmDispatchIrp(
     _In_
     WDFDEVICE Device,
@@ -2164,6 +2165,7 @@ NTSTATUS
 _Must_inspect_result_
 _IRQL_requires_max_(DISPATCH_LEVEL)
 NTSTATUS
+FORCEINLINE
 WdfDeviceWdmDispatchIrpToIoQueue(
     _In_
     WDFDEVICE Device,
@@ -2198,6 +2200,7 @@ NTSTATUS
 _Must_inspect_result_
 _IRQL_requires_max_(DISPATCH_LEVEL)
 NTSTATUS
+FORCEINLINE
 WdfDeviceAddDependentUsageDeviceObject(
     _In_
     WDFDEVICE Device,
@@ -2226,6 +2229,7 @@ VOID
 
 _IRQL_requires_max_(DISPATCH_LEVEL)
 VOID
+FORCEINLINE
 WdfDeviceRemoveDependentUsageDeviceObject(
     _In_
     WDFDEVICE Device,
@@ -2256,6 +2260,7 @@ NTSTATUS
 _Must_inspect_result_
 _IRQL_requires_max_(DISPATCH_LEVEL)
 NTSTATUS
+FORCEINLINE
 WdfDeviceAddRemovalRelationsPhysicalDevice(
     _In_
     WDFDEVICE Device,
@@ -2284,6 +2289,7 @@ VOID
 
 _IRQL_requires_max_(DISPATCH_LEVEL)
 VOID
+FORCEINLINE
 WdfDeviceRemoveRemovalRelationsPhysicalDevice(
     _In_
     WDFDEVICE Device,
@@ -2310,6 +2316,7 @@ VOID
 
 _IRQL_requires_max_(DISPATCH_LEVEL)
 VOID
+FORCEINLINE
 WdfDeviceClearRemovalRelationsDevices(
     _In_
     WDFDEVICE Device
@@ -2334,6 +2341,7 @@ WDFDRIVER
 
 _IRQL_requires_max_(DISPATCH_LEVEL)
 WDFDRIVER
+FORCEINLINE
 WdfDeviceGetDriver(
     _In_
     WDFDEVICE Device
@@ -2362,6 +2370,7 @@ NTSTATUS
 _Must_inspect_result_
 _IRQL_requires_max_(PASSIVE_LEVEL)
 NTSTATUS
+FORCEINLINE
 WdfDeviceRetrieveDeviceName(
     _In_
     WDFDEVICE Device,
@@ -2392,6 +2401,7 @@ NTSTATUS
 _Must_inspect_result_
 _IRQL_requires_max_(PASSIVE_LEVEL)
 NTSTATUS
+FORCEINLINE
 WdfDeviceAssignMofResourceName(
     _In_
     WDFDEVICE Device,
@@ -2418,6 +2428,7 @@ WDFIOTARGET
 
 _IRQL_requires_max_(DISPATCH_LEVEL)
 WDFIOTARGET
+FORCEINLINE
 WdfDeviceGetIoTarget(
     _In_
     WDFDEVICE Device
@@ -2442,6 +2453,7 @@ WDF_DEVICE_PNP_STATE
 
 _IRQL_requires_max_(DISPATCH_LEVEL)
 WDF_DEVICE_PNP_STATE
+FORCEINLINE
 WdfDeviceGetDevicePnpState(
     _In_
     WDFDEVICE Device
@@ -2466,6 +2478,7 @@ WDF_DEVICE_POWER_STATE
 
 _IRQL_requires_max_(DISPATCH_LEVEL)
 WDF_DEVICE_POWER_STATE
+FORCEINLINE
 WdfDeviceGetDevicePowerState(
     _In_
     WDFDEVICE Device
@@ -2490,6 +2503,7 @@ WDF_DEVICE_POWER_POLICY_STATE
 
 _IRQL_requires_max_(DISPATCH_LEVEL)
 WDF_DEVICE_POWER_POLICY_STATE
+FORCEINLINE
 WdfDeviceGetDevicePowerPolicyState(
     _In_
     WDFDEVICE Device
@@ -2518,6 +2532,7 @@ NTSTATUS
 _Must_inspect_result_
 _IRQL_requires_max_(DISPATCH_LEVEL)
 NTSTATUS
+FORCEINLINE
 WdfDeviceAssignS0IdleSettings(
     _In_
     WDFDEVICE Device,
@@ -2548,6 +2563,7 @@ NTSTATUS
 _Must_inspect_result_
 _IRQL_requires_max_(DISPATCH_LEVEL)
 NTSTATUS
+FORCEINLINE
 WdfDeviceAssignSxWakeSettings(
     _In_
     WDFDEVICE Device,
@@ -2584,6 +2600,7 @@ NTSTATUS
 _Must_inspect_result_
 _IRQL_requires_max_(PASSIVE_LEVEL)
 NTSTATUS
+FORCEINLINE
 WdfDeviceOpenRegistryKey(
     _In_
     WDFDEVICE Device,
@@ -2626,6 +2643,7 @@ NTSTATUS
 _Must_inspect_result_
 _IRQL_requires_max_(PASSIVE_LEVEL)
 NTSTATUS
+FORCEINLINE
 WdfDeviceOpenDevicemapKey(
     _In_
     WDFDEVICE Device,
@@ -2662,6 +2680,7 @@ VOID
 
 _IRQL_requires_max_(DISPATCH_LEVEL)
 VOID
+FORCEINLINE
 WdfDeviceSetSpecialFileSupport(
     _In_
     WDFDEVICE Device,
@@ -2690,8 +2709,14 @@ VOID
     ULONG DeviceCharacteristics
     );
 
+// 
+// Use WdfDeviceInitSetCharacteristics during device creation time, use
+// this API after the device has been created if you cannot determine the
+// characteristics at creation time
+// 
 _IRQL_requires_max_(DISPATCH_LEVEL)
 VOID
+FORCEINLINE
 WdfDeviceSetCharacteristics(
     _In_
     WDFDEVICE Device,
@@ -2718,6 +2743,7 @@ ULONG
 
 _IRQL_requires_max_(DISPATCH_LEVEL)
 ULONG
+FORCEINLINE
 WdfDeviceGetCharacteristics(
     _In_
     WDFDEVICE Device
@@ -2742,6 +2768,7 @@ ULONG
 
 _IRQL_requires_max_(DISPATCH_LEVEL)
 ULONG
+FORCEINLINE
 WdfDeviceGetAlignmentRequirement(
     _In_
     WDFDEVICE Device
@@ -2768,6 +2795,7 @@ VOID
 
 _IRQL_requires_max_(DISPATCH_LEVEL)
 VOID
+FORCEINLINE
 WdfDeviceSetAlignmentRequirement(
     _In_
     WDFDEVICE Device,
@@ -2794,6 +2822,7 @@ VOID
 
 _IRQL_requires_max_(DISPATCH_LEVEL)
 VOID
+FORCEINLINE
 WdfDeviceInitFree(
     _In_
     PWDFDEVICE_INIT DeviceInit
@@ -2802,33 +2831,63 @@ WdfDeviceInitFree(
     ((PFN_WDFDEVICEINITFREE) WdfFunctions[WdfDeviceInitFreeTableIndex])(WdfDriverGlobals, DeviceInit);
 }
 
-#endif
-
 //
 // WDF Function: WdfDeviceInitSetPnpPowerEventCallbacks
 //
+typedef
 _IRQL_requires_max_(DISPATCH_LEVEL)
+WDFAPI
 VOID
-WdfDeviceInitSetPnpPowerEventCallbacks(
+(*PFN_WDFDEVICEINITSETPNPPOWEREVENTCALLBACKS)(
+    _In_
+    PWDF_DRIVER_GLOBALS DriverGlobals,
     _In_
     PWDFDEVICE_INIT DeviceInit,
     _In_
     PWDF_PNPPOWER_EVENT_CALLBACKS PnpPowerEventCallbacks
     );
 
+_IRQL_requires_max_(DISPATCH_LEVEL)
+VOID
+FORCEINLINE
+WdfDeviceInitSetPnpPowerEventCallbacks(
+    _In_
+    PWDFDEVICE_INIT DeviceInit,
+    _In_
+    PWDF_PNPPOWER_EVENT_CALLBACKS PnpPowerEventCallbacks
+    )
+{
+    ((PFN_WDFDEVICEINITSETPNPPOWEREVENTCALLBACKS) WdfFunctions[WdfDeviceInitSetPnpPowerEventCallbacksTableIndex])(WdfDriverGlobals, DeviceInit, PnpPowerEventCallbacks);
+}
+
 //
 // WDF Function: WdfDeviceInitSetPowerPolicyEventCallbacks
 //
+typedef
 _IRQL_requires_max_(DISPATCH_LEVEL)
+WDFAPI
 VOID
-WdfDeviceInitSetPowerPolicyEventCallbacks(
+(*PFN_WDFDEVICEINITSETPOWERPOLICYEVENTCALLBACKS)(
+    _In_
+    PWDF_DRIVER_GLOBALS DriverGlobals,
     _In_
     PWDFDEVICE_INIT DeviceInit,
     _In_
     PWDF_POWER_POLICY_EVENT_CALLBACKS PowerPolicyEventCallbacks
     );
 
-#if !defined(DMF_WIN32_MODE)
+_IRQL_requires_max_(DISPATCH_LEVEL)
+VOID
+FORCEINLINE
+WdfDeviceInitSetPowerPolicyEventCallbacks(
+    _In_
+    PWDFDEVICE_INIT DeviceInit,
+    _In_
+    PWDF_POWER_POLICY_EVENT_CALLBACKS PowerPolicyEventCallbacks
+    )
+{
+    ((PFN_WDFDEVICEINITSETPOWERPOLICYEVENTCALLBACKS) WdfFunctions[WdfDeviceInitSetPowerPolicyEventCallbacksTableIndex])(WdfDriverGlobals, DeviceInit, PowerPolicyEventCallbacks);
+}
 
 //
 // WDF Function: WdfDeviceInitSetPowerPolicyOwnership
@@ -2848,6 +2907,7 @@ VOID
 
 _IRQL_requires_max_(DISPATCH_LEVEL)
 VOID
+FORCEINLINE
 WdfDeviceInitSetPowerPolicyOwnership(
     _In_
     PWDFDEVICE_INIT DeviceInit,
@@ -2882,6 +2942,7 @@ NTSTATUS
 _Must_inspect_result_
 _IRQL_requires_max_(PASSIVE_LEVEL)
 NTSTATUS
+FORCEINLINE
 WdfDeviceInitRegisterPnpStateChangeCallback(
     _In_
     PWDFDEVICE_INIT DeviceInit,
@@ -2920,6 +2981,7 @@ NTSTATUS
 _Must_inspect_result_
 _IRQL_requires_max_(PASSIVE_LEVEL)
 NTSTATUS
+FORCEINLINE
 WdfDeviceInitRegisterPowerStateChangeCallback(
     _In_
     PWDFDEVICE_INIT DeviceInit,
@@ -2958,6 +3020,7 @@ NTSTATUS
 _Must_inspect_result_
 _IRQL_requires_max_(PASSIVE_LEVEL)
 NTSTATUS
+FORCEINLINE
 WdfDeviceInitRegisterPowerPolicyStateChangeCallback(
     _In_
     PWDFDEVICE_INIT DeviceInit,
@@ -2990,6 +3053,7 @@ VOID
 
 _IRQL_requires_max_(DISPATCH_LEVEL)
 VOID
+FORCEINLINE
 WdfDeviceInitSetExclusive(
     _In_
     PWDFDEVICE_INIT DeviceInit,
@@ -3018,6 +3082,7 @@ VOID
 
 _IRQL_requires_max_(DISPATCH_LEVEL)
 VOID
+FORCEINLINE
 WdfDeviceInitSetIoType(
     _In_
     PWDFDEVICE_INIT DeviceInit,
@@ -3044,6 +3109,7 @@ VOID
 
 _IRQL_requires_max_(DISPATCH_LEVEL)
 VOID
+FORCEINLINE
 WdfDeviceInitSetPowerNotPageable(
     _In_
     PWDFDEVICE_INIT DeviceInit
@@ -3068,6 +3134,7 @@ VOID
 
 _IRQL_requires_max_(DISPATCH_LEVEL)
 VOID
+FORCEINLINE
 WdfDeviceInitSetPowerPageable(
     _In_
     PWDFDEVICE_INIT DeviceInit
@@ -3092,6 +3159,7 @@ VOID
 
 _IRQL_requires_max_(DISPATCH_LEVEL)
 VOID
+FORCEINLINE
 WdfDeviceInitSetPowerInrush(
     _In_
     PWDFDEVICE_INIT DeviceInit
@@ -3118,6 +3186,7 @@ VOID
 
 _IRQL_requires_max_(DISPATCH_LEVEL)
 VOID
+FORCEINLINE
 WdfDeviceInitSetDeviceType(
     _In_
     PWDFDEVICE_INIT DeviceInit,
@@ -3148,6 +3217,7 @@ NTSTATUS
 _Must_inspect_result_
 _IRQL_requires_max_(PASSIVE_LEVEL)
 NTSTATUS
+FORCEINLINE
 WdfDeviceInitAssignName(
     _In_
     PWDFDEVICE_INIT DeviceInit,
@@ -3178,6 +3248,7 @@ NTSTATUS
 _Must_inspect_result_
 _IRQL_requires_max_(PASSIVE_LEVEL)
 NTSTATUS
+FORCEINLINE
 WdfDeviceInitAssignSDDLString(
     _In_
     PWDFDEVICE_INIT DeviceInit,
@@ -3188,26 +3259,45 @@ WdfDeviceInitAssignSDDLString(
     return ((PFN_WDFDEVICEINITASSIGNSDDLSTRING) WdfFunctions[WdfDeviceInitAssignSDDLStringTableIndex])(WdfDriverGlobals, DeviceInit, SDDLString);
 }
 
-#endif
-
 //
 // WDF Function: WdfDeviceInitSetDeviceClass
 //
+typedef
 _IRQL_requires_max_(DISPATCH_LEVEL)
+WDFAPI
 VOID
-WdfDeviceInitSetDeviceClass(
+(*PFN_WDFDEVICEINITSETDEVICECLASS)(
+    _In_
+    PWDF_DRIVER_GLOBALS DriverGlobals,
     _In_
     PWDFDEVICE_INIT DeviceInit,
     _In_
     CONST GUID* DeviceClassGuid
     );
 
+_IRQL_requires_max_(DISPATCH_LEVEL)
+VOID
+FORCEINLINE
+WdfDeviceInitSetDeviceClass(
+    _In_
+    PWDFDEVICE_INIT DeviceInit,
+    _In_
+    CONST GUID* DeviceClassGuid
+    )
+{
+    ((PFN_WDFDEVICEINITSETDEVICECLASS) WdfFunctions[WdfDeviceInitSetDeviceClassTableIndex])(WdfDriverGlobals, DeviceInit, DeviceClassGuid);
+}
+
 //
 // WDF Function: WdfDeviceInitSetCharacteristics
 //
+typedef
 _IRQL_requires_max_(DISPATCH_LEVEL)
+WDFAPI
 VOID
-WdfDeviceInitSetCharacteristics(
+(*PFN_WDFDEVICEINITSETCHARACTERISTICS)(
+    _In_
+    PWDF_DRIVER_GLOBALS DriverGlobals,
     _In_
     PWDFDEVICE_INIT DeviceInit,
     _In_
@@ -3216,12 +3306,36 @@ WdfDeviceInitSetCharacteristics(
     BOOLEAN OrInValues
     );
 
+// 
+// Use WdfDeviceInitSetCharacteristics during device creation time, use
+// WdfDeviceSetCharacteristics after the device has been created if you
+// cannot determine the characteristics at creation time
+// 
+_IRQL_requires_max_(DISPATCH_LEVEL)
+VOID
+FORCEINLINE
+WdfDeviceInitSetCharacteristics(
+    _In_
+    PWDFDEVICE_INIT DeviceInit,
+    _In_
+    ULONG DeviceCharacteristics,
+    _In_
+    BOOLEAN OrInValues
+    )
+{
+    ((PFN_WDFDEVICEINITSETCHARACTERISTICS) WdfFunctions[WdfDeviceInitSetCharacteristicsTableIndex])(WdfDriverGlobals, DeviceInit, DeviceCharacteristics, OrInValues);
+}
+
 //
 // WDF Function: WdfDeviceInitSetFileObjectConfig
 //
+typedef
 _IRQL_requires_max_(DISPATCH_LEVEL)
+WDFAPI
 VOID
-WdfDeviceInitSetFileObjectConfig(
+(*PFN_WDFDEVICEINITSETFILEOBJECTCONFIG)(
+    _In_
+    PWDF_DRIVER_GLOBALS DriverGlobals,
     _In_
     PWDFDEVICE_INIT DeviceInit,
     _In_
@@ -3230,7 +3344,20 @@ WdfDeviceInitSetFileObjectConfig(
     PWDF_OBJECT_ATTRIBUTES FileObjectAttributes
     );
 
-#if !defined(DMF_WIN32_MODE)
+_IRQL_requires_max_(DISPATCH_LEVEL)
+VOID
+FORCEINLINE
+WdfDeviceInitSetFileObjectConfig(
+    _In_
+    PWDFDEVICE_INIT DeviceInit,
+    _In_
+    PWDF_FILEOBJECT_CONFIG FileObjectConfig,
+    _In_opt_
+    PWDF_OBJECT_ATTRIBUTES FileObjectAttributes
+    )
+{
+    ((PFN_WDFDEVICEINITSETFILEOBJECTCONFIG) WdfFunctions[WdfDeviceInitSetFileObjectConfigTableIndex])(WdfDriverGlobals, DeviceInit, FileObjectConfig, FileObjectAttributes);
+}
 
 //
 // WDF Function: WdfDeviceInitSetRequestAttributes
@@ -3250,6 +3377,7 @@ VOID
 
 _IRQL_requires_max_(DISPATCH_LEVEL)
 VOID
+FORCEINLINE
 WdfDeviceInitSetRequestAttributes(
     _In_
     PWDFDEVICE_INIT DeviceInit,
@@ -3287,6 +3415,7 @@ NTSTATUS
 _Must_inspect_result_
 _IRQL_requires_max_(DISPATCH_LEVEL)
 NTSTATUS
+FORCEINLINE
 WdfDeviceInitAssignWdmIrpPreprocessCallback(
     _In_
     PWDFDEVICE_INIT DeviceInit,
@@ -3322,6 +3451,7 @@ VOID
 
 _IRQL_requires_max_(DISPATCH_LEVEL)
 VOID
+FORCEINLINE
 WdfDeviceInitSetIoInCallerContextCallback(
     _In_
     PWDFDEVICE_INIT DeviceInit,
@@ -3350,6 +3480,7 @@ VOID
 
 _IRQL_requires_max_(DISPATCH_LEVEL)
 VOID
+FORCEINLINE
 WdfDeviceInitSetRemoveLockOptions(
     _In_
     PWDFDEVICE_INIT DeviceInit,
@@ -3360,15 +3491,17 @@ WdfDeviceInitSetRemoveLockOptions(
     ((PFN_WDFDEVICEINITSETREMOVELOCKOPTIONS) WdfFunctions[WdfDeviceInitSetRemoveLockOptionsTableIndex])(WdfDriverGlobals, DeviceInit, Options);
 }
 
-#endif
-
 //
 // WDF Function: WdfDeviceCreate
 //
+typedef
 _Must_inspect_result_
 _IRQL_requires_max_(PASSIVE_LEVEL)
+WDFAPI
 NTSTATUS
-WdfDeviceCreate(
+(*PFN_WDFDEVICECREATE)(
+    _In_
+    PWDF_DRIVER_GLOBALS DriverGlobals,
     _Inout_
     PWDFDEVICE_INIT* DeviceInit,
     _In_opt_
@@ -3377,7 +3510,21 @@ WdfDeviceCreate(
     WDFDEVICE* Device
     );
 
-#if !defined(DMF_WIN32_MODE)
+_Must_inspect_result_
+_IRQL_requires_max_(PASSIVE_LEVEL)
+NTSTATUS
+FORCEINLINE
+WdfDeviceCreate(
+    _Inout_
+    PWDFDEVICE_INIT* DeviceInit,
+    _In_opt_
+    PWDF_OBJECT_ATTRIBUTES DeviceAttributes,
+    _Out_
+    WDFDEVICE* Device
+    )
+{
+    return ((PFN_WDFDEVICECREATE) WdfFunctions[WdfDeviceCreateTableIndex])(WdfDriverGlobals, DeviceInit, DeviceAttributes, Device);
+}
 
 //
 // WDF Function: WdfDeviceSetStaticStopRemove
@@ -3397,6 +3544,7 @@ VOID
 
 _IRQL_requires_max_(DISPATCH_LEVEL)
 VOID
+FORCEINLINE
 WdfDeviceSetStaticStopRemove(
     _In_
     WDFDEVICE Device,
@@ -3429,6 +3577,7 @@ NTSTATUS
 _Must_inspect_result_
 _IRQL_requires_max_(PASSIVE_LEVEL)
 NTSTATUS
+FORCEINLINE
 WdfDeviceCreateDeviceInterface(
     _In_
     WDFDEVICE Device,
@@ -3463,6 +3612,7 @@ VOID
 
 _IRQL_requires_max_(PASSIVE_LEVEL)
 VOID
+FORCEINLINE
 WdfDeviceSetDeviceInterfaceState(
     _In_
     WDFDEVICE Device,
@@ -3501,6 +3651,7 @@ NTSTATUS
 _Must_inspect_result_
 _IRQL_requires_max_(PASSIVE_LEVEL)
 NTSTATUS
+FORCEINLINE
 WdfDeviceRetrieveDeviceInterfaceString(
     _In_
     WDFDEVICE Device,
@@ -3535,6 +3686,7 @@ NTSTATUS
 _Must_inspect_result_
 _IRQL_requires_max_(PASSIVE_LEVEL)
 NTSTATUS
+FORCEINLINE
 WdfDeviceCreateSymbolicLink(
     _In_
     WDFDEVICE Device,
@@ -3571,6 +3723,7 @@ NTSTATUS
 _Must_inspect_result_
 _IRQL_requires_max_(PASSIVE_LEVEL)
 NTSTATUS
+FORCEINLINE
 WdfDeviceQueryProperty(
     _In_
     WDFDEVICE Device,
@@ -3614,6 +3767,7 @@ NTSTATUS
 _Must_inspect_result_
 _IRQL_requires_max_(PASSIVE_LEVEL)
 NTSTATUS
+FORCEINLINE
 WdfDeviceAllocAndQueryProperty(
     _In_
     WDFDEVICE Device,
@@ -3649,6 +3803,7 @@ VOID
 
 _IRQL_requires_max_(DISPATCH_LEVEL)
 VOID
+FORCEINLINE
 WdfDeviceSetPnpCapabilities(
     _In_
     WDFDEVICE Device,
@@ -3677,6 +3832,7 @@ VOID
 
 _IRQL_requires_max_(DISPATCH_LEVEL)
 VOID
+FORCEINLINE
 WdfDeviceSetPowerCapabilities(
     _In_
     WDFDEVICE Device,
@@ -3705,6 +3861,7 @@ VOID
 
 _IRQL_requires_max_(DISPATCH_LEVEL)
 VOID
+FORCEINLINE
 WdfDeviceSetBusInformationForChildren(
     _In_
     WDFDEVICE Device,
@@ -3735,6 +3892,7 @@ NTSTATUS
 _Must_inspect_result_
 _IRQL_requires_max_(DISPATCH_LEVEL)
 NTSTATUS
+FORCEINLINE
 WdfDeviceIndicateWakeStatus(
     _In_
     WDFDEVICE Device,
@@ -3763,6 +3921,7 @@ VOID
 
 _IRQL_requires_max_(DISPATCH_LEVEL)
 VOID
+FORCEINLINE
 WdfDeviceSetFailed(
     _In_
     WDFDEVICE Device,
@@ -3795,6 +3954,7 @@ _Must_inspect_result_
 _When_(WaitForD0 == 0, _IRQL_requires_max_(DISPATCH_LEVEL))
 _When_(WaitForD0 != 0, _IRQL_requires_max_(PASSIVE_LEVEL))
 NTSTATUS
+FORCEINLINE
 WdfDeviceStopIdleNoTrack(
     _In_
     WDFDEVICE Device,
@@ -3821,6 +3981,7 @@ VOID
 
 _IRQL_requires_max_(DISPATCH_LEVEL)
 VOID
+FORCEINLINE
 WdfDeviceResumeIdleNoTrack(
     _In_
     WDFDEVICE Device
@@ -3850,13 +4011,14 @@ NTSTATUS
     _In_
     LONG Line,
     _In_z_
-    PCHAR File
+    PCCH File
     );
 
 _Must_inspect_result_
 _When_(WaitForD0 == 0, _IRQL_requires_max_(DISPATCH_LEVEL))
 _When_(WaitForD0 != 0, _IRQL_requires_max_(PASSIVE_LEVEL))
 NTSTATUS
+FORCEINLINE
 WdfDeviceStopIdleActual(
     _In_
     WDFDEVICE Device,
@@ -3867,7 +4029,7 @@ WdfDeviceStopIdleActual(
     _In_
     LONG Line,
     _In_z_
-    PCHAR File
+    PCCH File
     )
 {
     return ((PFN_WDFDEVICESTOPIDLEACTUAL) WdfFunctions[WdfDeviceStopIdleActualTableIndex])(WdfDriverGlobals, Device, WaitForD0, Tag, Line, File);
@@ -3890,11 +4052,12 @@ VOID
     _In_
     LONG Line,
     _In_z_
-    PCHAR File
+    PCCH File
     );
 
 _IRQL_requires_max_(DISPATCH_LEVEL)
 VOID
+FORCEINLINE
 WdfDeviceResumeIdleActual(
     _In_
     WDFDEVICE Device,
@@ -3903,7 +4066,7 @@ WdfDeviceResumeIdleActual(
     _In_
     LONG Line,
     _In_z_
-    PCHAR File
+    PCCH File
     )
 {
     ((PFN_WDFDEVICERESUMEIDLEACTUAL) WdfFunctions[WdfDeviceResumeIdleActualTableIndex])(WdfDriverGlobals, Device, Tag, Line, File);
@@ -3927,6 +4090,7 @@ WDFFILEOBJECT
 
 _IRQL_requires_max_(DISPATCH_LEVEL)
 WDFFILEOBJECT
+FORCEINLINE
 WdfDeviceGetFileObject(
     _In_
     WDFDEVICE Device,
@@ -3957,6 +4121,7 @@ NTSTATUS
 _Must_inspect_result_
 _IRQL_requires_max_(DISPATCH_LEVEL)
 NTSTATUS
+FORCEINLINE
 WdfDeviceEnqueueRequest(
     _In_
     WDFDEVICE Device,
@@ -3983,6 +4148,7 @@ WDFQUEUE
 
 _IRQL_requires_max_(DISPATCH_LEVEL)
 WDFQUEUE
+FORCEINLINE
 WdfDeviceGetDefaultQueue(
     _In_
     WDFDEVICE Device
@@ -4014,6 +4180,7 @@ NTSTATUS
 _Must_inspect_result_
 _IRQL_requires_max_(DISPATCH_LEVEL)
 NTSTATUS
+FORCEINLINE
 WdfDeviceConfigureRequestDispatching(
     _In_
     WDFDEVICE Device,
@@ -4053,6 +4220,7 @@ NTSTATUS
 _Must_inspect_result_
 _IRQL_requires_max_(DISPATCH_LEVEL)
 NTSTATUS
+FORCEINLINE
 WdfDeviceConfigureWdmIrpDispatchCallback(
     _In_
     WDFDEVICE Device,
@@ -4085,6 +4253,7 @@ POWER_ACTION
 
 _IRQL_requires_max_(DISPATCH_LEVEL)
 POWER_ACTION
+FORCEINLINE
 WdfDeviceGetSystemPowerAction(
     _In_
     WDFDEVICE Device
@@ -4113,6 +4282,7 @@ NTSTATUS
 _Must_inspect_result_
 _IRQL_requires_max_(PASSIVE_LEVEL)
 NTSTATUS
+FORCEINLINE
 WdfDeviceWdmAssignPowerFrameworkSettings(
     _In_
     WDFDEVICE Device,
@@ -4141,6 +4311,7 @@ VOID
 
 _IRQL_requires_max_(DISPATCH_LEVEL)
 VOID
+FORCEINLINE
 WdfDeviceInitSetReleaseHardwareOrderOnFailure(
     _In_
     PWDFDEVICE_INIT DeviceInit,
@@ -4169,6 +4340,7 @@ VOID
 
 _IRQL_requires_max_(PASSIVE_LEVEL)
 VOID
+FORCEINLINE
 WdfDeviceInitSetIoTypeEx(
     _In_
     PWDFDEVICE_INIT DeviceInit,
@@ -4178,6 +4350,7 @@ WdfDeviceInitSetIoTypeEx(
 {
     ((PFN_WDFDEVICEINITSETIOTYPEEX) WdfFunctions[WdfDeviceInitSetIoTypeExTableIndex])(WdfDriverGlobals, DeviceInit, IoTypeConfig);
 }
+
 
 
 
@@ -4217,6 +4390,7 @@ NTSTATUS
 _Must_inspect_result_
 _IRQL_requires_max_(APC_LEVEL)
 NTSTATUS
+FORCEINLINE
 WdfDeviceQueryPropertyEx(
     _In_
     WDFDEVICE Device,
@@ -4264,6 +4438,7 @@ NTSTATUS
 _Must_inspect_result_
 _IRQL_requires_max_(APC_LEVEL)
 NTSTATUS
+FORCEINLINE
 WdfDeviceAllocAndQueryPropertyEx(
     _In_
     WDFDEVICE Device,
@@ -4309,6 +4484,7 @@ NTSTATUS
 _Must_inspect_result_
 _IRQL_requires_max_(APC_LEVEL)
 NTSTATUS
+FORCEINLINE
 WdfDeviceAssignProperty(
     _In_
     WDFDEVICE Device,
@@ -4325,7 +4501,38 @@ WdfDeviceAssignProperty(
     return ((PFN_WDFDEVICEASSIGNPROPERTY) WdfFunctions[WdfDeviceAssignPropertyTableIndex])(WdfDriverGlobals, Device, DeviceProperty, Type, Size, Data);
 }
 
-#endif
+//
+// WDF Function: WdfDeviceRetrieveCompanionTarget
+//
+typedef
+_Must_inspect_result_
+_IRQL_requires_max_(PASSIVE_LEVEL)
+WDFAPI
+NTSTATUS
+(*PFN_WDFDEVICERETRIEVECOMPANIONTARGET)(
+    _In_
+    PWDF_DRIVER_GLOBALS DriverGlobals,
+    _In_
+    WDFDEVICE Device,
+    _Out_
+    WDFCOMPANIONTARGET* CompanionTarget
+    );
+
+_Must_inspect_result_
+_IRQL_requires_max_(PASSIVE_LEVEL)
+NTSTATUS
+FORCEINLINE
+WdfDeviceRetrieveCompanionTarget(
+    _In_
+    WDFDEVICE Device,
+    _Out_
+    WDFCOMPANIONTARGET* CompanionTarget
+    )
+{
+    return ((PFN_WDFDEVICERETRIEVECOMPANIONTARGET) WdfFunctions[WdfDeviceRetrieveCompanionTargetTableIndex])(WdfDriverGlobals, Device, CompanionTarget);
+}
+
+
 
 #endif // (NTDDI_VERSION >= NTDDI_WIN2K)
 
@@ -4334,5 +4541,4 @@ WDF_EXTERN_C_END
 
 #endif // _WDFDEVICE_H_
 
-#pragma warning(pop)
 

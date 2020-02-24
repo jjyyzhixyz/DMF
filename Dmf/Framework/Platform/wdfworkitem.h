@@ -87,7 +87,7 @@ WDF_WORKITEM_CONFIG_INIT(
     )
 {
     RtlZeroMemory(Config, sizeof(WDF_WORKITEM_CONFIG));
-    Config->Size = sizeof(WDF_WORKITEM_CONFIG);
+    Config->Size = WDF_STRUCTURE_SIZE(WDF_WORKITEM_CONFIG);
     Config->EvtWorkItemFunc = EvtWorkItemFunc;
 
     Config->AutomaticSerialization = TRUE;
@@ -97,10 +97,14 @@ WDF_WORKITEM_CONFIG_INIT(
 //
 // WDF Function: WdfWorkItemCreate
 //
+typedef
 _Must_inspect_result_
 _IRQL_requires_max_(DISPATCH_LEVEL)
+WDFAPI
 NTSTATUS
-WdfWorkItemCreate(
+(*PFN_WDFWORKITEMCREATE)(
+    _In_
+    PWDF_DRIVER_GLOBALS DriverGlobals,
     _In_
     PWDF_WORKITEM_CONFIG Config,
     _In_
@@ -109,35 +113,96 @@ WdfWorkItemCreate(
     WDFWORKITEM* WorkItem
     );
 
+_Must_inspect_result_
+_IRQL_requires_max_(DISPATCH_LEVEL)
+NTSTATUS
+FORCEINLINE
+WdfWorkItemCreate(
+    _In_
+    PWDF_WORKITEM_CONFIG Config,
+    _In_
+    PWDF_OBJECT_ATTRIBUTES Attributes,
+    _Out_
+    WDFWORKITEM* WorkItem
+    )
+{
+    return ((PFN_WDFWORKITEMCREATE) WdfFunctions[WdfWorkItemCreateTableIndex])(WdfDriverGlobals, Config, Attributes, WorkItem);
+}
+
 //
 // WDF Function: WdfWorkItemEnqueue
 //
+typedef
 _IRQL_requires_max_(DISPATCH_LEVEL)
+WDFAPI
 VOID
-WdfWorkItemEnqueue(
+(*PFN_WDFWORKITEMENQUEUE)(
+    _In_
+    PWDF_DRIVER_GLOBALS DriverGlobals,
     _In_
     WDFWORKITEM WorkItem
     );
+
+_IRQL_requires_max_(DISPATCH_LEVEL)
+VOID
+FORCEINLINE
+WdfWorkItemEnqueue(
+    _In_
+    WDFWORKITEM WorkItem
+    )
+{
+    ((PFN_WDFWORKITEMENQUEUE) WdfFunctions[WdfWorkItemEnqueueTableIndex])(WdfDriverGlobals, WorkItem);
+}
 
 //
 // WDF Function: WdfWorkItemGetParentObject
 //
+typedef
 _IRQL_requires_max_(DISPATCH_LEVEL)
+WDFAPI
 WDFOBJECT
-WdfWorkItemGetParentObject(
+(*PFN_WDFWORKITEMGETPARENTOBJECT)(
+    _In_
+    PWDF_DRIVER_GLOBALS DriverGlobals,
     _In_
     WDFWORKITEM WorkItem
     );
 
+_IRQL_requires_max_(DISPATCH_LEVEL)
+WDFOBJECT
+FORCEINLINE
+WdfWorkItemGetParentObject(
+    _In_
+    WDFWORKITEM WorkItem
+    )
+{
+    return ((PFN_WDFWORKITEMGETPARENTOBJECT) WdfFunctions[WdfWorkItemGetParentObjectTableIndex])(WdfDriverGlobals, WorkItem);
+}
+
 //
 // WDF Function: WdfWorkItemFlush
 //
+typedef
 _IRQL_requires_max_(PASSIVE_LEVEL)
+WDFAPI
 VOID
-WdfWorkItemFlush(
+(*PFN_WDFWORKITEMFLUSH)(
+    _In_
+    PWDF_DRIVER_GLOBALS DriverGlobals,
     _In_
     WDFWORKITEM WorkItem
     );
+
+_IRQL_requires_max_(PASSIVE_LEVEL)
+VOID
+FORCEINLINE
+WdfWorkItemFlush(
+    _In_
+    WDFWORKITEM WorkItem
+    )
+{
+    ((PFN_WDFWORKITEMFLUSH) WdfFunctions[WdfWorkItemFlushTableIndex])(WdfDriverGlobals, WorkItem);
+}
 
 
 

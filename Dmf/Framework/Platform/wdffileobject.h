@@ -49,7 +49,7 @@ WDF_EXTERN_C_START
 
 #if (NTDDI_VERSION >= NTDDI_WIN2K)
 
-#if !defined(DMF_WIN32_MODE)
+
 
 
 //
@@ -102,19 +102,55 @@ WdfFileObjectGetFlags(
     return ((PFN_WDFFILEOBJECTGETFLAGS) WdfFunctions[WdfFileObjectGetFlagsTableIndex])(WdfDriverGlobals, FileObject);
 }
 
-#endif
-
 //
 // WDF Function: WdfFileObjectGetDevice
 //
+typedef
 _IRQL_requires_max_(DISPATCH_LEVEL)
+WDFAPI
 WDFDEVICE
-WdfFileObjectGetDevice(
+(*PFN_WDFFILEOBJECTGETDEVICE)(
+    _In_
+    PWDF_DRIVER_GLOBALS DriverGlobals,
     _In_
     WDFFILEOBJECT FileObject
     );
 
-#if !defined(DMF_WIN32_MODE)
+_IRQL_requires_max_(DISPATCH_LEVEL)
+WDFDEVICE
+FORCEINLINE
+WdfFileObjectGetDevice(
+    _In_
+    WDFFILEOBJECT FileObject
+    )
+{
+    return ((PFN_WDFFILEOBJECTGETDEVICE) WdfFunctions[WdfFileObjectGetDeviceTableIndex])(WdfDriverGlobals, FileObject);
+}
+
+//
+// WDF Function: WdfFileObjectGetInitiatorProcessId
+//
+typedef
+_IRQL_requires_max_(DISPATCH_LEVEL)
+WDFAPI
+ULONG
+(*PFN_WDFFILEOBJECTGETINITIATORPROCESSID)(
+    _In_
+    PWDF_DRIVER_GLOBALS DriverGlobals,
+    _In_
+    WDFFILEOBJECT FileObject
+    );
+
+_IRQL_requires_max_(DISPATCH_LEVEL)
+ULONG
+FORCEINLINE
+WdfFileObjectGetInitiatorProcessId(
+    _In_
+    WDFFILEOBJECT FileObject
+    )
+{
+    return ((PFN_WDFFILEOBJECTGETINITIATORPROCESSID) WdfFunctions[WdfFileObjectGetInitiatorProcessIdTableIndex])(WdfDriverGlobals, FileObject);
+}
 
 //
 // WDF Function: WdfFileObjectWdmGetFileObject
@@ -141,7 +177,6 @@ WdfFileObjectWdmGetFileObject(
     return ((PFN_WDFFILEOBJECTWDMGETFILEOBJECT) WdfFunctions[WdfFileObjectWdmGetFileObjectTableIndex])(WdfDriverGlobals, FileObject);
 }
 
-#endif
 
 
 

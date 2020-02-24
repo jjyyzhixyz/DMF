@@ -224,6 +224,7 @@
     <ClInclude Include="..\..\Framework\Platform\wdfcore.h" />
     <ClInclude Include="..\..\Framework\Platform\wdfdevice.h" />
     <ClInclude Include="..\..\Framework\Platform\wdffileobject.h" />
+    <ClInclude Include="..\..\Framework\Platform\wdffuncenum.h" />
     <ClInclude Include="..\..\Framework\Platform\wdfio.h" />
     <ClInclude Include="..\..\Framework\Platform\wdfmemory.h" />
     <ClInclude Include="..\..\Framework\Platform\wdfobject.h" />

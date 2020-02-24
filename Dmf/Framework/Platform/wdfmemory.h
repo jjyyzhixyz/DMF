@@ -146,11 +146,15 @@ WDF_MEMORY_DESCRIPTOR_INIT_MDL(
 //
 // WDF Function: WdfMemoryCreate
 //
+typedef
 _Must_inspect_result_
 _When_(PoolType == 1 || PoolType == 257, _IRQL_requires_max_(APC_LEVEL))
-_When_(PoolType == 0 || PoolType == 256, _IRQL_requires_max_(DISPATCH_LEVEL))
+_When_(PoolType == 0 || PoolType == 256 || PoolType == 512, _IRQL_requires_max_(DISPATCH_LEVEL))
+WDFAPI
 NTSTATUS
-WdfMemoryCreate(
+(*PFN_WDFMEMORYCREATE)(
+    _In_
+    PWDF_DRIVER_GLOBALS DriverGlobals,
     _In_opt_
     PWDF_OBJECT_ATTRIBUTES Attributes,
     _In_
@@ -167,13 +171,46 @@ WdfMemoryCreate(
     PVOID* Buffer
     );
 
+// 
+// Creates a memory handle which allocates the underlying memory for the buffer
+// and context internal to the handle
+// 
+_Must_inspect_result_
+_When_(PoolType == 1 || PoolType == 257, _IRQL_requires_max_(APC_LEVEL))
+_When_(PoolType == 0 || PoolType == 256 || PoolType == 512, _IRQL_requires_max_(DISPATCH_LEVEL))
+NTSTATUS
+FORCEINLINE
+WdfMemoryCreate(
+    _In_opt_
+    PWDF_OBJECT_ATTRIBUTES Attributes,
+    _In_
+    _Strict_type_match_
+    POOL_TYPE PoolType,
+    _In_opt_
+    ULONG PoolTag,
+    _In_
+    _When_(BufferSize == 0, __drv_reportError(BufferSize cannot be zero))
+    size_t BufferSize,
+    _Out_
+    WDFMEMORY* Memory,
+    _Outptr_opt_result_bytebuffer_(BufferSize)
+    PVOID* Buffer
+    )
+{
+    return ((PFN_WDFMEMORYCREATE) WdfFunctions[WdfMemoryCreateTableIndex])(WdfDriverGlobals, Attributes, PoolType, PoolTag, BufferSize, Memory, Buffer);
+}
+
 //
 // WDF Function: WdfMemoryCreatePreallocated
 //
+typedef
 _Must_inspect_result_
 _IRQL_requires_max_(DISPATCH_LEVEL)
+WDFAPI
 NTSTATUS
-WdfMemoryCreatePreallocated(
+(*PFN_WDFMEMORYCREATEPREALLOCATED)(
+    _In_
+    PWDF_DRIVER_GLOBALS DriverGlobals,
     _In_opt_
     PWDF_OBJECT_ATTRIBUTES Attributes,
     _In_ __drv_aliasesMem
@@ -185,26 +222,78 @@ WdfMemoryCreatePreallocated(
     WDFMEMORY* Memory
     );
 
+_Must_inspect_result_
+_IRQL_requires_max_(DISPATCH_LEVEL)
+NTSTATUS
+FORCEINLINE
+WdfMemoryCreatePreallocated(
+    _In_opt_
+    PWDF_OBJECT_ATTRIBUTES Attributes,
+    _In_ __drv_aliasesMem
+    PVOID Buffer,
+    _In_
+    _When_(BufferSize == 0, __drv_reportError(BufferSize cannot be zero))
+    size_t BufferSize,
+    _Out_
+    WDFMEMORY* Memory
+    )
+{
+    return ((PFN_WDFMEMORYCREATEPREALLOCATED) WdfFunctions[WdfMemoryCreatePreallocatedTableIndex])(WdfDriverGlobals, Attributes, Buffer, BufferSize, Memory);
+}
+
 //
 // WDF Function: WdfMemoryGetBuffer
 //
+typedef
 _IRQL_requires_max_(DISPATCH_LEVEL)
+WDFAPI
 PVOID
-WdfMemoryGetBuffer(
+(*PFN_WDFMEMORYGETBUFFER)(
+    _In_
+    PWDF_DRIVER_GLOBALS DriverGlobals,
     _In_
     WDFMEMORY Memory,
     _Out_opt_
     size_t* BufferSize
     );
 
-#if DMF_PLATFORM_UNUSED
+_IRQL_requires_max_(DISPATCH_LEVEL)
+PVOID
+FORCEINLINE
+WdfMemoryGetBuffer(
+    _In_
+    WDFMEMORY Memory,
+    _Out_opt_
+    size_t* BufferSize
+    )
+{
+    return ((PFN_WDFMEMORYGETBUFFER) WdfFunctions[WdfMemoryGetBufferTableIndex])(WdfDriverGlobals, Memory, BufferSize);
+}
 
 //
 // WDF Function: WdfMemoryAssignBuffer
 //
+typedef
+_Must_inspect_result_
+_IRQL_requires_max_(DISPATCH_LEVEL)
+WDFAPI
+NTSTATUS
+(*PFN_WDFMEMORYASSIGNBUFFER)(
+    _In_
+    PWDF_DRIVER_GLOBALS DriverGlobals,
+    _In_
+    WDFMEMORY Memory,
+    _Pre_notnull_ _Pre_writable_byte_size_(BufferSize)
+    PVOID Buffer,
+    _In_
+    _When_(BufferSize == 0, __drv_reportError(BufferSize cannot be zero))
+    size_t BufferSize
+    );
+
 _Must_inspect_result_
 _IRQL_requires_max_(DISPATCH_LEVEL)
 NTSTATUS
+FORCEINLINE
 WdfMemoryAssignBuffer(
     _In_
     WDFMEMORY Memory,
@@ -221,9 +310,29 @@ WdfMemoryAssignBuffer(
 //
 // WDF Function: WdfMemoryCopyToBuffer
 //
+typedef
+_Must_inspect_result_
+_IRQL_requires_max_(DISPATCH_LEVEL)
+WDFAPI
+NTSTATUS
+(*PFN_WDFMEMORYCOPYTOBUFFER)(
+    _In_
+    PWDF_DRIVER_GLOBALS DriverGlobals,
+    _In_
+    WDFMEMORY SourceMemory,
+    _In_
+    size_t SourceOffset,
+    _Out_writes_bytes_( NumBytesToCopyTo )
+    PVOID Buffer,
+    _In_
+    _When_(NumBytesToCopyTo == 0, __drv_reportError(NumBytesToCopyTo cannot be zero))
+    size_t NumBytesToCopyTo
+    );
+
 _Must_inspect_result_
 _IRQL_requires_max_(DISPATCH_LEVEL)
 NTSTATUS
+FORCEINLINE
 WdfMemoryCopyToBuffer(
     _In_
     WDFMEMORY SourceMemory,
@@ -242,9 +351,29 @@ WdfMemoryCopyToBuffer(
 //
 // WDF Function: WdfMemoryCopyFromBuffer
 //
+typedef
+_Must_inspect_result_
+_IRQL_requires_max_(DISPATCH_LEVEL)
+WDFAPI
+NTSTATUS
+(*PFN_WDFMEMORYCOPYFROMBUFFER)(
+    _In_
+    PWDF_DRIVER_GLOBALS DriverGlobals,
+    _In_
+    WDFMEMORY DestinationMemory,
+    _In_
+    size_t DestinationOffset,
+    _In_
+    PVOID Buffer,
+    _In_
+    _When_(NumBytesToCopyFrom == 0, __drv_reportError(NumBytesToCopyFrom cannot be zero))
+    size_t NumBytesToCopyFrom
+    );
+
 _Must_inspect_result_
 _IRQL_requires_max_(DISPATCH_LEVEL)
 NTSTATUS
+FORCEINLINE
 WdfMemoryCopyFromBuffer(
     _In_
     WDFMEMORY DestinationMemory,
@@ -260,7 +389,91 @@ WdfMemoryCopyFromBuffer(
     return ((PFN_WDFMEMORYCOPYFROMBUFFER) WdfFunctions[WdfMemoryCopyFromBufferTableIndex])(WdfDriverGlobals, DestinationMemory, DestinationOffset, Buffer, NumBytesToCopyFrom);
 }
 
-#endif // PLATFORM_UNUSED
+//
+// WDF Function: WdfLookasideListCreate
+//
+typedef
+_Must_inspect_result_
+_When_(PoolType == 1 || PoolType == 257, _IRQL_requires_max_(APC_LEVEL))
+_When_(PoolType == 0 || PoolType == 256, _IRQL_requires_max_(DISPATCH_LEVEL))
+WDFAPI
+NTSTATUS
+(*PFN_WDFLOOKASIDELISTCREATE)(
+    _In_
+    PWDF_DRIVER_GLOBALS DriverGlobals,
+    _In_opt_
+    PWDF_OBJECT_ATTRIBUTES LookasideAttributes,
+    _In_
+    _When_(BufferSize == 0, __drv_reportError(BufferSize cannot be zero))
+    size_t BufferSize,
+    _In_
+    _Strict_type_match_
+    POOL_TYPE PoolType,
+    _In_opt_
+    PWDF_OBJECT_ATTRIBUTES MemoryAttributes,
+    _In_opt_
+    ULONG PoolTag,
+    _Out_
+    WDFLOOKASIDE* Lookaside
+    );
+
+_Must_inspect_result_
+_When_(PoolType == 1 || PoolType == 257, _IRQL_requires_max_(APC_LEVEL))
+_When_(PoolType == 0 || PoolType == 256, _IRQL_requires_max_(DISPATCH_LEVEL))
+NTSTATUS
+FORCEINLINE
+WdfLookasideListCreate(
+    _In_opt_
+    PWDF_OBJECT_ATTRIBUTES LookasideAttributes,
+    _In_
+    _When_(BufferSize == 0, __drv_reportError(BufferSize cannot be zero))
+    size_t BufferSize,
+    _In_
+    _Strict_type_match_
+    POOL_TYPE PoolType,
+    _In_opt_
+    PWDF_OBJECT_ATTRIBUTES MemoryAttributes,
+    _In_opt_
+    ULONG PoolTag,
+    _Out_
+    WDFLOOKASIDE* Lookaside
+    )
+{
+    return ((PFN_WDFLOOKASIDELISTCREATE) WdfFunctions[WdfLookasideListCreateTableIndex])(WdfDriverGlobals, LookasideAttributes, BufferSize, PoolType, MemoryAttributes, PoolTag, Lookaside);
+}
+
+//
+// WDF Function: WdfMemoryCreateFromLookaside
+//
+typedef
+_Must_inspect_result_
+_IRQL_requires_max_(DISPATCH_LEVEL)
+WDFAPI
+NTSTATUS
+(*PFN_WDFMEMORYCREATEFROMLOOKASIDE)(
+    _In_
+    PWDF_DRIVER_GLOBALS DriverGlobals,
+    _In_
+    WDFLOOKASIDE Lookaside,
+    _Out_
+    WDFMEMORY* Memory
+    );
+
+_Must_inspect_result_
+_IRQL_requires_max_(DISPATCH_LEVEL)
+NTSTATUS
+FORCEINLINE
+WdfMemoryCreateFromLookaside(
+    _In_
+    WDFLOOKASIDE Lookaside,
+    _Out_
+    WDFMEMORY* Memory
+    )
+{
+    return ((PFN_WDFMEMORYCREATEFROMLOOKASIDE) WdfFunctions[WdfMemoryCreateFromLookasideTableIndex])(WdfDriverGlobals, Lookaside, Memory);
+}
+
+
 
 #endif // (NTDDI_VERSION >= NTDDI_WIN2K)
 

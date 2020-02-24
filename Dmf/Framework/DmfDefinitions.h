@@ -1977,6 +1977,17 @@ PushEntryList(
 }
 #endif // defined(DMF_USER_MODE) && !defined( _ARM64_ )
 
+// PLATFORM_TEMPLATE: Or with definitions of platforms that need platform support.
+//
+#if defined(DMF_WIN32_MODE) || defined(DMF_XXX_MODE)
+
+void
+DMF_PlatformInitialize(
+    void
+    );
+
+#endif
+
 #if defined(__cplusplus)
 }
 #endif // defined(__cplusplus)

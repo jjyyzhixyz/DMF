@@ -213,7 +213,7 @@ WDF_REQUEST_PARAMETERS_INIT(
 {
     RtlZeroMemory(Parameters, sizeof(WDF_REQUEST_PARAMETERS));
 
-    Parameters->Size = sizeof(WDF_REQUEST_PARAMETERS);
+    Parameters->Size = (USHORT)WDF_STRUCTURE_SIZE(WDF_REQUEST_PARAMETERS);
 }
 
 typedef struct _WDF_USB_REQUEST_COMPLETION_PARAMS *PWDF_USB_REQUEST_COMPLETION_PARAMS;
@@ -289,7 +289,7 @@ WDF_REQUEST_COMPLETION_PARAMS_INIT(
     )
 {
     RtlZeroMemory(Params, sizeof(WDF_REQUEST_COMPLETION_PARAMS));
-    Params->Size = sizeof(WDF_REQUEST_COMPLETION_PARAMS);
+    Params->Size = WDF_STRUCTURE_SIZE(WDF_REQUEST_COMPLETION_PARAMS);
     Params->Type = WdfRequestTypeNoFormat;
 }
 
@@ -367,7 +367,7 @@ WDF_REQUEST_REUSE_PARAMS_INIT(
 {
     RtlZeroMemory(Params, sizeof(WDF_REQUEST_REUSE_PARAMS));
 
-    Params->Size = sizeof(WDF_REQUEST_REUSE_PARAMS);
+    Params->Size = WDF_STRUCTURE_SIZE(WDF_REQUEST_REUSE_PARAMS);
     Params->Flags = Flags;
     Params->Status = Status;
 }
@@ -410,7 +410,7 @@ WDF_REQUEST_SEND_OPTIONS_INIT(
     )
 {
     RtlZeroMemory(Options, sizeof(WDF_REQUEST_SEND_OPTIONS));
-    Options->Size = sizeof(WDF_REQUEST_SEND_OPTIONS);
+    Options->Size = WDF_STRUCTURE_SIZE(WDF_REQUEST_SEND_OPTIONS);
     Options->Flags = Flags;
 }
 
@@ -439,7 +439,7 @@ typedef struct _WDF_REQUEST_FORWARD_OPTIONS {
     // Bit field combination of values from the WDF_REQUEST_FORWARD_OPTIONS_FLAGS
     // enumeration
     //
-    ULONG Flags;  
+    ULONG Flags;
 } WDF_REQUEST_FORWARD_OPTIONS, *PWDF_REQUEST_FORWARD_OPTIONS;
 
 
@@ -454,12 +454,12 @@ WDF_REQUEST_FORWARD_OPTIONS_INIT(
 {
     RtlZeroMemory(ForwardOptions, sizeof(WDF_REQUEST_FORWARD_OPTIONS));
 
-    ForwardOptions->Size = sizeof(WDF_REQUEST_FORWARD_OPTIONS);
+    ForwardOptions->Size = WDF_STRUCTURE_SIZE(WDF_REQUEST_FORWARD_OPTIONS);
     ForwardOptions->Flags |= WDF_REQUEST_FORWARD_OPTION_SEND_AND_FORGET;
 }
 
 
-#if !defined(DMF_WIN32_MODE)
+
 
 //
 // WDF Function: WdfRequestCreate
@@ -480,6 +480,10 @@ NTSTATUS
     WDFREQUEST* Request
     );
 
+// 
+// Declarations
+// 
+
 _Must_inspect_result_
 _IRQL_requires_max_(DISPATCH_LEVEL)
 NTSTATUS
@@ -494,6 +498,31 @@ WdfRequestCreate(
     )
 {
     return ((PFN_WDFREQUESTCREATE) WdfFunctions[WdfRequestCreateTableIndex])(WdfDriverGlobals, RequestAttributes, IoTarget, Request);
+}
+
+//
+// WDF Function: WdfRequestGetRequestorProcessId
+//
+typedef
+_IRQL_requires_max_(DISPATCH_LEVEL)
+WDFAPI
+ULONG
+(*PFN_WDFREQUESTGETREQUESTORPROCESSID)(
+    _In_
+    PWDF_DRIVER_GLOBALS DriverGlobals,
+    _In_
+    WDFREQUEST Request
+    );
+
+_IRQL_requires_max_(DISPATCH_LEVEL)
+ULONG
+FORCEINLINE
+WdfRequestGetRequestorProcessId(
+    _In_
+    WDFREQUEST Request
+    )
+{
+    return ((PFN_WDFREQUESTGETREQUESTORPROCESSID) WdfFunctions[WdfRequestGetRequestorProcessIdTableIndex])(WdfDriverGlobals, Request);
 }
 
 //
@@ -966,21 +995,34 @@ WdfRequestAllocateTimer(
     return ((PFN_WDFREQUESTALLOCATETIMER) WdfFunctions[WdfRequestAllocateTimerTableIndex])(WdfDriverGlobals, Request);
 }
 
-#endif
-
 //
 // WDF Function: WdfRequestComplete
 //
+typedef
 _IRQL_requires_max_(DISPATCH_LEVEL)
+WDFAPI
 VOID
-WdfRequestComplete(
+(*PFN_WDFREQUESTCOMPLETE)(
+    _In_
+    PWDF_DRIVER_GLOBALS DriverGlobals,
     _In_
     WDFREQUEST Request,
     _In_
     NTSTATUS Status
     );
 
-#if !defined(DMF_WIN32_MODE)
+_IRQL_requires_max_(DISPATCH_LEVEL)
+VOID
+FORCEINLINE
+WdfRequestComplete(
+    _In_
+    WDFREQUEST Request,
+    _In_
+    NTSTATUS Status
+    )
+{
+    ((PFN_WDFREQUESTCOMPLETE) WdfFunctions[WdfRequestCompleteTableIndex])(WdfDriverGlobals, Request, Status);
+}
 
 //
 // WDF Function: WdfRequestCompleteWithPriorityBoost
@@ -1665,6 +1707,10 @@ PIRP
     WDFREQUEST Request
     );
 
+// 
+// Wdm Compatibility
+// 
+
 _IRQL_requires_max_(DISPATCH_LEVEL)
 PIRP
 FORCEINLINE
@@ -1736,7 +1782,6 @@ WdfRequestForwardToParentDeviceIoQueue(
     return ((PFN_WDFREQUESTFORWARDTOPARENTDEVICEIOQUEUE) WdfFunctions[WdfRequestForwardToParentDeviceIoQueueTableIndex])(WdfDriverGlobals, Request, ParentDeviceQueue, ForwardOptions);
 }
 
-#endif
 
 
 

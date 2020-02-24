@@ -90,14 +90,14 @@ typedef struct _WDF_TIMER_CONFIG {
     // Optional tolerance for the timer in milliseconds.
     //
     ULONG TolerableDelay;
-    
+
     //
     // If this is TRUE, high resolution timers will be used. The default
     // value is FALSE
     //
     DECLSPEC_ALIGN(8) BOOLEAN UseHighResolutionTimer;
 
-} WDF_TIMER_CONFIG, *PWDF_TIMER_CONFIG; 
+} WDF_TIMER_CONFIG, *PWDF_TIMER_CONFIG;
 
 #pragma warning(pop)
 
@@ -109,7 +109,7 @@ WDF_TIMER_CONFIG_INIT(
     )
 {
     RtlZeroMemory(Config, sizeof(WDF_TIMER_CONFIG));
-    Config->Size = sizeof(WDF_TIMER_CONFIG);
+    Config->Size = WDF_STRUCTURE_SIZE(WDF_TIMER_CONFIG);
     Config->EvtTimerFunc = EvtTimerFunc;
     Config->Period = 0;
     Config->AutomaticSerialization = TRUE;
@@ -125,7 +125,7 @@ WDF_TIMER_CONFIG_INIT_PERIODIC(
     )
 {
     RtlZeroMemory(Config, sizeof(WDF_TIMER_CONFIG));
-    Config->Size = sizeof(WDF_TIMER_CONFIG);
+    Config->Size = WDF_STRUCTURE_SIZE(WDF_TIMER_CONFIG);
     Config->EvtTimerFunc = EvtTimerFunc;
     Config->Period = Period;
     Config->AutomaticSerialization = TRUE;
@@ -136,10 +136,14 @@ WDF_TIMER_CONFIG_INIT_PERIODIC(
 //
 // WDF Function: WdfTimerCreate
 //
+typedef
 _Must_inspect_result_
 _IRQL_requires_max_(DISPATCH_LEVEL)
+WDFAPI
 NTSTATUS
-WdfTimerCreate(
+(*PFN_WDFTIMERCREATE)(
+    _In_
+    PWDF_DRIVER_GLOBALS DriverGlobals,
     _In_
     PWDF_TIMER_CONFIG Config,
     _In_
@@ -148,40 +152,108 @@ WdfTimerCreate(
     WDFTIMER* Timer
     );
 
+_Must_inspect_result_
+_IRQL_requires_max_(DISPATCH_LEVEL)
+NTSTATUS
+FORCEINLINE
+WdfTimerCreate(
+    _In_
+    PWDF_TIMER_CONFIG Config,
+    _In_
+    PWDF_OBJECT_ATTRIBUTES Attributes,
+    _Out_
+    WDFTIMER* Timer
+    )
+{
+    return ((PFN_WDFTIMERCREATE) WdfFunctions[WdfTimerCreateTableIndex])(WdfDriverGlobals, Config, Attributes, Timer);
+}
+
 //
 // WDF Function: WdfTimerStart
 //
+typedef
 _IRQL_requires_max_(DISPATCH_LEVEL)
+WDFAPI
 BOOLEAN
-WdfTimerStart(
+(*PFN_WDFTIMERSTART)(
+    _In_
+    PWDF_DRIVER_GLOBALS DriverGlobals,
     _In_
     WDFTIMER Timer,
     _In_
     LONGLONG DueTime
     );
 
+_IRQL_requires_max_(DISPATCH_LEVEL)
+BOOLEAN
+FORCEINLINE
+WdfTimerStart(
+    _In_
+    WDFTIMER Timer,
+    _In_
+    LONGLONG DueTime
+    )
+{
+    return ((PFN_WDFTIMERSTART) WdfFunctions[WdfTimerStartTableIndex])(WdfDriverGlobals, Timer, DueTime);
+}
+
 //
 // WDF Function: WdfTimerStop
 //
+typedef
 _When_(Wait == __true, _IRQL_requires_max_(PASSIVE_LEVEL))
 _When_(Wait == __false, _IRQL_requires_max_(DISPATCH_LEVEL))
+WDFAPI
 BOOLEAN
-WdfTimerStop(
+(*PFN_WDFTIMERSTOP)(
+    _In_
+    PWDF_DRIVER_GLOBALS DriverGlobals,
     _In_
     WDFTIMER Timer,
     _In_
     BOOLEAN Wait
     );
 
+_When_(Wait == __true, _IRQL_requires_max_(PASSIVE_LEVEL))
+_When_(Wait == __false, _IRQL_requires_max_(DISPATCH_LEVEL))
+BOOLEAN
+FORCEINLINE
+WdfTimerStop(
+    _In_
+    WDFTIMER Timer,
+    _In_
+    BOOLEAN Wait
+    )
+{
+    return ((PFN_WDFTIMERSTOP) WdfFunctions[WdfTimerStopTableIndex])(WdfDriverGlobals, Timer, Wait);
+}
+
 //
 // WDF Function: WdfTimerGetParentObject
 //
+typedef
 _IRQL_requires_max_(DISPATCH_LEVEL)
+WDFAPI
 WDFOBJECT
-WdfTimerGetParentObject(
+(*PFN_WDFTIMERGETPARENTOBJECT)(
+    _In_
+    PWDF_DRIVER_GLOBALS DriverGlobals,
     _In_
     WDFTIMER Timer
     );
+
+_IRQL_requires_max_(DISPATCH_LEVEL)
+WDFOBJECT
+FORCEINLINE
+WdfTimerGetParentObject(
+    _In_
+    WDFTIMER Timer
+    )
+{
+    return ((PFN_WDFTIMERGETPARENTOBJECT) WdfFunctions[WdfTimerGetParentObjectTableIndex])(WdfDriverGlobals, Timer);
+}
+
+
 
 #endif // (NTDDI_VERSION >= NTDDI_WIN2K)
 

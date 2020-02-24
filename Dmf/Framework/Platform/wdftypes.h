@@ -72,12 +72,12 @@ typedef UCHAR BYTE;
 //
 // WDF_WPP_KMDF_DRIVER  define is used by the WPP trace template file
 // (km-init.tpl) to call the framework to register the KMDF provider
-// if the WppInit and WppCleanup functions are executed in the 
+// if the WppInit and WppCleanup functions are executed in the
 // Windows 2000 system.
 //
-#ifndef WDF_WPP_KMDF_DRIVER 
-#define WDF_WPP_KMDF_DRIVER 
-#endif // WDF_WPP_KMDF_DRIVER 
+#ifndef WDF_WPP_KMDF_DRIVER
+#define WDF_WPP_KMDF_DRIVER
+#endif // WDF_WPP_KMDF_DRIVER
 
 // 
 // Do not create an invalid value for this enum in case driver writers mix up
@@ -90,6 +90,8 @@ typedef enum _WDF_TRI_STATE {
 } WDF_TRI_STATE, *PWDF_TRI_STATE;
 
 
+
+typedef size_t* WDF_STRUCT_INFO;
 
 typedef PVOID WDFCONTEXT;
 
@@ -163,6 +165,13 @@ DECLARE_HANDLE( WDFCHILDLIST );
 DECLARE_HANDLE( WDFIORESREQLIST );
 DECLARE_HANDLE( WDFIORESLIST );
 DECLARE_HANDLE( WDFCMRESLIST );
+
+
+
+//
+// companion target for task queues
+//
+DECLARE_HANDLE( WDFCOMPANIONTARGET );
 
 
 

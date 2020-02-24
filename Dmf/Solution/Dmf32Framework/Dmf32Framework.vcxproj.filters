@@ -159,6 +159,9 @@
     <ClInclude Include="..\..\Framework\Platform\DmfPlatform_Win32.h">
       <Filter>Headers\Framework\Platform</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Framework\Platform\wdffuncenum.h">
+      <Filter>Headers\Framework\Platform</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Modules">

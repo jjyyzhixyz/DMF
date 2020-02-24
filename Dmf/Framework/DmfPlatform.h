@@ -33,8 +33,6 @@ extern "C"
 
 #if defined(DMF_WIN32_MODE) || defined(DMF_XXX_MODE)
 
-    typedef void* PWDF_DRIVER_GLOBALS;
-
     #define STATUS_SUCCESS                   ((NTSTATUS)0x00000000L) 
     #define STATUS_ABANDONED                 ((NTSTATUS)0x00000080L)
     #define STATUS_ALERTED                   ((NTSTATUS)0x00000101L)
@@ -66,11 +64,29 @@ extern "C"
     #define STATUS_WAIT_0                    ((DWORD   )0x00000000L) 
     #define STATUS_WAIT_1                    (STATUS_WAIT_0 + 1)
 
+    // TODO: From WDM.
+    //
+    #define DEVICE_TYPE DWORD
+
+    #define WDF_EVERYTHING_ALWAYS_AVAILABLE
     #include ".\Platform\wudfwdm.h"
     #include ".\Platform\wdftypes.h"
+    #include ".\Platform\wdfglobals.h"
+    #include ".\Platform\wdffuncenum.h"
+
+    typedef VOID (*WDFFUNC) (VOID);
+    extern WDFFUNC WdfFunctions[WdfFunctionTableNumEntries];
+
     #include ".\Platform\wdfobject.h"
     #include ".\Platform\wdfcore.h"
 
+    // TODO: From WDM.
+    //
+    typedef struct _PNP_BUS_INFORMATION {
+        GUID BusTypeGuid;
+        INTERFACE_TYPE LegacyBusType;
+        ULONG BusNumber;
+    } PNP_BUS_INFORMATION, *PPNP_BUS_INFORMATION;
     #define WDF_DEVICE_NO_WDMSEC_H
     #include ".\Platform\wdfdevice.h"
 
@@ -79,8 +95,15 @@ extern "C"
     #include ".\Platform\wdftimer.h"
     #include ".\Platform\wdfworkitem.h"
     #include ".\Platform\wdfcollection.h"
-    #include ".\Platform\wdfio.h"
+
+    // TODO: From WDM.
+    //
+    typedef struct 
+    {
+        ULONG Dummy;
+    }IO_STACK_LOCATION, *PIO_STACK_LOCATION;
     #include ".\Platform\wdfrequest.h"
+    #include ".\Platform\wdfio.h"
     #include ".\Platform\wdffileobject.h"
 
     typedef enum

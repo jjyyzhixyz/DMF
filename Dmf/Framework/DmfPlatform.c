@@ -70,7 +70,9 @@ CustomContextAllocate(WDFOBJECT Object,
 // TODO: Use ContextSizeOverride.
 //
 NTSTATUS
-WdfObjectAllocateContext(
+DmfPlatform_WdfObjectAllocateContext(
+    _In_
+    PWDF_DRIVER_GLOBALS DriverGlobals,
     _In_
     WDFOBJECT Handle,
     _In_
@@ -82,6 +84,8 @@ WdfObjectAllocateContext(
     NTSTATUS ntStatus;
     DMF_PLATFORM_OBJECT* platformObject;
     DMF_PLATFORM_CONTEXT* platformContext;
+
+    UNREFERENCED_PARAMETER(DriverGlobals);
 
     platformObject = (DMF_PLATFORM_OBJECT*)Handle;
 
@@ -124,7 +128,9 @@ Exit:
 }
 
 PVOID
-WdfObjectGetTypedContextWorker(
+DmfPlatform_WdfObjectGetTypedContextWorker(
+    _In_
+    PWDF_DRIVER_GLOBALS DriverGlobals,
     _In_
     WDFOBJECT Handle,
     _In_
@@ -135,6 +141,8 @@ WdfObjectGetTypedContextWorker(
     DMF_PLATFORM_CONTEXT* platformContext;
     LIST_ENTRY* listEntry;
     VOID* returnValue;
+
+    UNREFERENCED_PARAMETER(DriverGlobals);
 
     returnValue = NULL;
     platformObject = (DMF_PLATFORM_OBJECT*)Handle;
@@ -159,7 +167,9 @@ WdfObjectGetTypedContextWorker(
 
 _IRQL_requires_max_(DISPATCH_LEVEL)
 VOID
-WdfObjectDelete(
+DmfPlatform_WdfObjectDelete(
+    _In_
+    PWDF_DRIVER_GLOBALS DriverGlobals,
     _In_
     WDFOBJECT Object
     )
@@ -168,6 +178,8 @@ WdfObjectDelete(
     DMF_PLATFORM_OBJECT* childObject;
     LIST_ENTRY* listEntry;
     LONG newReferenceCount;
+
+    UNREFERENCED_PARAMETER(DriverGlobals);
 
     platformObject = (DMF_PLATFORM_OBJECT*)Object;
 
@@ -324,7 +336,9 @@ _Must_inspect_result_
 _When_(PoolType == 1 || PoolType == 257, _IRQL_requires_max_(APC_LEVEL))
 _When_(PoolType == 0 || PoolType == 256, _IRQL_requires_max_(DISPATCH_LEVEL))
 NTSTATUS
-WdfMemoryCreate(
+DmfPlatform_WdfMemoryCreate(
+    _In_
+    PWDF_DRIVER_GLOBALS DriverGlobals,
     _In_opt_
     PWDF_OBJECT_ATTRIBUTES Attributes,
     _In_
@@ -345,6 +359,7 @@ WdfMemoryCreate(
     DMF_PLATFORM_OBJECT* platformObject;
     DMF_PLATFORM_OBJECT* parentObject;
 
+    UNREFERENCED_PARAMETER(DriverGlobals);
     UNREFERENCED_PARAMETER(PoolType);
     UNREFERENCED_PARAMETER(PoolTag);
 
@@ -412,7 +427,9 @@ Exit:
 _Must_inspect_result_
 _IRQL_requires_max_(DISPATCH_LEVEL)
 NTSTATUS
-WdfMemoryCreatePreallocated(
+DmfPlatform_WdfMemoryCreatePreallocated(
+    _In_
+    PWDF_DRIVER_GLOBALS DriverGlobals,
     _In_opt_
     PWDF_OBJECT_ATTRIBUTES Attributes,
     _In_ __drv_aliasesMem
@@ -427,6 +444,8 @@ WdfMemoryCreatePreallocated(
     NTSTATUS ntStatus;
     DMF_PLATFORM_OBJECT* platformObject;
     DMF_PLATFORM_OBJECT* parentObject;
+
+    UNREFERENCED_PARAMETER(DriverGlobals);
 
     ntStatus = STATUS_UNSUCCESSFUL;
 
@@ -478,7 +497,9 @@ Exit:
 
 _IRQL_requires_max_(DISPATCH_LEVEL)
 PVOID
-WdfMemoryGetBuffer(
+DmfPlatform_WdfMemoryGetBuffer(
+    _In_
+    PWDF_DRIVER_GLOBALS DriverGlobals,
     _In_
     WDFMEMORY Memory,
     _Out_opt_
@@ -487,6 +508,8 @@ WdfMemoryGetBuffer(
 {
     DMF_PLATFORM_OBJECT* platformObject;
     DMF_PLATFORM_MEMORY* platformMemory;
+
+    UNREFERENCED_PARAMETER(DriverGlobals);
 
     platformObject = (DMF_PLATFORM_OBJECT*)Memory;
     DmfAssert(platformObject->PlatformObjectType == DmfPlatformObjectTypeMemory);
@@ -522,7 +545,9 @@ DmfPlatformWdfWaitLockDelete(
 _Must_inspect_result_
 _IRQL_requires_max_(DISPATCH_LEVEL)
 NTSTATUS
-WdfWaitLockCreate(
+DmfPlatform_WdfWaitLockCreate(
+    _In_
+    PWDF_DRIVER_GLOBALS DriverGlobals,
     _In_opt_
     PWDF_OBJECT_ATTRIBUTES LockAttributes,
     _Out_
@@ -533,6 +558,8 @@ WdfWaitLockCreate(
     DMF_PLATFORM_OBJECT* platformObject;
     DMF_PLATFORM_OBJECT* parentObject;
     BOOLEAN waitEventCreated;
+
+    UNREFERENCED_PARAMETER(DriverGlobals);
 
     ntStatus = STATUS_UNSUCCESSFUL;
 
@@ -599,7 +626,9 @@ _Always_(_When_(Timeout == NULL, _Acquires_lock_(Lock)))
 _When_(Timeout != NULL && return == STATUS_SUCCESS, _Acquires_lock_(Lock))
 _When_(Timeout != NULL, _Must_inspect_result_)
 NTSTATUS
-WdfWaitLockAcquire(
+DmfPlatform_WdfWaitLockAcquire(
+    _In_
+    PWDF_DRIVER_GLOBALS DriverGlobals,
     _In_
     _Requires_lock_not_held_(_Curr_)
     WDFWAITLOCK Lock,
@@ -612,6 +641,8 @@ WdfWaitLockAcquire(
     DMF_PLATFORM_WAITLOCK* platformWaitLock;
     DWORD returnValue;
     LONGLONG timeoutMs;
+
+    UNREFERENCED_PARAMETER(DriverGlobals);
 
     platformObject = (DMF_PLATFORM_OBJECT*)Lock;
     DmfAssert(platformObject->PlatformObjectType == DmfPlatformObjectTypeWaitLock);
@@ -650,7 +681,9 @@ WdfWaitLockAcquire(
 
 _IRQL_requires_max_(DISPATCH_LEVEL)
 VOID
-WdfWaitLockRelease(
+DmfPlatform_WdfWaitLockRelease(
+    _In_
+    PWDF_DRIVER_GLOBALS DriverGlobals,
     _In_
     _Requires_lock_held_(_Curr_)
     _Releases_lock_(_Curr_)
@@ -659,6 +692,8 @@ WdfWaitLockRelease(
 {
     DMF_PLATFORM_OBJECT* platformObject;
     DMF_PLATFORM_WAITLOCK* platformWaitLock;
+
+    UNREFERENCED_PARAMETER(DriverGlobals);
 
     platformObject = (DMF_PLATFORM_OBJECT*)Lock;
     DmfAssert(platformObject->PlatformObjectType == DmfPlatformObjectTypeWaitLock);
@@ -689,7 +724,9 @@ DmfPlatformWdfSpinLockDelete(
 _Must_inspect_result_
 _IRQL_requires_max_(DISPATCH_LEVEL)
 NTSTATUS
-WdfSpinLockCreate(
+DmfPlatform_WdfSpinLockCreate(
+    _In_
+    PWDF_DRIVER_GLOBALS DriverGlobals,
     _In_opt_
     PWDF_OBJECT_ATTRIBUTES SpinLockAttributes,
     _Out_
@@ -701,6 +738,7 @@ WdfSpinLockCreate(
     DMF_PLATFORM_OBJECT* parentObject;
     BOOLEAN spinLockCreated;
 
+    UNREFERENCED_PARAMETER(DriverGlobals);
     UNREFERENCED_PARAMETER(SpinLockAttributes);
 
     ntStatus = STATUS_UNSUCCESSFUL;
@@ -762,7 +800,9 @@ Exit:
 _IRQL_requires_max_(DISPATCH_LEVEL)
 _IRQL_raises_(DISPATCH_LEVEL)
 VOID
-WdfSpinLockAcquire(
+DmfPlatform_WdfSpinLockAcquire(
+    _In_
+    PWDF_DRIVER_GLOBALS DriverGlobals,
     _In_
     _Requires_lock_not_held_(_Curr_)
     _Acquires_lock_(_Curr_)
@@ -772,6 +812,8 @@ WdfSpinLockAcquire(
 {
     DMF_PLATFORM_OBJECT* platformObject;
     DMF_PLATFORM_SPINLOCK* platformSpinLock;
+
+    UNREFERENCED_PARAMETER(DriverGlobals);
 
     platformObject = (DMF_PLATFORM_OBJECT*)SpinLock;
     DmfAssert(platformObject->PlatformObjectType == DmfPlatformObjectTypeSpinLock);
@@ -787,7 +829,9 @@ WdfSpinLockAcquire(
 _IRQL_requires_max_(DISPATCH_LEVEL)
 _IRQL_requires_min_(DISPATCH_LEVEL)
 VOID
-WdfSpinLockRelease(
+DmfPlatform_WdfSpinLockRelease(
+    _In_
+    PWDF_DRIVER_GLOBALS DriverGlobals,
     _In_
     _Requires_lock_held_(_Curr_)
     _Releases_lock_(_Curr_)
@@ -797,6 +841,8 @@ WdfSpinLockRelease(
 {
     DMF_PLATFORM_OBJECT* platformObject;
     DMF_PLATFORM_SPINLOCK* platformSpinLock;
+
+    UNREFERENCED_PARAMETER(DriverGlobals);
 
     platformObject = (DMF_PLATFORM_OBJECT*)SpinLock;
     DmfAssert(platformObject->PlatformObjectType == DmfPlatformObjectTypeSpinLock);
@@ -832,7 +878,9 @@ DmfPlatformWdfTimerDelete(
 _Must_inspect_result_
 _IRQL_requires_max_(DISPATCH_LEVEL)
 NTSTATUS
-WdfTimerCreate(
+DmfPlatform_WdfTimerCreate(
+    _In_
+    PWDF_DRIVER_GLOBALS DriverGlobals,
     _In_
     PWDF_TIMER_CONFIG Config,
     _In_
@@ -845,6 +893,8 @@ WdfTimerCreate(
     DMF_PLATFORM_OBJECT* platformObject;
     DMF_PLATFORM_OBJECT* parentObject;
     BOOLEAN timerCreated;
+
+    UNREFERENCED_PARAMETER(DriverGlobals);
 
     ntStatus = STATUS_UNSUCCESSFUL;
 
@@ -911,7 +961,9 @@ Exit:
 
 _IRQL_requires_max_(DISPATCH_LEVEL)
 BOOLEAN
-WdfTimerStart(
+DmfPlatform_WdfTimerStart(
+    _In_
+    PWDF_DRIVER_GLOBALS DriverGlobals,
     _In_
     WDFTIMER Timer,
     _In_
@@ -921,6 +973,8 @@ WdfTimerStart(
     DMF_PLATFORM_OBJECT* platformObject;
     DMF_PLATFORM_TIMER* platformTimer;
     BOOLEAN returnValue;
+
+    UNREFERENCED_PARAMETER(DriverGlobals);
 
     platformObject = (DMF_PLATFORM_OBJECT*)Timer;
     DmfAssert(platformObject->PlatformObjectType == DmfPlatformObjectTypeTimer);
@@ -941,7 +995,9 @@ WdfTimerStart(
 _When_(Wait == __true, _IRQL_requires_max_(PASSIVE_LEVEL))
 _When_(Wait == __false, _IRQL_requires_max_(DISPATCH_LEVEL))
 BOOLEAN
-WdfTimerStop(
+DmfPlatform_WdfTimerStop(
+    _In_
+    PWDF_DRIVER_GLOBALS DriverGlobals,
     _In_
     WDFTIMER Timer,
     _In_
@@ -951,6 +1007,8 @@ WdfTimerStop(
     DMF_PLATFORM_OBJECT* platformObject;
     DMF_PLATFORM_TIMER* platformTimer;
     BOOLEAN returnValue;
+
+    UNREFERENCED_PARAMETER(DriverGlobals);
 
     platformObject = (DMF_PLATFORM_OBJECT*)Timer;
     DmfAssert(platformObject->PlatformObjectType == DmfPlatformObjectTypeTimer);
@@ -968,12 +1026,16 @@ WdfTimerStop(
 
 _IRQL_requires_max_(DISPATCH_LEVEL)
 WDFOBJECT
-WdfTimerGetParentObject(
+DmfPlatform_WdfTimerGetParentObject(
+    _In_
+    PWDF_DRIVER_GLOBALS DriverGlobals,
     _In_
     WDFTIMER Timer
     )
 {
     DMF_PLATFORM_OBJECT* platformObject;
+
+    UNREFERENCED_PARAMETER(DriverGlobals);
 
     platformObject = (DMF_PLATFORM_OBJECT*)Timer;
     return platformObject->ObjectAttributes.ParentObject;
@@ -1002,7 +1064,9 @@ DmfPlatformWdfWorkItemDelete(
 _Must_inspect_result_
 _IRQL_requires_max_(DISPATCH_LEVEL)
 NTSTATUS
-WdfWorkItemCreate(
+DmfPlatform_WdfWorkItemCreate(
+    _In_
+    PWDF_DRIVER_GLOBALS DriverGlobals,
     _In_
     PWDF_WORKITEM_CONFIG Config,
     _In_
@@ -1015,6 +1079,8 @@ WdfWorkItemCreate(
     DMF_PLATFORM_OBJECT* platformObject;
     DMF_PLATFORM_OBJECT* parentObject;
     BOOLEAN workitemCreated;
+
+    UNREFERENCED_PARAMETER(DriverGlobals);
 
     ntStatus = STATUS_UNSUCCESSFUL;
 
@@ -1081,13 +1147,17 @@ Exit:
 
 _IRQL_requires_max_(DISPATCH_LEVEL)
 VOID
-WdfWorkItemEnqueue(
+DmfPlatform_WdfWorkItemEnqueue(
+    _In_
+    PWDF_DRIVER_GLOBALS DriverGlobals,
     _In_
     WDFWORKITEM WorkItem
     )
 {
     DMF_PLATFORM_OBJECT* platformObject;
     DMF_PLATFORM_WORKITEM* platformWorkItem;
+
+    UNREFERENCED_PARAMETER(DriverGlobals);
 
     platformObject = (DMF_PLATFORM_OBJECT*)WorkItem;
     DmfAssert(platformObject->PlatformObjectType == DmfPlatformObjectTypeWorkItem);
@@ -1104,12 +1174,16 @@ WdfWorkItemEnqueue(
 
 _IRQL_requires_max_(DISPATCH_LEVEL)
 WDFOBJECT
-WdfWorkItemGetParentObject(
+DmfPlatform_WdfWorkItemGetParentObject(
+    _In_
+    PWDF_DRIVER_GLOBALS DriverGlobals,
     _In_
     WDFWORKITEM WorkItem
     )
 {
     DMF_PLATFORM_OBJECT* platformObject;
+
+    UNREFERENCED_PARAMETER(DriverGlobals);
 
     platformObject = (DMF_PLATFORM_OBJECT*)WorkItem;
     return platformObject->ObjectAttributes.ParentObject;
@@ -1117,13 +1191,17 @@ WdfWorkItemGetParentObject(
 
 _IRQL_requires_max_(PASSIVE_LEVEL)
 VOID
-WdfWorkItemFlush(
+DmfPlatform_WdfWorkItemFlush(
+    _In_
+    PWDF_DRIVER_GLOBALS DriverGlobals,
     _In_
     WDFWORKITEM WorkItem
     )
 {
     DMF_PLATFORM_OBJECT* platformObject;
     DMF_PLATFORM_WORKITEM* platformWorkItem;
+
+    UNREFERENCED_PARAMETER(DriverGlobals);
 
     platformObject = (DMF_PLATFORM_OBJECT*)WorkItem;
     DmfAssert(platformObject->PlatformObjectType == DmfPlatformObjectTypeWorkItem);
@@ -1143,7 +1221,9 @@ WdfWorkItemFlush(
 _Must_inspect_result_
 _IRQL_requires_max_(DISPATCH_LEVEL)
 NTSTATUS
-WdfCollectionCreate(
+DmfPlatform_WdfCollectionCreate(
+    _In_
+    PWDF_DRIVER_GLOBALS DriverGlobals,
     _In_opt_
     PWDF_OBJECT_ATTRIBUTES CollectionAttributes,
     _Out_
@@ -1153,6 +1233,8 @@ WdfCollectionCreate(
     NTSTATUS ntStatus;
     DMF_PLATFORM_OBJECT* platformObject;
     DMF_PLATFORM_OBJECT* parentObject;
+
+    UNREFERENCED_PARAMETER(DriverGlobals);
 
     ntStatus = STATUS_UNSUCCESSFUL;
 
@@ -1218,13 +1300,17 @@ Exit:
 
 _IRQL_requires_max_(DISPATCH_LEVEL)
 ULONG
-WdfCollectionGetCount(
+DmfPlatform_WdfCollectionGetCount(
+    _In_
+    PWDF_DRIVER_GLOBALS DriverGlobals,
     _In_
     WDFCOLLECTION Collection
     )
 {
     DMF_PLATFORM_OBJECT* platformObject;
     DMF_PLATFORM_COLLECTION* platformcollection;
+
+    UNREFERENCED_PARAMETER(DriverGlobals);
 
     platformObject = (DMF_PLATFORM_OBJECT*)Collection;
     DmfAssert(platformObject->PlatformObjectType == DmfPlatformObjectTypeCollection);
@@ -1242,7 +1328,9 @@ typedef struct
 _Must_inspect_result_
 _IRQL_requires_max_(DISPATCH_LEVEL)
 NTSTATUS
-WdfCollectionAdd(
+DmfPlatform_WdfCollectionAdd(
+    _In_
+    PWDF_DRIVER_GLOBALS DriverGlobals,
     _In_
     WDFCOLLECTION Collection,
     _In_
@@ -1253,6 +1341,8 @@ WdfCollectionAdd(
     DMF_PLATFORM_OBJECT* platformObject;
     DMF_PLATFORM_COLLECTION* platformCollection;
     COLLECTION_ENTRY* collectionEntry;
+
+    UNREFERENCED_PARAMETER(DriverGlobals);
 
     platformObject = (DMF_PLATFORM_OBJECT*)Collection;
     DmfAssert(platformObject->PlatformObjectType == DmfPlatformObjectTypeCollection);
@@ -1286,7 +1376,9 @@ Exit:
 
 _IRQL_requires_max_(DISPATCH_LEVEL)
 VOID
-WdfCollectionRemove(
+DmfPlatform_WdfCollectionRemove(
+    _In_
+    PWDF_DRIVER_GLOBALS DriverGlobals,
     _In_
     WDFCOLLECTION Collection,
     _In_
@@ -1297,6 +1389,8 @@ WdfCollectionRemove(
     DMF_PLATFORM_COLLECTION* platformCollection;
     COLLECTION_ENTRY* collectionEntry;
     LIST_ENTRY* listEntry;
+
+    UNREFERENCED_PARAMETER(DriverGlobals);
 
     platformObject = (DMF_PLATFORM_OBJECT*)Collection;
     DmfAssert(platformObject->PlatformObjectType == DmfPlatformObjectTypeCollection);
@@ -1328,7 +1422,9 @@ WdfCollectionRemove(
 
 _IRQL_requires_max_(DISPATCH_LEVEL)
 VOID
-WdfCollectionRemoveItem(
+DmfPlatform_WdfCollectionRemoveItem(
+    _In_
+    PWDF_DRIVER_GLOBALS DriverGlobals,
     _In_
     WDFCOLLECTION Collection,
     _In_
@@ -1340,6 +1436,8 @@ WdfCollectionRemoveItem(
     COLLECTION_ENTRY* collectionEntry;
     LIST_ENTRY* listEntry;
     ULONG currentItemIndex;
+
+    UNREFERENCED_PARAMETER(DriverGlobals);
 
     platformObject = (DMF_PLATFORM_OBJECT*)Collection;
     DmfAssert(platformObject->PlatformObjectType == DmfPlatformObjectTypeCollection);
@@ -1373,7 +1471,9 @@ WdfCollectionRemoveItem(
 
 _IRQL_requires_max_(DISPATCH_LEVEL)
 WDFOBJECT
-WdfCollectionGetItem(
+DmfPlatform_WdfCollectionGetItem(
+    _In_
+    PWDF_DRIVER_GLOBALS DriverGlobals,
     _In_
     WDFCOLLECTION Collection,
     _In_
@@ -1386,6 +1486,8 @@ WdfCollectionGetItem(
     COLLECTION_ENTRY* collectionEntry;
     LIST_ENTRY* listEntry;
     ULONG currentItemIndex;
+
+    UNREFERENCED_PARAMETER(DriverGlobals);
 
     platformObject = (DMF_PLATFORM_OBJECT*)Collection;
     DmfAssert(platformObject->PlatformObjectType == DmfPlatformObjectTypeCollection);
@@ -1422,7 +1524,9 @@ WdfCollectionGetItem(
 
 _IRQL_requires_max_(DISPATCH_LEVEL)
 WDFOBJECT
-WdfCollectionGetFirstItem(
+DmfPlatform_WdfCollectionGetFirstItem(
+    _In_
+    PWDF_DRIVER_GLOBALS DriverGlobals,
     _In_
     WDFCOLLECTION Collection
     )
@@ -1432,6 +1536,8 @@ WdfCollectionGetFirstItem(
     DMF_PLATFORM_COLLECTION* platformCollection;
     COLLECTION_ENTRY* collectionEntry;
     LIST_ENTRY* listEntry;
+
+    UNREFERENCED_PARAMETER(DriverGlobals);
 
     platformObject = (DMF_PLATFORM_OBJECT*)Collection;
     DmfAssert(platformObject->PlatformObjectType == DmfPlatformObjectTypeCollection);
@@ -1462,7 +1568,9 @@ WdfCollectionGetFirstItem(
 
 _IRQL_requires_max_(DISPATCH_LEVEL)
 WDFOBJECT
-WdfCollectionGetLastItem(
+DmfPlatform_WdfCollectionGetLastItem(
+    _In_
+    PWDF_DRIVER_GLOBALS DriverGlobals,
     _In_
     WDFCOLLECTION Collection
     )
@@ -1472,6 +1580,8 @@ WdfCollectionGetLastItem(
     DMF_PLATFORM_COLLECTION* platformCollection;
     COLLECTION_ENTRY* collectionEntry;
     LIST_ENTRY* listEntry;
+
+    UNREFERENCED_PARAMETER(DriverGlobals);
 
     platformObject = (DMF_PLATFORM_OBJECT*)Collection;
     DmfAssert(platformObject->PlatformObjectType == DmfPlatformObjectTypeCollection);
@@ -1505,34 +1615,34 @@ WdfCollectionGetLastItem(
 ///////////////////////////////////////////////////////////////////////////////////
 //
 
-//
-// WDF Function: WdfDeviceInitSetPnpPowerEventCallbacks
-//
 _IRQL_requires_max_(DISPATCH_LEVEL)
 VOID
-WdfDeviceInitSetPnpPowerEventCallbacks(
+DmfPlatform_WdfDeviceInitSetPnpPowerEventCallbacks(
+    _In_
+    PWDF_DRIVER_GLOBALS DriverGlobals,
     _In_
     PWDFDEVICE_INIT DeviceInit,
     _In_
     PWDF_PNPPOWER_EVENT_CALLBACKS PnpPowerEventCallbacks
     )
 {
+    UNREFERENCED_PARAMETER(DriverGlobals);
     UNREFERENCED_PARAMETER(DeviceInit);
     UNREFERENCED_PARAMETER(PnpPowerEventCallbacks);
 }
 
-//
-// WDF Function: WdfDeviceInitSetPowerPolicyEventCallbacks
-//
 _IRQL_requires_max_(DISPATCH_LEVEL)
 VOID
-WdfDeviceInitSetPowerPolicyEventCallbacks(
+DmfPlatform_WdfDeviceInitSetPowerPolicyEventCallbacks(
+    _In_
+    PWDF_DRIVER_GLOBALS DriverGlobals,
     _In_
     PWDFDEVICE_INIT DeviceInit,
     _In_
     PWDF_POWER_POLICY_EVENT_CALLBACKS PowerPolicyEventCallbacks
     )
 {
+    UNREFERENCED_PARAMETER(DriverGlobals);
     UNREFERENCED_PARAMETER(DeviceInit);
     UNREFERENCED_PARAMETER(PowerPolicyEventCallbacks);
 }
@@ -1540,7 +1650,9 @@ WdfDeviceInitSetPowerPolicyEventCallbacks(
 _Must_inspect_result_
 _IRQL_requires_max_(PASSIVE_LEVEL)
 NTSTATUS
-WdfDeviceCreate(
+DmfPlatform_WdfDeviceCreate(
+    _In_
+    PWDF_DRIVER_GLOBALS DriverGlobals,
     _Inout_
     PWDFDEVICE_INIT* DeviceInit,
     _In_opt_
@@ -1553,6 +1665,7 @@ WdfDeviceCreate(
     DMF_PLATFORM_OBJECT* platformObject;
     DMF_PLATFORM_OBJECT* parentObject;
 
+    UNREFERENCED_PARAMETER(DriverGlobals);
     UNREFERENCED_PARAMETER(DeviceInit);
 
     ntStatus = STATUS_UNSUCCESSFUL;
@@ -1607,7 +1720,9 @@ Exit:
 
 _IRQL_requires_max_(DISPATCH_LEVEL)
 VOID
-WdfDeviceInitSetFileObjectConfig(
+DmfPlatform_WdfDeviceInitSetFileObjectConfig(
+    _In_
+    PWDF_DRIVER_GLOBALS DriverGlobals,
     _In_
     PWDFDEVICE_INIT DeviceInit,
     _In_
@@ -1616,6 +1731,7 @@ WdfDeviceInitSetFileObjectConfig(
     PWDF_OBJECT_ATTRIBUTES FileObjectAttributes
     )
 {
+    UNREFERENCED_PARAMETER(DriverGlobals);
     UNREFERENCED_PARAMETER(DeviceInit);
     UNREFERENCED_PARAMETER(FileObjectConfig);
     UNREFERENCED_PARAMETER(FileObjectAttributes);
@@ -1623,7 +1739,9 @@ WdfDeviceInitSetFileObjectConfig(
 
 _IRQL_requires_max_(DISPATCH_LEVEL)
 VOID
-WdfDeviceInitSetCharacteristics(
+DmfPlatform_WdfDeviceInitSetCharacteristics(
+    _In_
+    PWDF_DRIVER_GLOBALS DriverGlobals,
     _In_
     PWDFDEVICE_INIT DeviceInit,
     _In_
@@ -1632,6 +1750,7 @@ WdfDeviceInitSetCharacteristics(
     BOOLEAN OrInValues
     )
 {
+    UNREFERENCED_PARAMETER(DriverGlobals);
     UNREFERENCED_PARAMETER(DeviceInit);
     UNREFERENCED_PARAMETER(DeviceCharacteristics);
     UNREFERENCED_PARAMETER(OrInValues);
@@ -1639,13 +1758,16 @@ WdfDeviceInitSetCharacteristics(
 
 _IRQL_requires_max_(DISPATCH_LEVEL)
 VOID
-WdfDeviceInitSetDeviceClass(
+DmfPlatform_WdfDeviceInitSetDeviceClass(
+    _In_
+    PWDF_DRIVER_GLOBALS DriverGlobals,
     _In_
     PWDFDEVICE_INIT DeviceInit,
     _In_
     CONST GUID* DeviceClassGuid
     )
 {
+    UNREFERENCED_PARAMETER(DriverGlobals);
     UNREFERENCED_PARAMETER(DeviceInit);
     UNREFERENCED_PARAMETER(DeviceClassGuid);
 }
@@ -1664,7 +1786,9 @@ WdfDeviceInitSetDeviceClass(
 _Must_inspect_result_
 _IRQL_requires_max_(DISPATCH_LEVEL)
 NTSTATUS
-WdfIoQueueCreate(
+DmfPlatform_WdfIoQueueCreate(
+    _In_
+    PWDF_DRIVER_GLOBALS DriverGlobals,
     _In_
     WDFDEVICE Device,
     _In_
@@ -1679,6 +1803,7 @@ WdfIoQueueCreate(
     DMF_PLATFORM_OBJECT* platformObject;
     DMF_PLATFORM_OBJECT* parentObject;
 
+    UNREFERENCED_PARAMETER(DriverGlobals);
     UNREFERENCED_PARAMETER(Device);
 
     ntStatus = STATUS_UNSUCCESSFUL;
@@ -1730,13 +1855,16 @@ Exit:
 
 _IRQL_requires_max_(DISPATCH_LEVEL)
 WDFDEVICE
-WdfIoQueueGetDevice(
+DmfPlatform_WdfIoQueueGetDevice(
+    _In_
+    PWDF_DRIVER_GLOBALS DriverGlobals,
     _In_
     WDFQUEUE Queue
     )
 {
     // TODO:
     //
+    UNREFERENCED_PARAMETER(DriverGlobals);
     UNREFERENCED_PARAMETER(Queue);
     return NULL;
 }
@@ -1749,13 +1877,16 @@ WdfIoQueueGetDevice(
 
 _IRQL_requires_max_(DISPATCH_LEVEL)
 VOID
-WdfRequestComplete(
+DmfPlatform_WdfRequestComplete(
+    _In_
+    PWDF_DRIVER_GLOBALS DriverGlobals,
     _In_
     WDFREQUEST Request,
     _In_
     NTSTATUS Status
     )
 {
+    UNREFERENCED_PARAMETER(DriverGlobals);
     UNREFERENCED_PARAMETER(Request);
     UNREFERENCED_PARAMETER(Status);
 }
@@ -1767,11 +1898,14 @@ WdfRequestComplete(
 
 _IRQL_requires_max_(DISPATCH_LEVEL)
 WDFDEVICE
-WdfFileObjectGetDevice(
+DmfPlatform_WdfFileObjectGetDevice(
+    _In_
+    PWDF_DRIVER_GLOBALS DriverGlobals,
     _In_
     WDFFILEOBJECT FileObject
     )
 {
+    UNREFERENCED_PARAMETER(DriverGlobals);
     UNREFERENCED_PARAMETER(FileObject);
     return NULL;
 }
@@ -1783,6 +1917,182 @@ WdfFileObjectGetDevice(
     // Use WDF directly.
     //
 #endif
+
+///////////////////////////////////////////////////////////////////////////////////
+// Initialization
+///////////////////////////////////////////////////////////////////////////////////
+//
+
+void
+DmfPlaformNotImplemented(
+    void
+    )
+{
+    DmfAssert(FALSE);
+}
+
+// Table of all function pointers.
+//
+WDFFUNC WdfFunctions[WdfFunctionTableNumEntries] = 
+{
+    // Defaults to NULL.
+    //
+};
+
+WDF_DRIVER_GLOBALS WdfDriverGlobalsBuffer;
+WDF_DRIVER_GLOBALS* WdfDriverGlobals = &WdfDriverGlobalsBuffer;
+// FALSE = "All functions are always available".
+//
+BOOLEAN WdfClientVersionHigherThanFramework = FALSE;
+ULONG WdfFunctionCount= WdfFunctionTableNumEntries;
+ULONG WdfStructureCount= WDF_STRUCTURE_TABLE_NUM_ENTRIES;
+
+void
+DMF_PlatformInitialize(
+    void
+    )
+{
+    ULONG functionTableIndex;
+
+    // Set default function for all functions to "not implemented".
+    //
+    for (functionTableIndex = 0; functionTableIndex < WdfFunctionTableNumEntries; functionTableIndex++)
+    {
+        switch (functionTableIndex)
+        {
+            // WDFSYNC
+            //
+            case WdfWaitLockCreateTableIndex:
+                WdfFunctions[WdfWaitLockCreateTableIndex] = (WDFFUNC)DmfPlatform_WdfWaitLockCreate;
+                break;
+            case WdfWaitLockAcquireTableIndex:
+                WdfFunctions[WdfWaitLockAcquireTableIndex] = (WDFFUNC)DmfPlatform_WdfWaitLockAcquire;
+                break;
+            case WdfWaitLockReleaseTableIndex:
+                WdfFunctions[WdfWaitLockReleaseTableIndex] = (WDFFUNC)DmfPlatform_WdfWaitLockRelease;
+                break;
+            case WdfSpinLockCreateTableIndex:
+                WdfFunctions[WdfSpinLockCreateTableIndex] = (WDFFUNC)DmfPlatform_WdfSpinLockCreate;
+                break;
+            case WdfSpinLockAcquireTableIndex:
+                WdfFunctions[WdfSpinLockAcquireTableIndex] = (WDFFUNC)DmfPlatform_WdfSpinLockAcquire;
+                break;
+            case WdfSpinLockReleaseTableIndex:
+                WdfFunctions[WdfSpinLockReleaseTableIndex] = (WDFFUNC)DmfPlatform_WdfSpinLockRelease;
+                break;
+            // WDFOBJECT
+            //
+            case WdfObjectDeleteTableIndex:
+                WdfFunctions[WdfObjectDeleteTableIndex] = (WDFFUNC)DmfPlatform_WdfObjectDelete;
+                break;
+            case WdfObjectGetTypedContextWorkerTableIndex:
+                WdfFunctions[WdfObjectGetTypedContextWorkerTableIndex] = (WDFFUNC)DmfPlatform_WdfObjectGetTypedContextWorker;
+                break;
+            case WdfObjectAllocateContextTableIndex:
+                WdfFunctions[WdfObjectAllocateContextTableIndex] = (WDFFUNC)DmfPlatform_WdfObjectAllocateContext;
+                break;
+            // WDFDEVICE
+            //
+            case WdfDeviceCreateTableIndex:
+                WdfFunctions[WdfDeviceCreateTableIndex] = (WDFFUNC)DmfPlatform_WdfDeviceCreate;
+                break;
+            case WdfDeviceInitSetPnpPowerEventCallbacksTableIndex:
+                WdfFunctions[WdfDeviceInitSetPnpPowerEventCallbacksTableIndex] = (WDFFUNC)DmfPlatform_WdfDeviceInitSetPnpPowerEventCallbacks;
+                break;
+            case WdfDeviceInitSetPowerPolicyEventCallbacksTableIndex:
+                WdfFunctions[WdfDeviceInitSetPowerPolicyEventCallbacksTableIndex] = (WDFFUNC)DmfPlatform_WdfDeviceInitSetPowerPolicyEventCallbacks;
+                break;
+            // WDFMEMORY
+            //
+            case WdfMemoryCreateTableIndex:
+                WdfFunctions[WdfMemoryCreateTableIndex] = (WDFFUNC)DmfPlatform_WdfMemoryCreate;
+                break;
+            case WdfMemoryCreatePreallocatedTableIndex:
+                WdfFunctions[WdfMemoryCreatePreallocatedTableIndex] = (WDFFUNC)DmfPlatform_WdfMemoryCreatePreallocated;
+                break;
+            case WdfMemoryGetBufferTableIndex:
+                WdfFunctions[WdfMemoryGetBufferTableIndex] = (WDFFUNC)DmfPlatform_WdfMemoryGetBuffer;
+                break;
+            // WDFIOQUEUE
+            //
+            case WdfIoQueueCreateTableIndex:
+                WdfFunctions[WdfIoQueueCreateTableIndex] = (WDFFUNC)WdfIoQueueCreate;
+                break;
+            case WdfIoQueueGetDeviceTableIndex:
+                WdfFunctions[WdfIoQueueGetDeviceTableIndex] = (WDFFUNC)DmfPlatform_WdfIoQueueGetDevice;
+                break;
+            // WDFFILEOBJECT
+            //
+            case WdfFileObjectGetDeviceTableIndex:
+                WdfFunctions[WdfFileObjectGetDeviceTableIndex] = (WDFFUNC)DmfPlatform_WdfFileObjectGetDevice;
+                break;
+            case WdfDeviceInitSetFileObjectConfigTableIndex:
+                WdfFunctions[WdfDeviceInitSetFileObjectConfigTableIndex] = (WDFFUNC)DmfPlatform_WdfDeviceInitSetFileObjectConfig;
+                break;
+            // WDFCOLLECTION
+            //
+            case WdfCollectionCreateTableIndex:
+                WdfFunctions[WdfCollectionCreateTableIndex] = (WDFFUNC)DmfPlatform_WdfCollectionCreate;
+                break;
+            case WdfCollectionGetCountTableIndex:
+                WdfFunctions[WdfCollectionGetCountTableIndex] = (WDFFUNC)DmfPlatform_WdfCollectionGetCount;
+                break;
+            case WdfCollectionAddTableIndex:
+                WdfFunctions[WdfCollectionAddTableIndex] = (WDFFUNC)DmfPlatform_WdfCollectionAdd;
+                break;
+            case WdfCollectionRemoveTableIndex:
+                WdfFunctions[WdfCollectionRemoveTableIndex] = (WDFFUNC)DmfPlatform_WdfCollectionRemove;
+                break;
+            case WdfCollectionRemoveItemTableIndex:
+                WdfFunctions[WdfCollectionRemoveItemTableIndex] = (WDFFUNC)DmfPlatform_WdfCollectionRemoveItem;
+                break;
+            case WdfCollectionGetItemTableIndex:
+                WdfFunctions[WdfCollectionGetItemTableIndex] = (WDFFUNC)DmfPlatform_WdfCollectionGetItem;
+                break;
+            case WdfCollectionGetFirstItemTableIndex:
+                WdfFunctions[WdfCollectionGetFirstItemTableIndex] = (WDFFUNC)DmfPlatform_WdfCollectionGetLastItem;
+                break;
+            case WdfCollectionGetLastItemTableIndex:
+                WdfFunctions[WdfCollectionGetLastItemTableIndex] = (WDFFUNC)DmfPlatform_WdfCollectionGetLastItem;
+                break;
+            // WDFTIMER
+            //
+            case WdfTimerCreateTableIndex:
+                WdfFunctions[WdfTimerCreateTableIndex] = (WDFFUNC)DmfPlatform_WdfTimerCreate;
+                break;
+            case WdfTimerStartTableIndex:
+                WdfFunctions[WdfTimerStartTableIndex] = (WDFFUNC)DmfPlatform_WdfTimerStart;
+                break;
+            case WdfTimerStopTableIndex:
+                WdfFunctions[WdfTimerStopTableIndex] = (WDFFUNC)DmfPlatform_WdfTimerStop;
+                break;
+            case WdfTimerGetParentObjectTableIndex:
+                WdfFunctions[WdfTimerGetParentObjectTableIndex] = (WDFFUNC)DmfPlatform_WdfTimerGetParentObject;
+                break;
+            // WDFWORKITEM
+            //
+            case WdfWorkItemCreateTableIndex:
+                WdfFunctions[WdfWorkItemCreateTableIndex] = (WDFFUNC)DmfPlatform_WdfWorkItemCreate;
+                break;
+            case WdfWorkItemEnqueueTableIndex:
+                WdfFunctions[WdfWorkItemEnqueueTableIndex] = (WDFFUNC)DmfPlatform_WdfWorkItemEnqueue;
+                break;
+            case WdfWorkItemGetParentObjectTableIndex:
+                WdfFunctions[WdfWorkItemGetParentObjectTableIndex] = (WDFFUNC)DmfPlatform_WdfWorkItemGetParentObject;
+                break;
+            case WdfWorkItemFlushTableIndex:
+                WdfFunctions[WdfWorkItemFlushTableIndex] = (WDFFUNC)DmfPlatform_WdfWorkItemFlush;
+                break;
+            // NOT IMPLEMENTED
+            //
+            default:
+            {
+                WdfFunctions[functionTableIndex] = DmfPlaformNotImplemented;
+                break;
+            }
+        }
+    }
+}
 
 #if defined(__cplusplus)
 }
