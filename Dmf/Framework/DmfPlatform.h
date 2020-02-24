@@ -168,6 +168,151 @@ extern "C"
         DMF_Platform_ObjectDelete ObjectDelete;
     };
 
+    typedef struct
+    {
+        LIST_ENTRY ListEntry;
+        WDF_OBJECT_CONTEXT_TYPE_INFO ContextTypeInfo;
+        VOID* ContextData;
+    } DMF_PLATFORM_CONTEXT;
+
+    // NOTE: Every platform defines platform specific versions of these
+    //       structures.
+    //
+    struct _DMF_PLATFORM_MEMORY;
+    struct _DMF_PLATFORM_SPINLOCK;
+    struct _DMF_PLATFORM_WAITLOCK;
+    struct _DMF_PLATFORM_TIMER;
+    struct _DMF_PLATFORM_WORKITEM;
+    struct _DMF_PLATFORM_COLLECTION;
+    struct _DMF_PLATFORM_QUEUE;
+    struct _DMF_PLATFORM_DEVICE;
+
+    // NOTE: Every platform defines platform specific versions of these
+    //       functions.
+    //
+    typedef
+    BOOLEAN
+    (*DmfPlatformHandler_WdfTimerCreate)(
+        _In_ struct _DMF_PLATFORM_TIMER* PlatformTimer,
+        _In_ DMF_PLATFORM_OBJECT* PlatformObject
+        );
+
+    typedef
+    BOOLEAN
+    (*DmfPlatformHandler_WdfTimerStart)(
+        _In_ struct _DMF_PLATFORM_TIMER* PlatformTimer,
+        _In_ LONGLONG DueTime
+        );
+
+    typedef
+    BOOLEAN
+    (*DmfPlatformHandler_WdfTimerStop)(
+        _In_ struct _DMF_PLATFORM_TIMER* PlatformTimer,
+        _In_ BOOLEAN Wait
+        );
+
+    typedef
+    void
+    (*DmfPlatformHandler_WdfTimerDelete)(
+        _In_ struct _DMF_PLATFORM_TIMER* PlatformTimer
+        );
+
+    typedef
+    BOOLEAN
+    (*DmfPlatformHandler_WdfWorkItemCreate)(
+        _In_ struct _DMF_PLATFORM_WORKITEM* PlatformWorkItem,
+        _In_ DMF_PLATFORM_OBJECT* PlatformObject
+        );
+
+    typedef
+    BOOLEAN
+    (*DmfPlatformHandler_WdfWorkItemEnqueue)(
+        _In_ struct _DMF_PLATFORM_WORKITEM* PlatformWorkItem
+        );
+
+    typedef
+    VOID
+    (*DmfPlatformHandler_WdfWorkItemFlush)(
+        _In_ struct _DMF_PLATFORM_WORKITEM* PlatformWorkItem
+        );
+
+    typedef
+    void
+    (*DmfPlatformHandler_WdfWorkItemDelete)(
+        _In_ struct _DMF_PLATFORM_WORKITEM* PlatformWorkItem
+        );
+
+    typedef
+    BOOLEAN
+    (*DmfPlatformHandler_WdfWaitLockCreate)(
+        _Out_ struct _DMF_PLATFORM_WAITLOCK* PlatformWaitLock
+        );
+
+    typedef
+    DWORD
+    (*DmfPlatformHandler_WdfWaitLockAcquire)(
+        _Out_ struct _DMF_PLATFORM_WAITLOCK* PlatformWaitLock,
+        _In_ DWORD TimeoutMs
+        );
+
+    typedef
+    void
+    (*DmfPlatformHandler_WdfWaitLockRelease)(
+        _Out_ struct _DMF_PLATFORM_WAITLOCK* PlatformWaitLock
+        );
+
+    typedef
+    void
+    (*DmfPlatformHandler_WdfWaitLockDelete)(
+        _Out_ struct _DMF_PLATFORM_WAITLOCK* PlatformWaitLock
+        );
+
+    typedef
+    BOOLEAN
+    (*DmfPlatformHandler_WdfSpinLockCreate)(
+        _Out_ struct _DMF_PLATFORM_SPINLOCK* PlatformSpinLock
+        );
+
+    typedef
+    void
+    (*DmfPlatformHandler_WdfSpinLockAcquire)(
+        _Out_ struct _DMF_PLATFORM_SPINLOCK* PlatformSpinLock
+        );
+
+    typedef
+    void
+    (*DmfPlatformHandler_WdfSpinLockRelease)(
+        _Out_ struct _DMF_PLATFORM_SPINLOCK* PlatformSpinLock
+        );
+
+    typedef
+    void
+    (*DmfPlatformHandler_WdfSpinLockDelete)(
+        _Out_ struct _DMF_PLATFORM_SPINLOCK* PlatformSpinLock
+        );
+
+    // Structure of all the mapped handlers.
+    //
+    typedef struct
+    {
+        DmfPlatformHandler_WdfTimerCreate DmfHandlerWdfTimerCreate;
+        DmfPlatformHandler_WdfTimerStart DmfHandlerWdfTimerStart;
+        DmfPlatformHandler_WdfTimerStop DmfHandlerWdfTimerStop;
+        DmfPlatformHandler_WdfTimerDelete DmfHandlerWdfTimerDelete;
+        DmfPlatformHandler_WdfWorkItemCreate DmfHandlerWdfWorkItemCreate;
+        DmfPlatformHandler_WdfWorkItemEnqueue DmfHandlerWdfWorkItemEnqueue;
+        DmfPlatformHandler_WdfWorkItemFlush DmfHandlerWdfWorkItemFlush;
+        DmfPlatformHandler_WdfWorkItemDelete DmfHandlerWdfWorkItemDelete;
+        DmfPlatformHandler_WdfWaitLockCreate DmfHandlerWdfWaitLockCreate;
+        DmfPlatformHandler_WdfWaitLockAcquire DmfHandlerWdfWaitLockAcquire;
+        DmfPlatformHandler_WdfWaitLockRelease DmfHandlerWdfWaitLockRelease;
+        DmfPlatformHandler_WdfWaitLockDelete DmfHandlerWdfWaitLockDelete;
+        DmfPlatformHandler_WdfSpinLockCreate DmfHandlerWdfSpinLockCreate;
+        DmfPlatformHandler_WdfSpinLockAcquire DmfHandlerWdfSpinLockAcquire;
+        DmfPlatformHandler_WdfSpinLockRelease DmfHandlerWdfSpinLockRelease;
+        DmfPlatformHandler_WdfSpinLockDelete DmfHandlerWdfSpinLockDelete;
+    } DmfPlatform_Handlers;
+
 #endif
 
 //////////////////////////////////////////////////////////////////////////////////////

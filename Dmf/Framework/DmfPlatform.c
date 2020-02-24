@@ -536,10 +536,7 @@ DmfPlatformWdfWaitLockDelete(
 
     DMF_PLATFORM_WAITLOCK* platformWaitLock = (DMF_PLATFORM_WAITLOCK*)PlatformObject->Data;
 
-#if defined(DMF_WIN32_MODE)
-    WdfWaitLockDelete_Win32(platformWaitLock);
-#elif defined(DMF_XXX_MODE)
-#endif
+    DmfPlatformHandlersTable.DmfHandlerWdfWaitLockDelete(platformWaitLock);
 }
 
 _Must_inspect_result_
@@ -590,11 +587,7 @@ DmfPlatform_WdfWaitLockCreate(
 
     DMF_PLATFORM_WAITLOCK* platformWaitLock = (DMF_PLATFORM_WAITLOCK*)platformObject->Data;
 
-#if defined(DMF_WIN32_MODE)
-    waitEventCreated = WdfWaitLockCreate_Win32(platformWaitLock);
-#else
-    #error Must define WdfWaitLockCreate_Xxx() for platform.
-#endif
+    waitEventCreated = DmfPlatformHandlersTable.DmfHandlerWdfWaitLockCreate(platformWaitLock);
     if (! waitEventCreated)
     {
         DMF_Platform_Free(platformObject->Data);
@@ -657,12 +650,8 @@ DmfPlatform_WdfWaitLockAcquire(
         timeoutMs = WDF_REL_TIMEOUT_IN_MS(*Timeout);
     }
 
-#if defined(DMF_WIN32_MODE)
-    returnValue = WdfWaitLockAcquire_Win32(platformWaitLock,
-                                           (DWORD)timeoutMs);
-#else
-    #error Must define WdfTimerCreate_Xxx() for platform.
-#endif
+    returnValue = DmfPlatformHandlersTable.DmfHandlerWdfWaitLockAcquire(platformWaitLock,
+                                                                         (DWORD)timeoutMs);
     if (returnValue == WAIT_OBJECT_0)
     {
         ntStatus = STATUS_SUCCESS;
@@ -699,11 +688,7 @@ DmfPlatform_WdfWaitLockRelease(
     DmfAssert(platformObject->PlatformObjectType == DmfPlatformObjectTypeWaitLock);
     platformWaitLock = (DMF_PLATFORM_WAITLOCK*)platformObject->Data;
 
-#if defined(DMF_WIN32_MODE)
-    WdfWaitLockRelease_Win32(platformWaitLock);
-#else
-    #error Must define WdfTimerCreate_Xxx() for platform.
-#endif
+    DmfPlatformHandlersTable.DmfHandlerWdfWaitLockRelease(platformWaitLock);
 }
 
 void
@@ -715,10 +700,7 @@ DmfPlatformWdfSpinLockDelete(
 
     DMF_PLATFORM_SPINLOCK* platformSpinLock = (DMF_PLATFORM_SPINLOCK*)PlatformObject->Data;
 
-#if defined(DMF_WIN32_MODE)
-    WdfSpinLockDelete_Win32(platformSpinLock);
-#elif defined(DMF_XXX_MODE)
-#endif
+    DmfPlatformHandlersTable.DmfHandlerWdfSpinLockDelete(platformSpinLock);
 }
 
 _Must_inspect_result_
@@ -770,11 +752,7 @@ DmfPlatform_WdfSpinLockCreate(
 
     DMF_PLATFORM_SPINLOCK* platformSpinLock = (DMF_PLATFORM_SPINLOCK*)platformObject->Data;
 
-#if defined(DMF_WIN32_MODE)
-    spinLockCreated = WdfSpinLockCreate_Win32(platformSpinLock);
-#else
-    #error Must define WdfspinLockCreate_Xxx() for platform.
-#endif
+    spinLockCreated = DmfPlatformHandlersTable.DmfHandlerWdfSpinLockCreate(platformSpinLock);
     if (!spinLockCreated)
     {
         goto Exit;
@@ -819,11 +797,7 @@ DmfPlatform_WdfSpinLockAcquire(
     DmfAssert(platformObject->PlatformObjectType == DmfPlatformObjectTypeSpinLock);
     platformSpinLock = (DMF_PLATFORM_SPINLOCK*)platformObject->Data;
 
-#if defined(DMF_WIN32_MODE)
-    WdfSpinLockAcquire_Win32(platformSpinLock);
-#else
-    #error Must define WdfspinLockAcquire_Xxx() for platform.
-#endif
+    DmfPlatformHandlersTable.DmfHandlerWdfSpinLockAcquire(platformSpinLock);
 }
 
 _IRQL_requires_max_(DISPATCH_LEVEL)
@@ -848,11 +822,7 @@ DmfPlatform_WdfSpinLockRelease(
     DmfAssert(platformObject->PlatformObjectType == DmfPlatformObjectTypeSpinLock);
     platformSpinLock = (DMF_PLATFORM_SPINLOCK*)platformObject->Data;
 
-#if defined(DMF_WIN32_MODE)
-    WdfSpinLockRelease_Win32(platformSpinLock);
-#else
-    #error Must define WdfspinLockRelease_Xxx() for platform.
-#endif
+    DmfPlatformHandlersTable.DmfHandlerWdfSpinLockRelease(platformSpinLock);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////
@@ -869,10 +839,7 @@ DmfPlatformWdfTimerDelete(
 
     DMF_PLATFORM_TIMER* platformTimer = (DMF_PLATFORM_TIMER*)PlatformObject->Data;
 
-#if defined(DMF_WIN32_MODE)
-    WdfTimerDelete_Win32(platformTimer);
-#elif defined(DMF_XXX_MODE)
-#endif
+    DmfPlatformHandlersTable.DmfHandlerWdfTimerDelete(platformTimer);
 }
 
 _Must_inspect_result_
@@ -932,12 +899,8 @@ DmfPlatform_WdfTimerCreate(
                sizeof(WDF_OBJECT_ATTRIBUTES));
     }
 
-#if defined(DMF_WIN32_MODE)
-    timerCreated = WdfTimerCreate_Win32(platformTimer,
-                                        platformObject);
-#else
-    #error Must define WdfTimerCreate_Xxx() for platform.
-#endif
+    timerCreated = DmfPlatformHandlersTable.DmfHandlerWdfTimerCreate(platformTimer,
+                                                                      platformObject);
     if (! timerCreated)
     {
         DMF_Platform_Free(platformObject->Data);
@@ -980,12 +943,8 @@ DmfPlatform_WdfTimerStart(
     DmfAssert(platformObject->PlatformObjectType == DmfPlatformObjectTypeTimer);
     platformTimer = (DMF_PLATFORM_TIMER*)platformObject->Data;
 
-#if defined(DMF_WIN32_MODE)
-    returnValue = WdfTimerStart_Win32(platformTimer,
-                                      DueTime);
-#else
-    #error Must define WdfTimerStart_Xxx() for platform.
-#endif
+    returnValue = DmfPlatformHandlersTable.DmfHandlerWdfTimerStart(platformTimer,
+                                                                    DueTime);
 
     // Always tell caller timer was not in queue.
     //
@@ -1014,12 +973,8 @@ DmfPlatform_WdfTimerStop(
     DmfAssert(platformObject->PlatformObjectType == DmfPlatformObjectTypeTimer);
     platformTimer = (DMF_PLATFORM_TIMER*)platformObject->Data;
 
-#if defined(DMF_WIN32_MODE)
-    returnValue = WdfTimerStop_Win32(platformTimer,
-                                     Wait);
-#else
-    #error Must define WdfTimerStop_Xxx() for platform.
-#endif
+    returnValue = DmfPlatformHandlersTable.DmfHandlerWdfTimerStop(platformTimer,
+                                                                   Wait);
 
     return returnValue;
 }
@@ -1055,10 +1010,7 @@ DmfPlatformWdfWorkItemDelete(
 
     DMF_PLATFORM_WORKITEM* platformWorkItem = (DMF_PLATFORM_WORKITEM*)PlatformObject->Data;
 
-#if defined(DMF_WIN32_MODE)
-    WdfWorkItemDelete_Win32(platformWorkItem);
-#elif defined(DMF_XXX_MODE)
-#endif
+    DmfPlatformHandlersTable.DmfHandlerWdfWorkItemDelete(platformWorkItem);
 }
 
 _Must_inspect_result_
@@ -1118,12 +1070,8 @@ DmfPlatform_WdfWorkItemCreate(
                sizeof(WDF_OBJECT_ATTRIBUTES));
     }
 
-#if defined(DMF_WIN32_MODE)
-    workitemCreated = WdfWorkItemCreate_Win32(platformWorkItem,
-                                              platformObject);
-#else
-    #error Must define WdfTimerStop_Xxx() for platform.
-#endif
+    workitemCreated = DmfPlatformHandlersTable.DmfHandlerWdfWorkItemCreate(platformWorkItem,
+                                                                            platformObject);
     if (!workitemCreated)
     {
         DMF_Platform_Free(platformObject->Data);
@@ -1165,11 +1113,7 @@ DmfPlatform_WdfWorkItemEnqueue(
 
     // Cause the workitem callback to execute as soon as possible.
     //
-#if defined(DMF_WIN32_MODE)
-    WdfWorkItemEnqueue_Win32(platformWorkItem);
-#else
-    #error Must define WdfTimerStop_Xxx() for platform.
-#endif
+    DmfPlatformHandlersTable.DmfHandlerWdfWorkItemEnqueue(platformWorkItem);
 }
 
 _IRQL_requires_max_(DISPATCH_LEVEL)
@@ -1209,8 +1153,7 @@ DmfPlatform_WdfWorkItemFlush(
 
     // Cause the workitem callback to execute as soon as possible.
     //
-    WdfTimerStop(platformWorkItem->Timer,
-                 TRUE);
+    DmfPlatformHandlersTable.DmfHandlerWdfWorkItemFlush(platformWorkItem);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////

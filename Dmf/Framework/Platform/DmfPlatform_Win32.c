@@ -144,7 +144,7 @@ TimerCallback(
 
 BOOLEAN
 WdfTimerCreate_Win32(
-    _In_ DMF_PLATFORM_TIMER* PlatformTimer,
+    _In_ struct _DMF_PLATFORM_TIMER* PlatformTimer,
     _In_ DMF_PLATFORM_OBJECT* PlatformObject
     )
 {
@@ -168,10 +168,8 @@ WdfTimerCreate_Win32(
 _IRQL_requires_max_(DISPATCH_LEVEL)
 BOOLEAN
 WdfTimerStart_Win32(
-    _In_
-    DMF_PLATFORM_TIMER* PlatformTimer,
-    _In_
-    LONGLONG DueTime
+    _In_ struct _DMF_PLATFORM_TIMER* PlatformTimer,
+    _In_ LONGLONG DueTime
     )
 {
     ULARGE_INTEGER dueTimeInteger;
@@ -193,10 +191,8 @@ WdfTimerStart_Win32(
 
 BOOLEAN
 WdfTimerStop_Win32(
-    _In_
-    DMF_PLATFORM_TIMER* PlatformTimer,
-    _In_
-    BOOLEAN Wait
+    _In_ struct _DMF_PLATFORM_TIMER* PlatformTimer,
+    _In_ BOOLEAN Wait
     )
 {
     SetThreadpoolTimer(PlatformTimer->PtpTimer,
@@ -214,7 +210,7 @@ WdfTimerStop_Win32(
 
 void
 WdfTimerDelete_Win32(
-    _In_ DMF_PLATFORM_TIMER* PlatformTimer
+    _In_ struct _DMF_PLATFORM_TIMER* PlatformTimer
     )
 {
     WdfTimerStop_Win32(PlatformTimer,
@@ -245,7 +241,7 @@ WorkitemCallback(
 
 BOOLEAN
 WdfWorkItemCreate_Win32(
-    _In_ DMF_PLATFORM_WORKITEM* PlatformWorkItem,
+    _In_ struct _DMF_PLATFORM_WORKITEM* PlatformWorkItem,
     _In_ DMF_PLATFORM_OBJECT* PlatformObject
     )
 {
@@ -271,11 +267,9 @@ Exit:
     return returnValue;
 }
 
-_IRQL_requires_max_(DISPATCH_LEVEL)
 BOOLEAN
 WdfWorkItemEnqueue_Win32(
-    _In_
-    DMF_PLATFORM_WORKITEM* PlatformWorkItem
+    _In_ struct _DMF_PLATFORM_WORKITEM* PlatformWorkItem
     )
 {
     WdfTimerStart(PlatformWorkItem->Timer,
@@ -284,8 +278,17 @@ WdfWorkItemEnqueue_Win32(
 }
 
 void
+WdfWorkItemFlush_Win32(
+    _In_ struct _DMF_PLATFORM_WORKITEM* PlatformWorkItem
+    )
+{
+    WdfTimerStop(PlatformWorkItem->Timer,
+                 TRUE);
+}
+
+void
 WdfWorkItemDelete_Win32(
-    _In_ DMF_PLATFORM_WORKITEM* PlatformWorkItem
+    _In_ struct _DMF_PLATFORM_WORKITEM* PlatformWorkItem
     )
 {
     WdfTimerStop(PlatformWorkItem->Timer,
@@ -298,7 +301,7 @@ WdfWorkItemDelete_Win32(
 
 BOOLEAN
 WdfWaitLockCreate_Win32(
-    _Out_ DMF_PLATFORM_WAITLOCK* PlatformWaitLock
+    _Out_ struct _DMF_PLATFORM_WAITLOCK* PlatformWaitLock
     )
 {
     BOOLEAN returnValue;
@@ -321,7 +324,7 @@ WdfWaitLockCreate_Win32(
 
 DWORD
 WdfWaitLockAcquire_Win32(
-    _Out_ DMF_PLATFORM_WAITLOCK* PlatformWaitLock,
+    _Out_ struct _DMF_PLATFORM_WAITLOCK* PlatformWaitLock,
     _In_ DWORD TimeoutMs
     )
 {
@@ -335,7 +338,7 @@ WdfWaitLockAcquire_Win32(
 
 VOID
 WdfWaitLockRelease_Win32(
-    _Out_ DMF_PLATFORM_WAITLOCK* PlatformWaitLock
+    _Out_ struct _DMF_PLATFORM_WAITLOCK* PlatformWaitLock
     )
 {
     SetEvent(PlatformWaitLock->Event);
@@ -343,7 +346,7 @@ WdfWaitLockRelease_Win32(
 
 void
 WdfWaitLockDelete_Win32(
-    _Out_ DMF_PLATFORM_WAITLOCK* PlatformWaitLock
+    _Out_ struct _DMF_PLATFORM_WAITLOCK* PlatformWaitLock
     )
 {
     CloseHandle(PlatformWaitLock->Event);
@@ -356,7 +359,7 @@ WdfWaitLockDelete_Win32(
 
 BOOLEAN
 WdfSpinLockCreate_Win32(
-    _Out_ DMF_PLATFORM_SPINLOCK* PlatformSpinLock
+    _Out_ struct _DMF_PLATFORM_SPINLOCK* PlatformSpinLock
     )
 {
     BOOLEAN returnValue;
@@ -370,7 +373,7 @@ WdfSpinLockCreate_Win32(
 
 VOID
 WdfSpinLockAcquire_Win32(
-    _Out_ DMF_PLATFORM_SPINLOCK* PlatformSpinLock
+    _Out_ struct _DMF_PLATFORM_SPINLOCK* PlatformSpinLock
     )
 {
     EnterCriticalSection(&PlatformSpinLock->SpinLock);
@@ -378,7 +381,7 @@ WdfSpinLockAcquire_Win32(
 
 VOID
 WdfSpinLockRelease_Win32(
-    _Out_ DMF_PLATFORM_SPINLOCK* PlatformSpinLock
+    _Out_ struct _DMF_PLATFORM_SPINLOCK* PlatformSpinLock
     )
 {
     LeaveCriticalSection(&PlatformSpinLock->SpinLock);
@@ -386,11 +389,34 @@ WdfSpinLockRelease_Win32(
 
 void
 WdfSpinLockDelete_Win32(
-    _Out_ DMF_PLATFORM_SPINLOCK* PlatformSpinLock
+    _Out_ struct _DMF_PLATFORM_SPINLOCK* PlatformSpinLock
     )
 {
     DeleteCriticalSection(&PlatformSpinLock->SpinLock);
 }
+
+// NOTE: This exact name is defined in each platform, but only a single 
+//       instance is compiled.
+//
+DmfPlatform_Handlers DmfPlatformHandlersTable =
+{
+    WdfTimerCreate_Win32,
+    WdfTimerStart_Win32,
+    WdfTimerStop_Win32,
+    WdfTimerDelete_Win32,
+    WdfWorkItemCreate_Win32,
+    WdfWorkItemEnqueue_Win32,
+    WdfWorkItemFlush_Win32,
+    WdfWorkItemDelete_Win32,
+    WdfWaitLockCreate_Win32,
+    WdfWaitLockAcquire_Win32,
+    WdfWaitLockRelease_Win32,
+    WdfWaitLockDelete_Win32,
+    WdfSpinLockCreate_Win32,
+    WdfSpinLockAcquire_Win32,
+    WdfSpinLockRelease_Win32,
+    WdfSpinLockDelete_Win32,
+};
 
 #endif
 
