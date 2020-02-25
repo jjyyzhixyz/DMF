@@ -126,6 +126,7 @@ Return Value:
 }
 
 void
+__cdecl
 main()
 {
     NTSTATUS ntStatus;                                                          

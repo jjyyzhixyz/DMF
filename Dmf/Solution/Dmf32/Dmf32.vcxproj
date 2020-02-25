@@ -199,7 +199,7 @@
     <Lib />
     <Lib />
     <Lib>
-      <AdditionalLibraryDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(SolutionDir)$(ConfigurationName)\$(PlatformName)\individual_libs\Dmf32Framework;$(SolutionDir)$(ConfigurationName)\$(PlatformName)\individual_libs\DmfUModules.Library;</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(SolutionDir)$(ConfigurationName)\$(PlatformName)\individual_libs\Dmf32Framework;$(SolutionDir)$(ConfigurationName)\$(PlatformName)\individual_libs\Dmf32Modules.Library;</AdditionalLibraryDirectories>
       <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Dmf32Framework.lib;Dmf32Modules.Library.lib;</AdditionalDependencies>
     </Lib>
     <Lib />

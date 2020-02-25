@@ -108,12 +108,12 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>%(AdditionalDependencies);..\..\..\$(Configuration)\$(Platform)\lib\Dmf32\Dmf32.lib;..\..\..\$(Configuration)\$(Platform)\individual_libs\Dmf32Modules.Library.Tests\Dmf32Modules.Library.Tests.lib;</AdditionalDependencies>
-      <ShowProgress Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">LinkVerbose</ShowProgress>
-      <ShowProgress Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">LinkVerbose</ShowProgress>
-      <ShowProgress Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">LinkVerbose</ShowProgress>
-      <ShowProgress Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">LinkVerbose</ShowProgress>
+      <ShowProgress Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">NotSet</ShowProgress>
+      <ShowProgress Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">NotSet</ShowProgress>
+      <ShowProgress Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotSet</ShowProgress>
+      <ShowProgress Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotSet</ShowProgress>
       <ShowProgress Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotSet</ShowProgress>
-      <ShowProgress Condition="'$(Configuration)|$(Platform)'=='Release|x64'">LinkVerbose</ShowProgress>
+      <ShowProgress Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotSet</ShowProgress>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
