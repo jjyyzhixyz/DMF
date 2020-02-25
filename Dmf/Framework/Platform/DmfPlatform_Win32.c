@@ -395,11 +395,32 @@ WdfSpinLockDelete_Win32(
     DeleteCriticalSection(&PlatformSpinLock->SpinLock);
 }
 
+void
+PlatformInitialize(
+    void
+    )
+{
+    // NOTE: Platform can start deamon or thread or allocate resources
+    //       that are stored in global memory.
+    //
+}
+
+void
+PlatformUninitialize(
+    void
+    )
+{
+    // NOTE: Platform does inverse of what it did above.
+    //
+}
+
 // NOTE: This exact name is defined in each platform, but only a single 
 //       instance is compiled.
 //
 DmfPlatform_Handlers DmfPlatformHandlersTable =
 {
+    PlatformInitialize,
+    PlatformUninitialize,
     WdfTimerCreate_Win32,
     WdfTimerStart_Win32,
     WdfTimerStop_Win32,

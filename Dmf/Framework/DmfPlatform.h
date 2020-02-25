@@ -430,6 +430,23 @@ extern "C"
     // NOTE: Every platform defines platform specific versions of these
     //       functions.
     //
+
+    // TODO: We should return possible return a context that is used later
+    //       so platform can store platform specific data. (Use global memory
+    //       for that for now.)
+    //
+    typedef
+    void
+    (*DmfPlatformHandler_PlatformInitialize)(
+        void
+        );
+
+    typedef
+    void
+    (*DmfPlatformHandler_PlatformUninitialize)(
+        void
+        );
+
     typedef
     BOOLEAN
     (*DmfPlatformHandler_WdfTimerCreate)(
@@ -535,6 +552,8 @@ extern "C"
     //
     typedef struct
     {
+        DmfPlatformHandler_PlatformInitialize DmfHandlerPlatformInitialize;
+        DmfPlatformHandler_PlatformUninitialize DmfHandlerPlatformUninitialize;
         DmfPlatformHandler_WdfTimerCreate DmfHandlerWdfTimerCreate;
         DmfPlatformHandler_WdfTimerStart DmfHandlerWdfTimerStart;
         DmfPlatformHandler_WdfTimerStop DmfHandlerWdfTimerStop;

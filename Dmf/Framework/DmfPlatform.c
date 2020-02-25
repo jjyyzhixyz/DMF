@@ -2035,6 +2035,10 @@ DMF_PlatformInitialize(
             }
         }
     }
+
+    // Perform platform specific initialization.
+    //
+    DmfPlatformHandlersTable.DmfHandlerPlatformInitialize();
 }
 
 void
@@ -2046,6 +2050,10 @@ DMF_PlatformUninitialize(
     {
         WdfObjectDelete(WdfDevice);
     }
+
+    // Perform platform specific uninitialization.
+    //
+    DmfPlatformHandlersTable.DmfHandlerPlatformUninitialize();
 }
 
 #if defined(__cplusplus)
