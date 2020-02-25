@@ -176,11 +176,12 @@ Exit:
     if (dmfDeviceInit != NULL)                                                  
     {                                                                           
         DMF_DmfDeviceInitFree(&dmfDeviceInit);                                  
-    }      
-    if (device != NULL)
-    {
-        WdfObjectDelete(device);
     }
+
+    // Perform platform specific uninitialization including freeing all
+    // allocated resources.
+    //
+    DMF_PlatformUninitialize(device);
 }
 
 // eof: DmfInterface.c

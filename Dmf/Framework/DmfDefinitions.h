@@ -21,262 +21,14 @@ Environment:
 
 #pragma once
 
-#if defined(DMF_WIN32_MODE)
-#define DMF_USER_MODE
-#endif
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Include files and definitions that are platform specific.
 //
-// Compiler warning filters.
-//
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//
+#include "DmfPlatform.h"
 
 #if defined(__cplusplus)
 extern "C"
 {
 #endif // defined(__cplusplus)
-
-// Allow DMF Modules to disable false positive SAL warnings easily when 
-// compiled as C++ file.
-//
-// NOTE: Use with caution. First, verify there are no legitimate warnings. Then, use this option.
-//
-#if (defined(DMF_SAL_CPP_FILTER) && defined(__cplusplus)) || defined(DMF_USER_MODE)
-    // Disable some SAL warnings because they are false positives.
-    // NOTE: The pointers are checked via ASSERTs.
-    //
-
-    // 'Dereferencing NULL pointer'.
-    //
-    #pragma warning(disable:6011)
-    // '<argument> may be NULL'.
-    //
-    #pragma warning(disable:6387)
-#endif // (defined(DMF_SAL_CPP_FILTER) && defined(__cplusplus)) || defined(DMF_USER_MODE)
-
-// 'warning C4201: nonstandard extension used: nameless struct/union'
-//
-#pragma warning(disable:4201)
-
-// Check that the Windows version is Win10 or later. The supported versions are defined in sdkddkver.h.
-//
-#define IS_WIN10_OR_LATER (NTDDI_WIN10_RS3 && (NTDDI_VERSION >= NTDDI_WIN10))
-
-// Check that the Windows version is RS3 or later. The supported versions are defined in sdkddkver.h.
-//
-#define IS_WIN10_RS3_OR_LATER (NTDDI_WIN10_RS3 && (NTDDI_VERSION >= NTDDI_WIN10_RS3))
-
-// Check that the Windows version is RS4 or later. The supported versions are defined in sdkddkver.h.
-//
-#define IS_WIN10_RS4_OR_LATER (NTDDI_WIN10_RS4 && (NTDDI_VERSION >= NTDDI_WIN10_RS4))
-
-// Check that the Windows version is RS5 or later. The supported versions are defined in sdkddkver.h.
-//
-#define IS_WIN10_RS5_OR_LATER (NTDDI_WIN10_RS5 && (NTDDI_VERSION >= NTDDI_WIN10_RS5))
-
-// Check that the Windows version is 19H1 or earlier. The supported versions are defined in sdkddkver.h.
-//
-#define IS_WIN10_19H1_OR_EARLIER (!(NTDDI_WIN10_19H1 && (NTDDI_VERSION > NTDDI_WIN10_19H1)))
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//
-// All include files needed by all Modules and the Framework.
-// This ensures that all Modules always compile together so that any Module can always be used with any other
-// Module without having to deal with include file dependencies.
-//
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//
-
-// Some environments use DBG instead of DEBUG. DMF uses DEBUG so, define DEBUG in that case.
-//
-#if DBG
-    #if !defined(DEBUG)
-        #define DEBUG
-    #endif
-#endif
-
-// All DMF Modules need these.
-//
-#include <stdlib.h>
-#include <sal.h>
-#if defined(DMF_USER_MODE)
-    #include <windows.h>
-    #include <stdio.h>
-    #if !defined(DMF_WIN32_MODE)
-        #include <wdf.h>
-    #endif
-    #include <Objbase.h>
-    // NOTE: This file includes poclass.h. Do not include that again
-    //       otherwise, redefinition errors will occur.
-    //
-    #include <batclass.h>
-    #include <hidclass.h>
-    #include <powrprof.h>
-    #include <usbiodef.h>
-    #include <cguid.h>
-    #include <guiddef.h>
-    #include <wdmguid.h>
-    #include <cfgmgr32.h>
-    #include <ndisguid.h>
-    #include <strsafe.h>
-    #include <ndisguid.h>
-    // TODO: Add support for USB in User Mode drivers.
-    //
-    #if !defined(DMF_WIN32_MODE)
-        // Turn this on to debug asserts in UMDF.
-        // Normal assert() causes a crash in UMDF which causes UMDF to just disable the driver
-        // without showing what assert failed.
-        //
-        #if defined(DEBUG)
-            #if defined(USE_ASSERT_BREAK)
-                // It means, check a condition...If it is false, break into debugger.
-                //
-                #pragma warning(disable:4127)
-                #if defined(ASSERT)
-                    #undef ASSERT
-                #endif // defined(ASSERT)
-                #define ASSERT(X)   ((! (X)) ? DebugBreak() : TRUE)
-            #else
-                #if !defined(ASSERT)
-                    // It means, use native assert().
-                    //
-                    #include <assert.h>
-                    #define ASSERT(X)   assert(X)
-                #endif // !defined(ASSERT)
-            #endif // defined(USE_ASSERT_BREAK)
-        #else
-            #if !defined(ASSERT)
-                // It means, do not assert at all.
-                //
-                #define ASSERT(X) TRUE
-            #endif // !defined(ASSERT)
-        #endif // defined(DEBUG)
-    #else
-        #if defined(DEBUG)
-            #if defined(USE_ASSERT_BREAK)
-                // It means, check a condition...If it is false, break into debugger.
-                //
-                #pragma warning(disable:4127)
-                #if defined(ASSERT)
-                    #undef ASSERT
-                #endif // defined(ASSERT)
-                #define ASSERT(X)   ((! (X)) ? DebugBreak() : TRUE)
-            #else
-                #if !defined(ASSERT)
-                    // It means, use native assert().
-                    //
-                    #include <assert.h>
-                    #define ASSERT(X)   assert(X)
-                #endif // !defined(ASSERT)
-            #endif // defined(USE_ASSERT_BREAK)
-        #else
-            #if !defined(ASSERT)
-                // It means, do not assert at all.
-                //
-                #define ASSERT(X) TRUE
-            #endif // !defined(ASSERT)
-        #endif // defined(DEBUG)
-    #endif
-#else
-    // Kernel-mode
-    //
-    #include <ntifs.h>
-    #include <wdm.h>
-    #include <ntddk.h>
-    #include <ntstatus.h>
-    #include <ntintsafe.h>
-    // TODO: Add this after Dmf_Registry supports this definition properly.
-    // #define NTSTRSAFE_LIB
-    //
-    #include <ntstrsafe.h>
-    #include <wdf.h>
-    // NOTE: This file has be listed here. Listing it later causes many redefinition compilation errors.
-    //
-    #include <acpiioct.h>
-    #include <wmiguid.h>
-    #include <ntddstor.h>
-    #include <stdarg.h>
-    #include <ntddser.h>
-    #include <guiddef.h>
-    #include <wdmguid.h>
-    #include <ntddvdeo.h>
-    #include <spb.h>
-    // NOTE: This file includes poclass.h. Do not include that again
-    //       otherwise, redefinition errors will occur.
-    //
-    #include <batclass.h>
-    #include <hidport.h>
-    #include "usbdi.h"
-    #include "usbdlib.h"
-    #include <wdfusb.h>
-    #include <wpprecorder.h>
-    #if IS_WIN10_RS3_OR_LATER
-        #include <lkmdtel.h>
-    #endif // IS_WIN10_RS3_OR_LATER
-    #include <intrin.h>
-#endif // defined(DMF_USER_MODE)
-
-// DMF Asserts definitions 
-//
-#if defined(DMF_USER_MODE) && !defined(DMF_WIN32_MODE)
-    #if DBG
-        #if defined(NO_USE_ASSERT_BREAK)
-            #include <assert.h>
-            #define DmfAssertMessage(Message, Expression) (!(Expression) ? assert(Expression), FALSE : TRUE)
-        #else
-            #define DmfAssertMessage(Message, Expression) (!(Expression) ? DbgBreakPoint(), OutputDebugStringA(Message), FALSE : TRUE)
-        #endif
-    #else
-        #define DmfAssertMessage(Message, Expression) TRUE        
-    #endif
-    #define DmfVerifierAssert(Message, Expression)                          \
-        if ((WdfDriverGlobals->DriverFlags & WdfVerifyOn) && !(Expression)) \
-        {                                                                   \
-            OutputDebugStringA(Message);                                    \
-            DbgBreakPoint();                                                \
-        }
-#elif defined(DMF_WIN32_MODE)
-    #if DBG
-        #if defined(NO_USE_ASSERT_BREAK)
-            #include <assert.h>
-            #define DmfAssertMessage(Message, Expression) (!(Expression) ? assert(Expression), FALSE : TRUE)
-        #else
-            #define DmfAssertMessage(Message, Expression) (!(Expression) ? DebugBreak(), printf(Message), FALSE : TRUE)
-        #endif
-    #else
-        #define DmfAssertMessage(Message, Expression) TRUE        
-    #endif
-    #define DmfVerifierAssert(Message, Expression)                          \
-        if (!(Expression))                                                  \
-        {                                                                   \
-            printf(Message);                                                \
-            DebugBreak();                                                   \
-        }
-#else
-    #define DmfAssertMessage(Message, Expression) ASSERTMSG(Message, Expression)
-    #define DmfVerifierAssert(Message, Expression)                          \
-        if ((WdfDriverGlobals->DriverFlags & WdfVerifyOn) && !(Expression)) \
-        {                                                                   \
-            RtlAssert( Message, __FILE__, __LINE__, NULL );                 \
-        }
-#endif
-
-#define DmfAssert(Expression) DmfAssertMessage(#Expression, Expression)
-
-// Definitions for platforms that do not support WDF.
-//
-#include "DmfPlatform.h"
-
-// These probably need to be deleted for non-Windows platforms.
-//
-#include <hidusage.h>
-#include <hidpi.h>
-
-// NOTE: This is necessary in order to avoid redefinition errors. It is not clear why
-//       this is the case.
-//
-#define DEVPKEY_H_INCLUDED
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
@@ -1977,13 +1729,23 @@ PushEntryList(
 }
 #endif // defined(DMF_USER_MODE) && !defined( _ARM64_ )
 
-// PLATFORM_TEMPLATE: Or with definitions of platforms that need platform support.
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
+// Non Windows Kernel and User-modes require two additional calls to initialize the code for the platform.
+//
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+
 #if defined(DMF_WIN32_MODE) || defined(DMF_XXX_MODE)
 
 void
 DMF_PlatformInitialize(
     void
+    );
+
+void
+DMF_PlatformUninitialize(
+    _In_ WDFDEVICE WdfDevice
     );
 
 #endif

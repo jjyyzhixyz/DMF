@@ -2037,6 +2037,17 @@ DMF_PlatformInitialize(
     }
 }
 
+void
+DMF_PlatformUninitialize(
+    _In_ WDFDEVICE WdfDevice
+    )
+{
+    if (WdfDevice != NULL)
+    {
+        WdfObjectDelete(WdfDevice);
+    }
+}
+
 #if defined(__cplusplus)
 }
 #endif // defined(__cplusplus)
