@@ -440,7 +440,7 @@ Return Value:
         //
         if (dmfDeviceContext->IsFilterDevice)
         {
-#if !defined(DMF_WIN32_MODE)
+#if defined(DMF_WDF_DRIVER)
             // Completes this Request with error if it cannot passthru.
             //
             DMF_RequestPassthru(device,
@@ -510,7 +510,7 @@ Return Value:
         //
         if (dmfDeviceContext->IsFilterDevice)
         {
-#if !defined(DMF_WIN32_MODE)
+#if defined(DMF_WDF_DRIVER)
             // Completes this Request with error if it cannot passthru.
             //
             DMF_RequestPassthru(device,
@@ -589,7 +589,7 @@ Return Value:
         //
         if (dmfDeviceContext->IsFilterDevice)
         {
-#if !defined(DMF_WIN32_MODE)
+#if defined(DMF_WDF_DRIVER)
             // Completes this Request with error if it cannot passthru.
             //
             DMF_RequestPassthru(device,
@@ -1444,7 +1444,7 @@ Return Value:
         //
         if (dmfDeviceContext->IsFilterDevice)
         {
-#if !defined(DMF_WIN32_MODE)
+#if defined(DMF_WDF_DRIVER)
             // Completes this Request with error if it cannot passthru.
             // File Create must have a completion routine passed to avoid Verifier issue.
             //

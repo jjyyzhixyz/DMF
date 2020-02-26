@@ -32,9 +32,7 @@ extern "C"
 {
 #endif // defined(__cplusplus)
 
-// PLATFORM_TEMPLATE: Or with definitions of platforms that need platform support.
-//
-#if defined(DMF_WIN32_MODE) || defined(DMF_XXX_MODE)
+#if !defined(DMF_WDF_DRIVER)
 
 ///////////////////////////////////////////////////////////////////////////////////
 // WDFOBJECT
@@ -322,7 +320,7 @@ DmfPlatformWdfMemoryDelete(
     DMF_PLATFORM_OBJECT* PlatformObject
     )
 {
-    ASSERT(PlatformObject->PlatformObjectType == DmfPlatformObjectTypeMemory);
+    DmfAssert(PlatformObject->PlatformObjectType == DmfPlatformObjectTypeMemory);
 
     DMF_PLATFORM_MEMORY* platformMemory = (DMF_PLATFORM_MEMORY*)PlatformObject->Data;
 
@@ -532,7 +530,7 @@ DmfPlatformWdfWaitLockDelete(
     DMF_PLATFORM_OBJECT* PlatformObject
     )
 {
-    ASSERT(PlatformObject->PlatformObjectType == DmfPlatformObjectTypeWaitLock);
+    DmfAssert(PlatformObject->PlatformObjectType == DmfPlatformObjectTypeWaitLock);
 
     DMF_PLATFORM_WAITLOCK* platformWaitLock = (DMF_PLATFORM_WAITLOCK*)PlatformObject->Data;
 
@@ -696,7 +694,7 @@ DmfPlatformWdfSpinLockDelete(
     DMF_PLATFORM_OBJECT* PlatformObject
     )
 {
-    ASSERT(PlatformObject->PlatformObjectType == DmfPlatformObjectTypeSpinLock);
+    DmfAssert(PlatformObject->PlatformObjectType == DmfPlatformObjectTypeSpinLock);
 
     DMF_PLATFORM_SPINLOCK* platformSpinLock = (DMF_PLATFORM_SPINLOCK*)PlatformObject->Data;
 
@@ -835,7 +833,7 @@ DmfPlatformWdfTimerDelete(
     DMF_PLATFORM_OBJECT* PlatformObject
     )
 {
-    ASSERT(PlatformObject->PlatformObjectType == DmfPlatformObjectTypeTimer);
+    DmfAssert(PlatformObject->PlatformObjectType == DmfPlatformObjectTypeTimer);
 
     DMF_PLATFORM_TIMER* platformTimer = (DMF_PLATFORM_TIMER*)PlatformObject->Data;
 
@@ -1006,7 +1004,7 @@ DmfPlatformWdfWorkItemDelete(
     DMF_PLATFORM_OBJECT* PlatformObject
     )
 {
-    ASSERT(PlatformObject->PlatformObjectType == DmfPlatformObjectTypeWorkItem);
+    DmfAssert(PlatformObject->PlatformObjectType == DmfPlatformObjectTypeWorkItem);
 
     DMF_PLATFORM_WORKITEM* platformWorkItem = (DMF_PLATFORM_WORKITEM*)PlatformObject->Data;
 

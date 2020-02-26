@@ -556,7 +556,7 @@ Return Value:
     NTSTATUS ntStatus;
     DMF_OBJECT* dmfObject;
     WDFDEVICE device;
-#if !defined(DMF_WIN32_MODE)
+#if defined(DMF_WDF_DRIVER)
     POWER_ACTION powerAction;
 #endif
 
@@ -574,7 +574,7 @@ Return Value:
     //
     if (DMF_MODULE_OPEN_OPTION_OPEN_D0EntrySystemPowerUp == dmfObject->ModuleDescriptor.OpenOption)
     {
-#if defined(DMF_WIN32_MODE)
+#if !defined(DMF_WDF_DRIVER)
         DmfAssert(FALSE);
         ntStatus = STATUS_UNSUCCESSFUL;
         // TODO: Add WdfDeviceGetSystemPowerAction(device)
@@ -788,7 +788,7 @@ Return Value:
     DMF_OBJECT* dmfObject;
     NTSTATUS ntStatus;
     WDFDEVICE device;
-#if !defined(DMF_WIN32_MODE)
+#if defined(DMF_WDF_DRIVER)
     POWER_ACTION powerAction;
 #endif
 
@@ -806,9 +806,7 @@ Return Value:
 
     if (DMF_MODULE_OPEN_OPTION_OPEN_D0EntrySystemPowerUp == dmfObject->ModuleDescriptor.OpenOption)
     {
-#if defined(DMF_WIN32_MODE)
-        // TODO:
-        //
+#if !defined(DMF_WDF_DRIVER)
         DmfAssert(FALSE);
 #else
         powerAction = WdfDeviceGetSystemPowerAction(device);

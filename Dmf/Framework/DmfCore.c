@@ -1624,7 +1624,7 @@ Return Value:
     return transportModule;
 }
 
-#if !defined(DMF_WIN32_MODE)
+#if defined(DMF_WDF_DRIVER)
 
 BOOLEAN
 DMF_ModuleRequestCompleteOrForward(

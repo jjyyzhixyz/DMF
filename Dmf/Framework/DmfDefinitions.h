@@ -272,7 +272,7 @@ Return Value:
 //
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#if !defined(DMF_USER_MODE) && !defined(DMF_WIN32_MODE)
+#if defined(DMF_KERNEL_MODE)
 
 #define DMF_DEFAULT_DEVICEADD_WITH_BRANCHTRACK(DmfEvtDeviceAdd, DmfDeviceModulesAdd, BranchTrackInitialize, BranchTrackName, BranchTrackEntriesOverride)   \
                                                                                                                                                            \
@@ -404,7 +404,10 @@ DmfDriverContextCleanup(                                                        
 
 #elif defined(DMF_WIN32_MODE)
 
-#else
+// TODO: Decide if we want to do anything here.
+//
+
+#elif defined(DMF_USER_MODE)
 
 #define DMF_DEFAULT_DEVICEADD_WITH_BRANCHTRACK(DmfEvtDeviceAdd, DmfDeviceModuleAdd, BranchTrackInitialize, BranchTrackName, BranchTrackEntriesOverride)    \
                                                                                                                                                            \
@@ -1736,7 +1739,7 @@ PushEntryList(
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 
-#if defined(DMF_WIN32_MODE) || defined(DMF_XXX_MODE)
+#if !defined(DMF_WDF_DRIVER)
 
 void
 DMF_PlatformInitialize(

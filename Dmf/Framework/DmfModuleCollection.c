@@ -2964,7 +2964,7 @@ Return Value:
     //
     if (ModuleCollectionConfig->BranchTrackModuleConfig != NULL)
     {
-#if !defined(DMF_WIN32_MODE)
+#if defined(DMF_WDF_DRIVER)
         DMF_MODULE_ATTRIBUTES moduleAttributes;
 
         DMF_BranchTrack_ATTRIBUTES_INIT(&moduleAttributes);
@@ -3283,7 +3283,7 @@ Return Value:
     //
     if (ModuleCollectionConfig->BranchTrackModuleConfig != NULL)
     {
-#if !defined(DMF_WIN32_MODE)
+#if defined(DMF_WDF_DRIVER)
         // The Client Driver has enabled BranchTrack. Check if the User has enabled BranchTrack.
         //
         ULONG shouldBranchTrackBeInstantiatedAutomatically = DMF_ModuleBranchTrack_HasClientEnabledBranchTrack(ModuleCollectionConfig->DmfPrivate.ClientDriverWdfDevice);
@@ -3722,7 +3722,7 @@ Return Value:
     //
     if (ModuleCollectionConfig->DmfPrivate.BranchTrackEnabled)
     {
-#if !defined(DMF_WIN32_MODE)
+#if defined(DMF_WDF_DRIVER)
         DMF_ModuleBranchTrack_ModuleCollectionInitialize(moduleCollectionHandle);
 #else
         DmfAssert(FALSE);
@@ -3829,7 +3829,7 @@ Return Value:
     isControlDevice = DMF_DmfDeviceInitIsControlDevice(dmfDeviceInit);
     isFilterDriver = DMF_DmfDeviceInitIsFilterDriver(dmfDeviceInit);
 
-#if !defined(DMF_WIN32_MODE)
+#if defined(DMF_WDF_DRIVER)
     // If Default queue is not created by the client, then create one here.
     // Module which implement IoQueue callbacks will need a default queue.
     //

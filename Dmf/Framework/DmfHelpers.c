@@ -648,7 +648,7 @@ Return Value:
     return dmfModuleFeature;
 }
 
-#if !defined(DMF_WIN32_MODE)
+#if defined(DMF_WDF_DRIVER)
 
 _IRQL_requires_max_(DISPATCH_LEVEL)
 VOID

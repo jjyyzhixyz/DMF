@@ -30,7 +30,9 @@ extern "C"
 ////////////////////////////////////////////////////////////////////////////
 //
 
-#if defined(DMF_WIN32_MODE)
+#if !defined(DMF_WIN32_MODE)
+#error Must defined DMF_WIN32_MODE to include this file.
+#endif
 
 typedef struct _DMF_PLATFORM_MEMORY
 {
@@ -84,39 +86,39 @@ typedef struct _DMF_PLATFORM_DEVICE
 
 void*
 DMF_Platform_Allocate(
-    size_t Size
+    _In_ size_t Size
     );
 
 void
 DMF_Platform_Free(
-    void* Pointer
+    _In_ void* Pointer
     );
 
 typedef CRITICAL_SECTION DMF_PLATFORM_CRITICAL_SECTION;
 
 BOOLEAN
 DMF_Platform_CriticalSectionCreate(
-    _Out_ DMF_PLATFORM_CRITICAL_SECTION* CriticalSection
+    _Inout_ DMF_PLATFORM_CRITICAL_SECTION* CriticalSection
     );
 
+_Acquires_lock_(* CriticalSection)
 void
 DMF_Platform_CriticalSectionEnter(
-    _Out_ DMF_PLATFORM_CRITICAL_SECTION* CriticalSection
+    _Inout_ DMF_PLATFORM_CRITICAL_SECTION* CriticalSection
     );
 
-void
+ _Releases_lock_(* CriticalSection)
+ void
 DMF_Platform_CriticalSectionLeave(
-    DMF_PLATFORM_CRITICAL_SECTION* CriticalSection
+    _Inout_ DMF_PLATFORM_CRITICAL_SECTION* CriticalSection
     );
 
 void
 DMF_Platform_CriticalSectionDelete(
-    DMF_PLATFORM_CRITICAL_SECTION* CriticalSection
+    _Inout_ DMF_PLATFORM_CRITICAL_SECTION* CriticalSection
     );
 
 extern DmfPlatform_Handlers DmfPlatformHandlersTable;
-
-#endif // defined(DMF_WIN32_MODE)
 
 #if defined(__cplusplus)
 }

@@ -34,11 +34,13 @@ extern "C"
 ////////////////////////////////////////////////////////////////////////////
 //
 
-#if defined(DMF_WIN32_MODE)
+#if !defined(DMF_WIN32_MODE)
+#error Must defined DMF_WIN32_MODE to include this file.
+#endif
 
 void*
 DMF_Platform_Allocate(
-    size_t Size
+    _In_ size_t Size
     )
 {
     void* returnValue;
@@ -55,7 +57,7 @@ DMF_Platform_Allocate(
 
 void
 DMF_Platform_Free(
-    void* Pointer
+    _In_ void* Pointer
     )
 {
     free(Pointer);
@@ -74,7 +76,7 @@ typedef CRITICAL_SECTION DMF_PLATFORM_CRITICAL_SECTION;
 
 BOOLEAN
 DMF_Platform_CriticalSectionCreate(
-    _Out_ DMF_PLATFORM_CRITICAL_SECTION* CriticalSection
+    _Inout_ DMF_PLATFORM_CRITICAL_SECTION* CriticalSection
     )
 {
     BOOLEAN returnValue;
@@ -86,17 +88,19 @@ DMF_Platform_CriticalSectionCreate(
     return returnValue;
 }
 
+_Acquires_lock_(* CriticalSection)
 void
 DMF_Platform_CriticalSectionEnter(
-    _Out_ DMF_PLATFORM_CRITICAL_SECTION* CriticalSection
+    _Inout_ DMF_PLATFORM_CRITICAL_SECTION* CriticalSection
     )
 {
     EnterCriticalSection(CriticalSection);
 }
 
+_Releases_lock_(* CriticalSection)
 void
 DMF_Platform_CriticalSectionLeave(
-    DMF_PLATFORM_CRITICAL_SECTION* CriticalSection
+    _Inout_ DMF_PLATFORM_CRITICAL_SECTION* CriticalSection
     )
 {
     LeaveCriticalSection(CriticalSection);
@@ -104,7 +108,7 @@ DMF_Platform_CriticalSectionLeave(
 
 void
 DMF_Platform_CriticalSectionDelete(
-    DMF_PLATFORM_CRITICAL_SECTION* CriticalSection
+    _Inout_ DMF_PLATFORM_CRITICAL_SECTION* CriticalSection
     )
 {
     DeleteCriticalSection(CriticalSection);
@@ -114,12 +118,15 @@ DMF_Platform_CriticalSectionDelete(
 // Timer
 //
 
+// 'The pointer argument 'Instance' for function 'TimerCallback' can be marked as a pointer to const (con.3).'
+//
+#pragma warning(suppress:26461)
 VOID 
 CALLBACK 
 TimerCallback(
-    __in PTP_CALLBACK_INSTANCE Instance,
-    __in_opt PVOID Parameter,
-    __in PTP_TIMER Timer
+    _In_ PTP_CALLBACK_INSTANCE Instance,
+    _In_ PVOID Parameter,
+    _In_ PTP_TIMER Timer
     )
 {
     DMF_PLATFORM_OBJECT* platformObject;
@@ -130,7 +137,7 @@ TimerCallback(
 
     // Parameter should never be NULL. If it is, let it blow up and let us fix it.
     //
-    platformObject = reinterpret_cast<DMF_PLATFORM_OBJECT*>(Parameter);
+    platformObject = static_cast<DMF_PLATFORM_OBJECT*>(Parameter);
     platformTimer = (DMF_PLATFORM_TIMER*)platformObject->Data;
 
     platformTimer->Config.EvtTimerFunc((WDFTIMER)platformObject);
@@ -324,7 +331,7 @@ WdfWaitLockCreate_Win32(
 
 DWORD
 WdfWaitLockAcquire_Win32(
-    _Out_ struct _DMF_PLATFORM_WAITLOCK* PlatformWaitLock,
+    _Inout_ struct _DMF_PLATFORM_WAITLOCK* PlatformWaitLock,
     _In_ DWORD TimeoutMs
     )
 {
@@ -338,7 +345,7 @@ WdfWaitLockAcquire_Win32(
 
 VOID
 WdfWaitLockRelease_Win32(
-    _Out_ struct _DMF_PLATFORM_WAITLOCK* PlatformWaitLock
+    _Inout_ struct _DMF_PLATFORM_WAITLOCK* PlatformWaitLock
     )
 {
     SetEvent(PlatformWaitLock->Event);
@@ -346,7 +353,7 @@ WdfWaitLockRelease_Win32(
 
 void
 WdfWaitLockDelete_Win32(
-    _Out_ struct _DMF_PLATFORM_WAITLOCK* PlatformWaitLock
+    _Inout_ struct _DMF_PLATFORM_WAITLOCK* PlatformWaitLock
     )
 {
     CloseHandle(PlatformWaitLock->Event);
@@ -359,7 +366,7 @@ WdfWaitLockDelete_Win32(
 
 BOOLEAN
 WdfSpinLockCreate_Win32(
-    _Out_ struct _DMF_PLATFORM_SPINLOCK* PlatformSpinLock
+    _Inout_ struct _DMF_PLATFORM_SPINLOCK* PlatformSpinLock
     )
 {
     BOOLEAN returnValue;
@@ -371,17 +378,19 @@ WdfSpinLockCreate_Win32(
     return returnValue;
 }
 
+_Acquires_lock_(PlatformSpinLock->SpinLock)
 VOID
 WdfSpinLockAcquire_Win32(
-    _Out_ struct _DMF_PLATFORM_SPINLOCK* PlatformSpinLock
+    _Inout_ struct _DMF_PLATFORM_SPINLOCK* PlatformSpinLock
     )
 {
     EnterCriticalSection(&PlatformSpinLock->SpinLock);
 }
 
+_Releases_lock_(PlatformSpinLock->SpinLock) 
 VOID
 WdfSpinLockRelease_Win32(
-    _Out_ struct _DMF_PLATFORM_SPINLOCK* PlatformSpinLock
+    _Inout_ struct _DMF_PLATFORM_SPINLOCK* PlatformSpinLock
     )
 {
     LeaveCriticalSection(&PlatformSpinLock->SpinLock);
@@ -389,7 +398,7 @@ WdfSpinLockRelease_Win32(
 
 void
 WdfSpinLockDelete_Win32(
-    _Out_ struct _DMF_PLATFORM_SPINLOCK* PlatformSpinLock
+    _Inout_ struct _DMF_PLATFORM_SPINLOCK* PlatformSpinLock
     )
 {
     DeleteCriticalSection(&PlatformSpinLock->SpinLock);
@@ -438,8 +447,6 @@ DmfPlatform_Handlers DmfPlatformHandlersTable =
     WdfSpinLockRelease_Win32,
     WdfSpinLockDelete_Win32,
 };
-
-#endif
 
 #if defined(__cplusplus)
 }

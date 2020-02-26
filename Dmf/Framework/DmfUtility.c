@@ -65,7 +65,7 @@ Return Value:
 
 #endif
 
-#if !defined(DMF_WIN32_MODE)
+#if defined(DMF_WDF_DRIVER)
 
 _Must_inspect_result_
 NTSTATUS
@@ -336,7 +336,7 @@ Exit:
 
 #endif // !defined(DMF_USER_MODE)
 
-#if !defined(DMF_WIN32_MODE)
+#if defined(DMF_WDF_DRIVER)
 
 #pragma code_seg("PAGE")
 VOID

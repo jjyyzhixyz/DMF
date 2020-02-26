@@ -27,7 +27,7 @@ Environment:
 
 #include "Dmf_IoctlHandler.tmh"
 
-#if !defined(DMF_WIN32_MODE)
+#if defined(DMF_WDF_DRIVER)
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////
 // Module Private Enumerations and Structures
