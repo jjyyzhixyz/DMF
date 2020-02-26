@@ -29,17 +29,17 @@ extern "C"
 {
 #endif // defined(__cplusplus)
 
+#if !defined(DMF_WIN32_MODE)
+#error Must defined DMF_WIN32_MODE to include this file.
+#endif
+
 ////////////////////////////////////////////////////////////////////////////
 // Win32 Primitives for Memory Allocation
 ////////////////////////////////////////////////////////////////////////////
 //
 
-#if !defined(DMF_WIN32_MODE)
-#error Must defined DMF_WIN32_MODE to include this file.
-#endif
-
 void*
-DMF_Platform_Allocate(
+DmfPlatformHandlerAllocate_Win32(
     _In_ size_t Size
     )
 {
@@ -56,7 +56,7 @@ DMF_Platform_Allocate(
 }
 
 void
-DMF_Platform_Free(
+DmfPlatformHandlerFree_Win32(
     _In_ void* Pointer
     )
 {
@@ -67,52 +67,6 @@ DMF_Platform_Free(
 // Win32 Primitives for Timer, Workitem, Locks
 ////////////////////////////////////////////////////////////////////////////
 //
-
-////////////////////////////////////////////////////////////////////////////
-// Critical Section
-//
-
-typedef CRITICAL_SECTION DMF_PLATFORM_CRITICAL_SECTION;
-
-BOOLEAN
-DMF_Platform_CriticalSectionCreate(
-    _Inout_ DMF_PLATFORM_CRITICAL_SECTION* CriticalSection
-    )
-{
-    BOOLEAN returnValue;
-
-    InitializeCriticalSection(CriticalSection);
-
-    returnValue = TRUE;
-
-    return returnValue;
-}
-
-_Acquires_lock_(* CriticalSection)
-void
-DMF_Platform_CriticalSectionEnter(
-    _Inout_ DMF_PLATFORM_CRITICAL_SECTION* CriticalSection
-    )
-{
-    EnterCriticalSection(CriticalSection);
-}
-
-_Releases_lock_(* CriticalSection)
-void
-DMF_Platform_CriticalSectionLeave(
-    _Inout_ DMF_PLATFORM_CRITICAL_SECTION* CriticalSection
-    )
-{
-    LeaveCriticalSection(CriticalSection);
-}
-
-void
-DMF_Platform_CriticalSectionDelete(
-    _Inout_ DMF_PLATFORM_CRITICAL_SECTION* CriticalSection
-    )
-{
-    DeleteCriticalSection(CriticalSection);
-}
 
 ////////////////////////////////////////////////////////////////////////////
 // Timer
@@ -404,8 +358,56 @@ WdfSpinLockDelete_Win32(
     DeleteCriticalSection(&PlatformSpinLock->SpinLock);
 }
 
+////////////////////////////////////////////////////////////////////////////
+// Internal Lock
+//
+
+BOOLEAN
+DmfPlatformHandlerLockCreate_Win32(
+    _Inout_ CRITICAL_SECTION* Lock
+    )
+{
+    BOOLEAN returnValue;
+
+    InitializeCriticalSection(Lock);
+
+    returnValue = TRUE;
+
+    return returnValue;
+}
+
+_Acquires_lock_(* Lock)
 void
-PlatformInitialize(
+DmfPlatformHandlerLock_Win32(
+    _Inout_ CRITICAL_SECTION* Lock
+    )
+{
+    EnterCriticalSection(Lock);
+}
+
+_Releases_lock_(* Lock)
+void
+DmfPlatformHandlerUnlock_Win32(
+    _Inout_ CRITICAL_SECTION* Lock
+    )
+{
+    LeaveCriticalSection(Lock);
+}
+
+void
+DmfPlatformHandlerLockDelete_Win32(
+    _Inout_ CRITICAL_SECTION* Lock
+    )
+{
+    DeleteCriticalSection(Lock);
+}
+
+////////////////////////////////////////////////////////////////////////////
+// Platform Initialization
+//
+
+void
+DmfPlatformHandlerInitialize_Win32(
     void
     )
 {
@@ -415,7 +417,7 @@ PlatformInitialize(
 }
 
 void
-PlatformUninitialize(
+DmfPlatformHandlerUninitialize_Win32(
     void
     )
 {
@@ -423,13 +425,23 @@ PlatformUninitialize(
     //
 }
 
+////////////////////////////////////////////////////////////////////////////
+// Platform Handlers Table
+//
+
 // NOTE: This exact name is defined in each platform, but only a single 
 //       instance is compiled.
 //
 DmfPlatform_Handlers DmfPlatformHandlersTable =
 {
-    PlatformInitialize,
-    PlatformUninitialize,
+    DmfPlatformHandlerInitialize_Win32,
+    DmfPlatformHandlerUninitialize_Win32,
+    DmfPlatformHandlerAllocate_Win32,
+    DmfPlatformHandlerFree_Win32,
+    DmfPlatformHandlerLockCreate_Win32,
+    DmfPlatformHandlerLock_Win32,
+    DmfPlatformHandlerUnlock_Win32,
+    DmfPlatformHandlerLockDelete_Win32,
     WdfTimerCreate_Win32,
     WdfTimerStart_Win32,
     WdfTimerStop_Win32,

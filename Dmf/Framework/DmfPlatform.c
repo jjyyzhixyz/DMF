@@ -87,17 +87,17 @@ DmfPlatform_WdfObjectAllocateContext(
 
     platformObject = (DMF_PLATFORM_OBJECT*)Handle;
 
-    platformContext = (DMF_PLATFORM_CONTEXT*)DMF_Platform_Allocate(sizeof(DMF_PLATFORM_CONTEXT));
+    platformContext = (DMF_PLATFORM_CONTEXT*)DmfPlatformHandlersTable.DmfPlatformHandlerAllocate(sizeof(DMF_PLATFORM_CONTEXT));
     if (platformContext == NULL)
     {
         ntStatus = STATUS_INSUFFICIENT_RESOURCES;
         goto Exit;
     }
 
-    platformContext->ContextData = DMF_Platform_Allocate(ContextAttributes->ContextTypeInfo->ContextSize);
+    platformContext->ContextData = DmfPlatformHandlersTable.DmfPlatformHandlerAllocate(ContextAttributes->ContextTypeInfo->ContextSize);
     if (platformContext->ContextData == NULL)
     {
-        DMF_Platform_Free(platformContext);
+        DmfPlatformHandlersTable.DmfPlatformHandlerFree(platformContext);
         ntStatus = STATUS_INSUFFICIENT_RESOURCES;
         goto Exit;
     }
@@ -108,10 +108,10 @@ DmfPlatform_WdfObjectAllocateContext(
 
     InitializeListHead(&platformContext->ListEntry);
 
-    DMF_Platform_CriticalSectionEnter(&platformObject->ContextListLock);
+    DmfPlatformHandlersTable.DmfPlatformHandlerLock(&platformObject->ContextListLock);
     InsertTailList(&platformObject->ContextList,
                    &platformContext->ListEntry);
-    DMF_Platform_CriticalSectionLeave(&platformObject->ContextListLock);
+    DmfPlatformHandlersTable.DmfPlatformHandlerUnlock(&platformObject->ContextListLock);
 
     if (Context != NULL)
     {
@@ -144,7 +144,7 @@ DmfPlatform_WdfObjectGetTypedContextWorker(
 
     returnValue = NULL;
     platformObject = (DMF_PLATFORM_OBJECT*)Handle;
-    DMF_Platform_CriticalSectionEnter(&platformObject->ContextListLock);
+    DmfPlatformHandlersTable.DmfPlatformHandlerLock(&platformObject->ContextListLock);
     listEntry = platformObject->ContextList.Flink;
     while (listEntry != &platformObject->ContextList)
     {
@@ -158,7 +158,7 @@ DmfPlatform_WdfObjectGetTypedContextWorker(
         }
         listEntry = listEntry->Flink;
     }
-    DMF_Platform_CriticalSectionLeave(&platformObject->ContextListLock);
+    DmfPlatformHandlersTable.DmfPlatformHandlerUnlock(&platformObject->ContextListLock);
 
     return returnValue;
 }
@@ -198,7 +198,7 @@ DmfPlatform_WdfObjectDelete(
     {
         // Create a list of all the objects to be deleted without the lock held.
         //
-        DMF_Platform_CriticalSectionEnter(&platformObject->ChildListLock);
+        DmfPlatformHandlersTable.DmfPlatformHandlerLock(&platformObject->ChildListLock);
         listEntry = platformObject->ChildList.Flink;
         while (listEntry != &platformObject->ChildList)
         {
@@ -214,7 +214,7 @@ DmfPlatform_WdfObjectDelete(
             //
             listEntry = platformObject->ChildList.Flink;
         }
-        DMF_Platform_CriticalSectionLeave(&platformObject->ChildListLock);
+        DmfPlatformHandlersTable.DmfPlatformHandlerUnlock(&platformObject->ChildListLock);
 
         // Call the destroy callback.
         //
@@ -228,12 +228,12 @@ DmfPlatform_WdfObjectDelete(
         if (platformObject->ObjectAttributes.ParentObject != NULL)
         {
             DMF_PLATFORM_OBJECT* parentPlatformObject = (DMF_PLATFORM_OBJECT*)platformObject->ObjectAttributes.ParentObject;
-            DMF_Platform_CriticalSectionEnter(&parentPlatformObject->ChildListLock);
+            DmfPlatformHandlersTable.DmfPlatformHandlerLock(&parentPlatformObject->ChildListLock);
             DmfAssert(parentPlatformObject->NumberOfChildren >= 0);
             RemoveEntryList(&platformObject->ChildListEntry);
             parentPlatformObject->NumberOfChildren--;
             DmfAssert(parentPlatformObject->NumberOfChildren >= 0);
-            DMF_Platform_CriticalSectionLeave(&parentPlatformObject->ChildListLock);
+            DmfPlatformHandlersTable.DmfPlatformHandlerUnlock(&parentPlatformObject->ChildListLock);
         }
         // Free the memory used by this object.
         //
@@ -245,14 +245,14 @@ DmfPlatform_WdfObjectDelete(
         }
         // Free the container for object specific data.
         //
-        DMF_Platform_Free(platformObject->Data);
+        DmfPlatformHandlersTable.DmfPlatformHandlerFree(platformObject->Data);
         // Free the object's critical section.
         //
-        DMF_Platform_CriticalSectionDelete(&platformObject->ChildListLock);
-        DMF_Platform_CriticalSectionDelete(&platformObject->ContextListLock);
+        DmfPlatformHandlersTable.DmfPlatformHandlerLockDelete(&platformObject->ChildListLock);
+        DmfPlatformHandlersTable.DmfPlatformHandlerLockDelete(&platformObject->ContextListLock);
         // Free the object's main memory.
         //
-        DMF_Platform_Free(platformObject);
+        DmfPlatformHandlersTable.DmfPlatformHandlerFree(platformObject);
     }
 }
 
@@ -264,7 +264,7 @@ DmfPlatformObjectCreate(
 {
     DMF_PLATFORM_OBJECT* platformObject;
 
-    platformObject = (DMF_PLATFORM_OBJECT*)DMF_Platform_Allocate(sizeof(DMF_PLATFORM_OBJECT));
+    platformObject = (DMF_PLATFORM_OBJECT*)DmfPlatformHandlersTable.DmfPlatformHandlerAllocate(sizeof(DMF_PLATFORM_OBJECT));
     if (platformObject == NULL)
     {
         goto Exit;
@@ -282,12 +282,12 @@ DmfPlatformObjectCreate(
     // Initialize the list of contexts.
     //
     InitializeListHead(&platformObject->ContextList);
-    DMF_Platform_CriticalSectionCreate(&platformObject->ContextListLock);
+    DmfPlatformHandlersTable.DmfPlatformHandlerLockCreate(&platformObject->ContextListLock);
 
     // Initialize the list of children.
     //
     InitializeListHead(&platformObject->ChildList);
-    DMF_Platform_CriticalSectionCreate(&platformObject->ChildListLock);
+    DmfPlatformHandlersTable.DmfPlatformHandlerLockCreate(&platformObject->ChildListLock);
     
     DmfAssert(platformObject->ChildListEntry.Flink == NULL);
     DmfAssert(platformObject->ChildListEntry.Blink == NULL);
@@ -298,11 +298,11 @@ DmfPlatformObjectCreate(
 
     if (Parent != NULL)
     {
-        DMF_Platform_CriticalSectionEnter(&Parent->ChildListLock);
+        DmfPlatformHandlersTable.DmfPlatformHandlerLock(&Parent->ChildListLock);
         InsertTailList(&Parent->ChildList,
                        &platformObject->ChildListEntry);
         Parent->NumberOfChildren++;
-        DMF_Platform_CriticalSectionLeave(&Parent->ChildListLock);
+        DmfPlatformHandlersTable.DmfPlatformHandlerUnlock(&Parent->ChildListLock);
     }
 
 Exit:
@@ -326,7 +326,7 @@ DmfPlatformWdfMemoryDelete(
 
     if (platformMemory->NeedToDeallocate)
     {
-        DMF_Platform_Free(platformMemory->DataMemory);
+        DmfPlatformHandlersTable.DmfPlatformHandlerFree(platformMemory->DataMemory);
     }
 }
 
@@ -379,10 +379,10 @@ DmfPlatform_WdfMemoryCreate(
         goto Exit;
     }
 
-    platformObject->Data = (DMF_PLATFORM_MEMORY*)DMF_Platform_Allocate(sizeof(DMF_PLATFORM_MEMORY));
+    platformObject->Data = (DMF_PLATFORM_MEMORY*)DmfPlatformHandlersTable.DmfPlatformHandlerAllocate(sizeof(DMF_PLATFORM_MEMORY));
     if (platformObject->Data == NULL)
     {
-        DMF_Platform_Free(platformObject);
+        DmfPlatformHandlersTable.DmfPlatformHandlerFree(platformObject);
         goto Exit;
     }
 
@@ -397,11 +397,11 @@ DmfPlatform_WdfMemoryCreate(
                sizeof(WDF_OBJECT_ATTRIBUTES));
     }
 
-    platformMemory->DataMemory = (CHAR*)DMF_Platform_Allocate(BufferSize);
+    platformMemory->DataMemory = (CHAR*)DmfPlatformHandlersTable.DmfPlatformHandlerAllocate(BufferSize);
     if (platformMemory->DataMemory == NULL)
     {
-        DMF_Platform_Free(platformObject->Data);
-        DMF_Platform_Free(platformObject);
+        DmfPlatformHandlersTable.DmfPlatformHandlerFree(platformObject->Data);
+        DmfPlatformHandlersTable.DmfPlatformHandlerFree(platformObject);
         goto Exit;
     }
 
@@ -463,10 +463,10 @@ DmfPlatform_WdfMemoryCreatePreallocated(
         goto Exit;
     }
 
-    platformObject->Data = (DMF_PLATFORM_MEMORY*)DMF_Platform_Allocate(sizeof(DMF_PLATFORM_MEMORY));
+    platformObject->Data = (DMF_PLATFORM_MEMORY*)DmfPlatformHandlersTable.DmfPlatformHandlerAllocate(sizeof(DMF_PLATFORM_MEMORY));
     if (platformObject->Data == NULL)
     {
-        DMF_Platform_Free(platformObject);
+        DmfPlatformHandlersTable.DmfPlatformHandlerFree(platformObject);
         goto Exit;
     }
 
@@ -534,7 +534,7 @@ DmfPlatformWdfWaitLockDelete(
 
     DMF_PLATFORM_WAITLOCK* platformWaitLock = (DMF_PLATFORM_WAITLOCK*)PlatformObject->Data;
 
-    DmfPlatformHandlersTable.DmfHandlerWdfWaitLockDelete(platformWaitLock);
+    DmfPlatformHandlersTable.DmfPlatformHandlerWdfWaitLockDelete(platformWaitLock);
 }
 
 _Must_inspect_result_
@@ -574,10 +574,10 @@ DmfPlatform_WdfWaitLockCreate(
         goto Exit;
     }
 
-    platformObject->Data = (DMF_PLATFORM_WAITLOCK*)DMF_Platform_Allocate(sizeof(DMF_PLATFORM_WAITLOCK));
+    platformObject->Data = (DMF_PLATFORM_WAITLOCK*)DmfPlatformHandlersTable.DmfPlatformHandlerAllocate(sizeof(DMF_PLATFORM_WAITLOCK));
     if (platformObject->Data == NULL)
     {
-        DMF_Platform_Free(platformObject);
+        DmfPlatformHandlersTable.DmfPlatformHandlerFree(platformObject);
         goto Exit;
     }
 
@@ -585,11 +585,11 @@ DmfPlatform_WdfWaitLockCreate(
 
     DMF_PLATFORM_WAITLOCK* platformWaitLock = (DMF_PLATFORM_WAITLOCK*)platformObject->Data;
 
-    waitEventCreated = DmfPlatformHandlersTable.DmfHandlerWdfWaitLockCreate(platformWaitLock);
+    waitEventCreated = DmfPlatformHandlersTable.DmfPlatformHandlerWdfWaitLockCreate(platformWaitLock);
     if (! waitEventCreated)
     {
-        DMF_Platform_Free(platformObject->Data);
-        DMF_Platform_Free(platformObject);
+        DmfPlatformHandlersTable.DmfPlatformHandlerFree(platformObject->Data);
+        DmfPlatformHandlersTable.DmfPlatformHandlerFree(platformObject);
         goto Exit;
     }
 
@@ -648,7 +648,7 @@ DmfPlatform_WdfWaitLockAcquire(
         timeoutMs = WDF_REL_TIMEOUT_IN_MS(*Timeout);
     }
 
-    returnValue = DmfPlatformHandlersTable.DmfHandlerWdfWaitLockAcquire(platformWaitLock,
+    returnValue = DmfPlatformHandlersTable.DmfPlatformHandlerWdfWaitLockAcquire(platformWaitLock,
                                                                          (DWORD)timeoutMs);
     if (returnValue == WAIT_OBJECT_0)
     {
@@ -686,7 +686,7 @@ DmfPlatform_WdfWaitLockRelease(
     DmfAssert(platformObject->PlatformObjectType == DmfPlatformObjectTypeWaitLock);
     platformWaitLock = (DMF_PLATFORM_WAITLOCK*)platformObject->Data;
 
-    DmfPlatformHandlersTable.DmfHandlerWdfWaitLockRelease(platformWaitLock);
+    DmfPlatformHandlersTable.DmfPlatformHandlerWdfWaitLockRelease(platformWaitLock);
 }
 
 void
@@ -698,7 +698,7 @@ DmfPlatformWdfSpinLockDelete(
 
     DMF_PLATFORM_SPINLOCK* platformSpinLock = (DMF_PLATFORM_SPINLOCK*)PlatformObject->Data;
 
-    DmfPlatformHandlersTable.DmfHandlerWdfSpinLockDelete(platformSpinLock);
+    DmfPlatformHandlersTable.DmfPlatformHandlerWdfSpinLockDelete(platformSpinLock);
 }
 
 _Must_inspect_result_
@@ -739,10 +739,10 @@ DmfPlatform_WdfSpinLockCreate(
         goto Exit;
     }
 
-    platformObject->Data = (DMF_PLATFORM_SPINLOCK*)DMF_Platform_Allocate(sizeof(DMF_PLATFORM_SPINLOCK));
+    platformObject->Data = (DMF_PLATFORM_SPINLOCK*)DmfPlatformHandlersTable.DmfPlatformHandlerAllocate(sizeof(DMF_PLATFORM_SPINLOCK));
     if (platformObject->Data == NULL)
     {
-        DMF_Platform_Free(platformObject);
+        DmfPlatformHandlersTable.DmfPlatformHandlerFree(platformObject);
         goto Exit;
     }
 
@@ -750,7 +750,7 @@ DmfPlatform_WdfSpinLockCreate(
 
     DMF_PLATFORM_SPINLOCK* platformSpinLock = (DMF_PLATFORM_SPINLOCK*)platformObject->Data;
 
-    spinLockCreated = DmfPlatformHandlersTable.DmfHandlerWdfSpinLockCreate(platformSpinLock);
+    spinLockCreated = DmfPlatformHandlersTable.DmfPlatformHandlerWdfSpinLockCreate(platformSpinLock);
     if (!spinLockCreated)
     {
         goto Exit;
@@ -795,7 +795,7 @@ DmfPlatform_WdfSpinLockAcquire(
     DmfAssert(platformObject->PlatformObjectType == DmfPlatformObjectTypeSpinLock);
     platformSpinLock = (DMF_PLATFORM_SPINLOCK*)platformObject->Data;
 
-    DmfPlatformHandlersTable.DmfHandlerWdfSpinLockAcquire(platformSpinLock);
+    DmfPlatformHandlersTable.DmfPlatformHandlerWdfSpinLockAcquire(platformSpinLock);
 }
 
 _IRQL_requires_max_(DISPATCH_LEVEL)
@@ -820,7 +820,7 @@ DmfPlatform_WdfSpinLockRelease(
     DmfAssert(platformObject->PlatformObjectType == DmfPlatformObjectTypeSpinLock);
     platformSpinLock = (DMF_PLATFORM_SPINLOCK*)platformObject->Data;
 
-    DmfPlatformHandlersTable.DmfHandlerWdfSpinLockRelease(platformSpinLock);
+    DmfPlatformHandlersTable.DmfPlatformHandlerWdfSpinLockRelease(platformSpinLock);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////
@@ -837,7 +837,7 @@ DmfPlatformWdfTimerDelete(
 
     DMF_PLATFORM_TIMER* platformTimer = (DMF_PLATFORM_TIMER*)PlatformObject->Data;
 
-    DmfPlatformHandlersTable.DmfHandlerWdfTimerDelete(platformTimer);
+    DmfPlatformHandlersTable.DmfPlatformHandlerWdfTimerDelete(platformTimer);
 }
 
 _Must_inspect_result_
@@ -879,10 +879,10 @@ DmfPlatform_WdfTimerCreate(
         goto Exit;
     }
 
-    platformObject->Data = (DMF_PLATFORM_TIMER*)DMF_Platform_Allocate(sizeof(DMF_PLATFORM_TIMER));
+    platformObject->Data = (DMF_PLATFORM_TIMER*)DmfPlatformHandlersTable.DmfPlatformHandlerAllocate(sizeof(DMF_PLATFORM_TIMER));
     if (platformObject->Data == NULL)
     {
-        DMF_Platform_Free(platformObject);
+        DmfPlatformHandlersTable.DmfPlatformHandlerFree(platformObject);
         goto Exit;
     }
 
@@ -897,12 +897,12 @@ DmfPlatform_WdfTimerCreate(
                sizeof(WDF_OBJECT_ATTRIBUTES));
     }
 
-    timerCreated = DmfPlatformHandlersTable.DmfHandlerWdfTimerCreate(platformTimer,
+    timerCreated = DmfPlatformHandlersTable.DmfPlatformHandlerWdfTimerCreate(platformTimer,
                                                                       platformObject);
     if (! timerCreated)
     {
-        DMF_Platform_Free(platformObject->Data);
-        DMF_Platform_Free(platformObject);
+        DmfPlatformHandlersTable.DmfPlatformHandlerFree(platformObject->Data);
+        DmfPlatformHandlersTable.DmfPlatformHandlerFree(platformObject);
         goto Exit;
     }
 
@@ -941,7 +941,7 @@ DmfPlatform_WdfTimerStart(
     DmfAssert(platformObject->PlatformObjectType == DmfPlatformObjectTypeTimer);
     platformTimer = (DMF_PLATFORM_TIMER*)platformObject->Data;
 
-    returnValue = DmfPlatformHandlersTable.DmfHandlerWdfTimerStart(platformTimer,
+    returnValue = DmfPlatformHandlersTable.DmfPlatformHandlerWdfTimerStart(platformTimer,
                                                                     DueTime);
 
     // Always tell caller timer was not in queue.
@@ -971,7 +971,7 @@ DmfPlatform_WdfTimerStop(
     DmfAssert(platformObject->PlatformObjectType == DmfPlatformObjectTypeTimer);
     platformTimer = (DMF_PLATFORM_TIMER*)platformObject->Data;
 
-    returnValue = DmfPlatformHandlersTable.DmfHandlerWdfTimerStop(platformTimer,
+    returnValue = DmfPlatformHandlersTable.DmfPlatformHandlerWdfTimerStop(platformTimer,
                                                                    Wait);
 
     return returnValue;
@@ -1008,7 +1008,7 @@ DmfPlatformWdfWorkItemDelete(
 
     DMF_PLATFORM_WORKITEM* platformWorkItem = (DMF_PLATFORM_WORKITEM*)PlatformObject->Data;
 
-    DmfPlatformHandlersTable.DmfHandlerWdfWorkItemDelete(platformWorkItem);
+    DmfPlatformHandlersTable.DmfPlatformHandlerWdfWorkItemDelete(platformWorkItem);
 }
 
 _Must_inspect_result_
@@ -1050,10 +1050,10 @@ DmfPlatform_WdfWorkItemCreate(
         goto Exit;
     }
 
-    platformObject->Data = (DMF_PLATFORM_WORKITEM*)DMF_Platform_Allocate(sizeof(DMF_PLATFORM_WORKITEM));
+    platformObject->Data = (DMF_PLATFORM_WORKITEM*)DmfPlatformHandlersTable.DmfPlatformHandlerAllocate(sizeof(DMF_PLATFORM_WORKITEM));
     if (platformObject->Data == NULL)
     {
-        DMF_Platform_Free(platformObject);
+        DmfPlatformHandlersTable.DmfPlatformHandlerFree(platformObject);
         goto Exit;
     }
 
@@ -1068,12 +1068,12 @@ DmfPlatform_WdfWorkItemCreate(
                sizeof(WDF_OBJECT_ATTRIBUTES));
     }
 
-    workitemCreated = DmfPlatformHandlersTable.DmfHandlerWdfWorkItemCreate(platformWorkItem,
+    workitemCreated = DmfPlatformHandlersTable.DmfPlatformHandlerWdfWorkItemCreate(platformWorkItem,
                                                                             platformObject);
     if (!workitemCreated)
     {
-        DMF_Platform_Free(platformObject->Data);
-        DMF_Platform_Free(platformObject);
+        DmfPlatformHandlersTable.DmfPlatformHandlerFree(platformObject->Data);
+        DmfPlatformHandlersTable.DmfPlatformHandlerFree(platformObject);
         goto Exit;
     }
 
@@ -1111,7 +1111,7 @@ DmfPlatform_WdfWorkItemEnqueue(
 
     // Cause the workitem callback to execute as soon as possible.
     //
-    DmfPlatformHandlersTable.DmfHandlerWdfWorkItemEnqueue(platformWorkItem);
+    DmfPlatformHandlersTable.DmfPlatformHandlerWdfWorkItemEnqueue(platformWorkItem);
 }
 
 _IRQL_requires_max_(DISPATCH_LEVEL)
@@ -1151,7 +1151,7 @@ DmfPlatform_WdfWorkItemFlush(
 
     // Cause the workitem callback to execute as soon as possible.
     //
-    DmfPlatformHandlersTable.DmfHandlerWdfWorkItemFlush(platformWorkItem);
+    DmfPlatformHandlersTable.DmfPlatformHandlerWdfWorkItemFlush(platformWorkItem);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////
@@ -1197,10 +1197,10 @@ DmfPlatform_WdfCollectionCreate(
         goto Exit;
     }
 
-    platformObject->Data = (DMF_PLATFORM_COLLECTION*)DMF_Platform_Allocate(sizeof(DMF_PLATFORM_COLLECTION));
+    platformObject->Data = (DMF_PLATFORM_COLLECTION*)DmfPlatformHandlersTable.DmfPlatformHandlerAllocate(sizeof(DMF_PLATFORM_COLLECTION));
     if (platformObject->Data == NULL)
     {
-        DMF_Platform_Free(platformObject);
+        DmfPlatformHandlersTable.DmfPlatformHandlerFree(platformObject);
         goto Exit;
     }
 
@@ -1214,8 +1214,8 @@ DmfPlatform_WdfCollectionCreate(
                                  &platformCollection->ListLock);
     if (!NT_SUCCESS(ntStatus))
     {
-        DMF_Platform_Free(platformObject->Data);
-        DMF_Platform_Free(platformObject);
+        DmfPlatformHandlersTable.DmfPlatformHandlerFree(platformObject->Data);
+        DmfPlatformHandlersTable.DmfPlatformHandlerFree(platformObject);
         goto Exit;
     }
 
@@ -1289,7 +1289,7 @@ DmfPlatform_WdfCollectionAdd(
     DmfAssert(platformObject->PlatformObjectType == DmfPlatformObjectTypeCollection);
     platformCollection = (DMF_PLATFORM_COLLECTION*)platformObject->Data;
 
-    collectionEntry = (COLLECTION_ENTRY*)DMF_Platform_Allocate(sizeof(COLLECTION_ENTRY));
+    collectionEntry = (COLLECTION_ENTRY*)DmfPlatformHandlersTable.DmfPlatformHandlerAllocate(sizeof(COLLECTION_ENTRY));
     if (NULL == collectionEntry)
     {
         ntStatus = STATUS_INSUFFICIENT_RESOURCES;
@@ -1629,10 +1629,10 @@ DmfPlatform_WdfDeviceCreate(
         goto Exit;
     }
 
-    platformObject->Data = (DMF_PLATFORM_DEVICE*)DMF_Platform_Allocate(sizeof(DMF_PLATFORM_DEVICE));
+    platformObject->Data = (DMF_PLATFORM_DEVICE*)DmfPlatformHandlersTable.DmfPlatformHandlerAllocate(sizeof(DMF_PLATFORM_DEVICE));
     if (platformObject->Data == NULL)
     {
-        DMF_Platform_Free(platformObject);
+        DmfPlatformHandlersTable.DmfPlatformHandlerFree(platformObject);
         goto Exit;
     }
 
@@ -1767,10 +1767,10 @@ DmfPlatform_WdfIoQueueCreate(
         goto Exit;
     }
 
-    platformObject->Data = (DMF_PLATFORM_QUEUE*)DMF_Platform_Allocate(sizeof(DMF_PLATFORM_QUEUE));
+    platformObject->Data = (DMF_PLATFORM_QUEUE*)DmfPlatformHandlersTable.DmfPlatformHandlerAllocate(sizeof(DMF_PLATFORM_QUEUE));
     if (platformObject->Data == NULL)
     {
-        DMF_Platform_Free(platformObject);
+        DmfPlatformHandlersTable.DmfPlatformHandlerFree(platformObject);
         goto Exit;
     }
 
@@ -2036,7 +2036,7 @@ DMF_PlatformInitialize(
 
     // Perform platform specific initialization.
     //
-    DmfPlatformHandlersTable.DmfHandlerPlatformInitialize();
+    DmfPlatformHandlersTable.DmfPlatformHandlerInitialize();
 }
 
 void
@@ -2051,7 +2051,7 @@ DMF_PlatformUninitialize(
 
     // Perform platform specific uninitialization.
     //
-    DmfPlatformHandlersTable.DmfHandlerPlatformUninitialize();
+    DmfPlatformHandlersTable.DmfPlatformHandlerUninitialize();
 }
 
 #if defined(__cplusplus)

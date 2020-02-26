@@ -84,39 +84,8 @@ typedef struct _DMF_PLATFORM_DEVICE
 
 #define PAGED_CODE()
 
-void*
-DMF_Platform_Allocate(
-    _In_ size_t Size
-    );
-
-void
-DMF_Platform_Free(
-    _In_ void* Pointer
-    );
-
 typedef CRITICAL_SECTION DMF_PLATFORM_CRITICAL_SECTION;
 
-BOOLEAN
-DMF_Platform_CriticalSectionCreate(
-    _Inout_ DMF_PLATFORM_CRITICAL_SECTION* CriticalSection
-    );
-
-_Acquires_lock_(* CriticalSection)
-void
-DMF_Platform_CriticalSectionEnter(
-    _Inout_ DMF_PLATFORM_CRITICAL_SECTION* CriticalSection
-    );
-
- _Releases_lock_(* CriticalSection)
- void
-DMF_Platform_CriticalSectionLeave(
-    _Inout_ DMF_PLATFORM_CRITICAL_SECTION* CriticalSection
-    );
-
-void
-DMF_Platform_CriticalSectionDelete(
-    _Inout_ DMF_PLATFORM_CRITICAL_SECTION* CriticalSection
-    );
 
 extern DmfPlatform_Handlers DmfPlatformHandlersTable;
 
