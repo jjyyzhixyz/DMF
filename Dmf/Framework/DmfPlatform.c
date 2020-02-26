@@ -197,8 +197,11 @@ DmfPlatform_WdfObjectDelete(
     if (newReferenceCount == 0)
     {
         // Create a list of all the objects to be deleted without the lock held.
+        // NOTE: Do not hold the ChildListLock while deleting because of potential 
+        //       for deadlock when removing child from parent list.
+        //       Caller should not be doing anything else with object while it
+        //       is being deleted.
         //
-        DmfPlatformHandlersTable.DmfPlatformHandlerLock(&platformObject->ChildListLock);
         listEntry = platformObject->ChildList.Flink;
         while (listEntry != &platformObject->ChildList)
         {
@@ -214,7 +217,6 @@ DmfPlatform_WdfObjectDelete(
             //
             listEntry = platformObject->ChildList.Flink;
         }
-        DmfPlatformHandlersTable.DmfPlatformHandlerUnlock(&platformObject->ChildListLock);
 
         // Call the destroy callback.
         //
