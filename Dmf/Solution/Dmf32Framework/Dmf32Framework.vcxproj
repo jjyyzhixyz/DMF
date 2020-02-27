@@ -219,6 +219,7 @@
     <ClInclude Include="..\..\Framework\DmfDefinitions.h" />
     <ClInclude Include="..\..\Framework\Modules.Core\DmfModules.Core.Trace.h" />
     <ClInclude Include="..\..\Framework\Modules.Core\Dmf_RingBuffer.h" />
+    <ClInclude Include="..\..\Framework\Platform\DmfIncludes_WIN32_MODE.h" />
     <ClInclude Include="..\..\Framework\Platform\DmfPlatform_Win32.h" />
     <ClInclude Include="..\..\Framework\Platform\wdfcollection.h" />
     <ClInclude Include="..\..\Framework\Platform\wdfcore.h" />

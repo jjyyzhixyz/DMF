@@ -28,19 +28,19 @@ extern "C"
 #endif // defined(__cplusplus)
 
 #if defined(DMF_USER_MODE)
-    #include "DmfIncludes_USER_MODE.h"
+    #include "..\Platform\DmfIncludes_USER_MODE.h"
     #define DMF_WDF_DRIVER
 #elif defined(DMF_WIN32_MODE)
     // Win32 Mode uses many of the User-mode APIs.
     //
     #define DMF_USER_MODE
-    #include "DmfIncludes_WIN32_MODE.h"
+    #include "..\Platform\DmfIncludes_WIN32_MODE.h"
 #else
     // Kernel-mode by default.
     //
     #define DMF_KERNEL_MODE
     #define DMF_WDF_DRIVER
-    #include "DmfIncludes_KERNEL_MODE.h"
+    #include "..\Platform\DmfIncludes_KERNEL_MODE.h"
 #endif
 
 //////////////////////////////////////////////////////////////////////////////////////

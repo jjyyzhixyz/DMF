@@ -68,6 +68,7 @@
     <ClInclude Include="..\..\Framework\Modules.Core\Dmf_IoctlHandler.h" />
     <ClInclude Include="..\..\Framework\Modules.Core\Dmf_BufferQueue.h" />
     <ClInclude Include="..\..\Framework\Modules.Core\DmfModules.Core.Trace.h" />
+    <ClInclude Include="..\..\Framework\Platform\DmfIncludes_KERNEL_MODE.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{A603433B-6AE6-419D-AD1A-103809B82745}</ProjectGuid>

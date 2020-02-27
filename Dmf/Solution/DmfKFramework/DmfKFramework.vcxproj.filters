@@ -120,6 +120,9 @@
     <ClInclude Include="..\..\Framework\Modules.Core\Dmf_RingBuffer.h">
       <Filter>Headers\Modules\Buffers</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Framework\Platform\DmfIncludes_KERNEL_MODE.h">
+      <Filter>Framework\Platform</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Headers">
@@ -178,6 +181,9 @@
     </Filter>
     <Filter Include="Documentation\Modules\Buffers">
       <UniqueIdentifier>{0efec2e3-c4b1-4425-b3b7-415b730fedea}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Framework\Platform">
+      <UniqueIdentifier>{c1c11f7f-6de4-4a2a-878d-805beecac72a}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

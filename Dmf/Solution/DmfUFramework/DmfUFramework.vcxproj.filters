@@ -114,6 +114,9 @@
     <ClInclude Include="..\..\Framework\Modules.Core\DmfInterface.h">
       <Filter>Headers\Framework</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Framework\Platform\DmfIncludes_USER_MODE.h">
+      <Filter>Framework\Platform</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Modules">
@@ -172,6 +175,9 @@
     </Filter>
     <Filter Include="Modules\Buffers">
       <UniqueIdentifier>{b2b8ed35-5264-4ff8-9f04-26b7235518e9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Framework\Platform">
+      <UniqueIdentifier>{bf009321-7306-4730-ad1c-1eee395d0690}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
