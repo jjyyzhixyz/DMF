@@ -29,6 +29,7 @@ Environment:
 #include "DmfInterface.tmh"
 
 #include <conio.h>
+#include <time.h>
 
 _IRQL_requires_max_(PASSIVE_LEVEL)
 VOID
@@ -134,7 +135,12 @@ main()
     PDMFDEVICE_INIT dmfDeviceInit;                                              
     DMF_EVENT_CALLBACKS dmfCallbacks;                                           
     PWDFDEVICE_INIT deviceInit;
-    
+
+    srand((unsigned)time(NULL));
+
+Start:
+    printf("Starting...\n");
+
     DMF_PlatformInitialize();
 
     deviceInit = (PWDFDEVICE_INIT)&deviceInit;
@@ -167,10 +173,10 @@ main()
         goto Exit;                                                              
     }                                                                           
                                                                                 
-    while (!_kbhit())
-    {
-        Sleep(0);
-    }
+    ULONG millisecondsToSleep = (rand() % 60) * 1000;
+    printf("Waiting %d seconds...", millisecondsToSleep/1000);
+    Sleep(millisecondsToSleep);
+    printf("Wait satisfied.\n");
 
 Exit:                                                                           
                                                                                 
@@ -183,6 +189,8 @@ Exit:
     // allocated resources.
     //
     DMF_PlatformUninitialize(device);
+
+    goto Start;
 }
 
 // eof: DmfInterface.c
