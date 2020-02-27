@@ -156,8 +156,14 @@ Return Value:
         RtlInitAnsiString(&ansiString,
                           narrowBufferBig);
         ansiString.MaximumLength = sizeof(narrowBufferBig);
+#if defined(DMF_WDF_DRIVER)
         RtlInitUnicodeString(&unicodeString,
                              wideStrings[stringIndex]);
+#else
+        unicodeString.Buffer = wideStrings[stringIndex];
+        unicodeString.Length = (USHORT)(wcslen(wideStrings[stringIndex]) * sizeof(WCHAR));
+        unicodeString.MaximumLength = unicodeString.Length;
+#endif
         ntStatus = DMF_String_RtlUnicodeStringToAnsiString(DmfModule,
                                                            &ansiString,
                                                            &unicodeString);
@@ -188,8 +194,14 @@ Return Value:
         RtlInitAnsiString(&ansiString,
                           narrowBufferSmall);
         ansiString.MaximumLength = sizeof(narrowBufferSmall);
+#if defined(DMF_WDF_DRIVER)
         RtlInitUnicodeString(&unicodeString,
                              wideStrings[stringIndex]);
+#else
+        unicodeString.Buffer = wideStrings[stringIndex];
+        unicodeString.Length = (USHORT)(wcslen(wideStrings[stringIndex]) * sizeof(WCHAR));
+        unicodeString.MaximumLength = unicodeString.Length;
+#endif
         ntStatus = DMF_String_RtlUnicodeStringToAnsiString(DmfModule,
                                                            &ansiString,
                                                            &unicodeString);
@@ -203,8 +215,14 @@ Return Value:
         RtlInitAnsiString(&ansiString,
                           narrowBufferSmall);
         ansiString.MaximumLength = sizeof(narrowBufferSmall);
+#if defined(DMF_WDF_DRIVER)
         RtlInitUnicodeString(&unicodeString,
                              wideStrings[stringIndex]);
+#else
+        unicodeString.Buffer = wideStrings[stringIndex];
+        unicodeString.Length = (USHORT)(wcslen(wideStrings[stringIndex]) * sizeof(WCHAR));
+        unicodeString.MaximumLength = unicodeString.Length;
+#endif
         ntStatus = DMF_String_RtlUnicodeStringToAnsiString(DmfModule,
                                                            &ansiString,
                                                            &unicodeStrings[stringIndex]);
@@ -219,8 +237,14 @@ Return Value:
         //
         RtlZeroMemory(wideBufferBig,
                       sizeof(wideBufferBig));
+#if defined(DMF_WDF_DRIVER)
         RtlInitUnicodeString(&unicodeString,
                              wideBufferBig);
+#else
+        unicodeString.Buffer = wideBufferBig;
+        unicodeString.Length = (USHORT)((wcslen(wideBufferBig) * sizeof(WCHAR)));
+        unicodeString.MaximumLength = unicodeString.MaximumLength;
+#endif
         unicodeString.MaximumLength = sizeof(wideBufferBig);
         RtlInitAnsiString(&ansiString,
                           narrowStrings[stringIndex]);
@@ -236,8 +260,14 @@ Return Value:
         //
         RtlZeroMemory(wideBufferSmall,
                       sizeof(wideBufferSmall));
+#if defined(DMF_WDF_DRIVER)
         RtlInitUnicodeString(&unicodeString,
                              wideBufferSmall);
+#else
+        unicodeString.Buffer = wideBufferSmall;
+        unicodeString.Length = (USHORT)((wcslen(wideBufferSmall) * sizeof(WCHAR)));
+        unicodeString.MaximumLength = unicodeString.MaximumLength;
+#endif
         unicodeString.MaximumLength = sizeof(wideBufferSmall);
         RtlInitAnsiString(&ansiString,
                           narrowStrings[stringIndex]);

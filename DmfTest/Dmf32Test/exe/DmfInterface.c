@@ -105,7 +105,7 @@ Return Value:
                         &moduleAttributes,
                         WDF_NO_OBJECT_ATTRIBUTES,
                         NULL);
-#if 0
+
     // Tests_String
     // -------------
     //
@@ -114,7 +114,6 @@ Return Value:
                         &moduleAttributes,
                         WDF_NO_OBJECT_ATTRIBUTES,
                         NULL);
-#endif
 
     // Tests_AlertableSleep
     // --------------------
