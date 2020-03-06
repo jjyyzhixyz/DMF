@@ -67,7 +67,7 @@ typedef struct _DMF_INTERFACE_PROTOCOL1_CONTEXT
     // Stores the Id of the Transport Module.
     //
     ULONG TransportId;
-}DMF_INTERFACE_PROTOCOL1_CONTEXT;
+} DMF_INTERFACE_PROTOCOL1_CONTEXT;
 WDF_DECLARE_CONTEXT_TYPE_WITH_NAME(DMF_INTERFACE_PROTOCOL1_CONTEXT, DMF_SampleInterfaceProtocolContextGet)
 
 // Protocol Specific Callbacks

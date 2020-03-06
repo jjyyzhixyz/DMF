@@ -68,7 +68,7 @@ typedef struct _DMF_INTERFACE_UPPERPROTOCOL1_CONTEXT
     //
     ULONG TransportId;
 } DMF_INTERFACE_UPPERPROTOCOL1_CONTEXT;
-WDF_DECLARE_CONTEXT_TYPE_WITH_NAME(DMF_INTERFACE_UPPERPROTOCOL1_CONTEXT, DMF_SampleInterfaceProtocolContextGet)
+WDF_DECLARE_CONTEXT_TYPE_WITH_NAME(DMF_INTERFACE_UPPERPROTOCOL1_CONTEXT, DMF_SampleInterfaceUpperProtocolContextGet)
 
 // Protocol Specific Callbacks
 //
@@ -110,9 +110,9 @@ Return Value:
     protocolModule = DMF_InterfaceProtocolModuleGet(DmfInterface);
     moduleConfig = DMF_CONFIG_GET(protocolModule);
 
-    // Get the Protocol's Private Context associated with this conneciton.
+    // Get the Protocol's Private Context associated with this connection.
     //
-    protocolContext = DMF_SampleInterfaceProtocolContextGet(DmfInterface);
+    protocolContext = DMF_SampleInterfaceUpperProtocolContextGet(DmfInterface);
 
     TraceEvents(TRACE_LEVEL_INFORMATION, DMF_TRACE,
                 "SampleInterface TestCallback1: ProtocolId=%d ProtocolName=%s TransportId=%d ntStatus=%!STATUS!",
@@ -362,7 +362,7 @@ Return Value:
     //
     moduleContext->SampleInterfaceHandle = DmfInterface;
 
-    protocolContext = DMF_SampleInterfaceProtocolContextGet(DmfInterface);
+    protocolContext = DMF_SampleInterfaceUpperProtocolContextGet(DmfInterface);
     protocolContext->TransportId = transportBindData.TransportId;
 
     TraceEvents(TRACE_LEVEL_INFORMATION, DMF_TRACE, "DMF_SampleInterfaceUpperProtocol_Bind success");
