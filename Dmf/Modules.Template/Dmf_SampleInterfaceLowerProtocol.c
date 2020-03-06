@@ -62,13 +62,13 @@ DMF_MODULE_DECLARE_CONFIG(SampleInterfaceLowerProtocol)
 
 // Private context the Protocol Module associates with an Interface.
 //
-typedef struct _DMF_INTERFACE_PROTOCOL1_CONTEXT
+typedef struct _DMF_INTERFACE_LOWERPROTOCOL1_CONTEXT
 {
     // Stores the Id of the Transport Module.
     //
     ULONG TransportId;
-}DMF_INTERFACE_PROTOCOL1_CONTEXT;
-WDF_DECLARE_CONTEXT_TYPE_WITH_NAME(DMF_INTERFACE_PROTOCOL1_CONTEXT, DMF_SampleInterfaceProtocolContextGet)
+} DMF_INTERFACE_LOWERPROTOCOL1_CONTEXT;
+WDF_DECLARE_CONTEXT_TYPE_WITH_NAME(DMF_INTERFACE_LOWERPROTOCOL1_CONTEXT, DMF_SampleInterfaceProtocolContextGet)
 
 // Protocol Specific Callbacks
 //
@@ -100,7 +100,7 @@ Return Value:
     NTSTATUS ntStatus;
     DMFMODULE protocolModule;
     DMF_CONFIG_SampleInterfaceLowerProtocol* moduleConfig;
-    DMF_INTERFACE_PROTOCOL1_CONTEXT* protocolContext;
+    DMF_INTERFACE_LOWERPROTOCOL1_CONTEXT* protocolContext;
 
     PAGED_CODE();
 
@@ -330,7 +330,7 @@ Return Value:
     DMF_INTERFACE_TRANSPORT_SampleInterfaceLower_BIND_DATA transportBindData;
     DMF_CONTEXT_SampleInterfaceLowerProtocol* moduleContext;
     DMF_CONFIG_SampleInterfaceLowerProtocol* moduleConfig;
-    DMF_INTERFACE_PROTOCOL1_CONTEXT* protocolContext;
+    DMF_INTERFACE_LOWERPROTOCOL1_CONTEXT* protocolContext;
     DMFMODULE protocolModule;
 
     PAGED_CODE();
@@ -525,7 +525,7 @@ Return Value:
     DMF_MODULE_DESCRIPTOR dmfModuleDescriptor_SampleInterfaceLowerProtocol;
     DMF_CALLBACKS_DMF dmfCallbacksDmf_SampleInterfaceLowerProtocol;
     DMF_CALLBACKS_WDF dmfCallbacksWdf_SampleInterfaceLowerProtocol;
-DbgBreakPoint();
+
     PAGED_CODE();
 
     FuncEntry(DMF_TRACE);
@@ -542,7 +542,7 @@ DbgBreakPoint();
                                             SampleInterfaceLowerProtocol,
                                             DMF_CONTEXT_SampleInterfaceLowerProtocol,
                                             DMF_MODULE_OPTIONS_PASSIVE,
-                                            DMF_MODULE_OPEN_OPTION_OPEN_PrepareHardware);
+                                            DMF_MODULE_OPEN_OPTION_OPEN_Create);
 
     dmfModuleDescriptor_SampleInterfaceLowerProtocol.CallbacksDmf = &dmfCallbacksDmf_SampleInterfaceLowerProtocol;
     dmfModuleDescriptor_SampleInterfaceLowerProtocol.CallbacksWdf = &dmfCallbacksWdf_SampleInterfaceLowerProtocol;
@@ -573,7 +573,7 @@ DbgBreakPoint();
     // module will get a unique instance of this context each bidning. 
     // 
     DMF_INTERFACE_DESCRIPTOR_SET_CONTEXT_TYPE(&protocolDeclarationData, 
-                                              DMF_INTERFACE_PROTOCOL1_CONTEXT);
+                                              DMF_INTERFACE_LOWERPROTOCOL1_CONTEXT);
 
     // Add the interface to the Protocol Module.
     //
@@ -621,7 +621,7 @@ Return Value:
 {
     DMF_CONTEXT_SampleInterfaceLowerProtocol* moduleContext;
     NTSTATUS ntStatus;
-DbgBreakPoint();
+
     PAGED_CODE();
 
     FuncEntry(DMF_TRACE);

@@ -65,13 +65,13 @@ DMF_MODULE_DECLARE_CONFIG(SampleInterfaceUpperTransport1)
 
 // Private context the Protocol Module associates with an Interface.
 //
-typedef struct _DMF_INTERFACE_TRANSPORT1_CONTEXT
+typedef struct _DMF_INTERFACE_UPPERTRANSPORT1_CONTEXT
 {
     // Stores the Id of the Protocol Module.
     //
     ULONG ProtocolId;
-}DMF_INTERFACE_TRANSPORT1_CONTEXT;
-WDF_DECLARE_CONTEXT_TYPE_WITH_NAME(DMF_INTERFACE_TRANSPORT1_CONTEXT, DMF_SampleInterfaceUpperTransport1ContextGet)
+} DMF_INTERFACE_UPPERTRANSPORT1_CONTEXT;
+WDF_DECLARE_CONTEXT_TYPE_WITH_NAME(DMF_INTERFACE_UPPERTRANSPORT1_CONTEXT, DMF_SampleInterfaceUpperTransport1ContextGet)
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////
 // WDF Module Callbacks
@@ -106,12 +106,23 @@ Return Value:
 {
     NTSTATUS ntStatus;
     DMF_CONTEXT_SampleInterfaceUpperTransport1* moduleContext;
-DbgBreakPoint();
+    DMF_CONFIG_SampleInterfaceUpperTransport1* moduleConfig;
+
     UNREFERENCED_PARAMETER(PreviousState);
+    UNREFERENCED_PARAMETER(DmfModule);
+
+    PAGED_CODE()
 
     FuncEntry(DMF_TRACE);
 
     moduleContext = DMF_CONTEXT_GET(DmfModule);
+    moduleConfig = DMF_CONFIG_GET(DmfModule);
+
+    TraceEvents(TRACE_LEVEL_INFORMATION, DMF_TRACE,
+                "DMF_SampleInterfaceUpperTransport1_ModuleD0Entry: ModuleId=%d ModuleName=%s",
+                moduleConfig->ModuleId,
+                moduleConfig->ModuleName);
+
     ntStatus = DMF_SampleInterfaceLowerProtocol_TestMethod(moduleContext->DmfModuleProtocolLower);
  
     FuncExit(DMF_TRACE, "ntStatus=%!STATUS!", ntStatus);
@@ -145,15 +156,27 @@ Return Value:
 --*/
 {
     NTSTATUS ntStatus;
+    DMF_CONTEXT_SampleInterfaceUpperTransport1* moduleContext;
+    DMF_CONFIG_SampleInterfaceUpperTransport1* moduleConfig;
 
-    UNREFERENCED_PARAMETER(DmfModule);
     UNREFERENCED_PARAMETER(TargetState);
+    UNREFERENCED_PARAMETER(DmfModule);
+
+    PAGED_CODE()
 
     FuncEntry(DMF_TRACE);
 
-    ntStatus = STATUS_SUCCESS;
+    moduleContext = DMF_CONTEXT_GET(DmfModule);
+    moduleConfig = DMF_CONFIG_GET(DmfModule);
 
-    FuncExitVoid(DMF_TRACE);
+    TraceEvents(TRACE_LEVEL_INFORMATION, DMF_TRACE,
+                "DMF_SampleInterfaceUpperTransport1_ModuleD0Exit: ModuleId=%d ModuleName=%s",
+                moduleConfig->ModuleId,
+                moduleConfig->ModuleName);
+
+    ntStatus = DMF_SampleInterfaceLowerProtocol_TestMethod(moduleContext->DmfModuleProtocolLower);
+ 
+    FuncExit(DMF_TRACE, "ntStatus=%!STATUS!", ntStatus);
 
     return ntStatus;
 }
@@ -277,7 +300,7 @@ Return Value:
     NTSTATUS ntStatus;
     DMFMODULE transportModule;
     DMF_CONTEXT_SampleInterfaceUpperTransport1* moduleContext;
-    DMF_INTERFACE_TRANSPORT1_CONTEXT* transportContext;
+    DMF_INTERFACE_UPPERTRANSPORT1_CONTEXT* transportContext;
     DMF_CONFIG_SampleInterfaceUpperTransport1* moduleConfig;
 
     PAGED_CODE();
@@ -285,7 +308,7 @@ Return Value:
     FuncEntry(DMF_TRACE);
 
     UNREFERENCED_PARAMETER(ProtocolBindData);
-DbgBreakPoint();
+
     ntStatus = STATUS_SUCCESS;
     transportModule = DMF_InterfaceTransportModuleGet(DmfInterface);
     moduleContext = DMF_CONTEXT_GET(transportModule);
@@ -340,7 +363,7 @@ Return Value:
     UNREFERENCED_PARAMETER(DmfInterface);
 
     PAGED_CODE();
-DbgBreakPoint();
+
     FuncEntry(DMF_TRACE);
 
     TraceEvents(TRACE_LEVEL_INFORMATION, DMF_TRACE, "DMF_INTERFACE_PROTOCOL_SampleInterfaceUpperTransport1_Unbind success");
@@ -375,7 +398,7 @@ Return Value:
 --*/
 {
     NTSTATUS ntStatus;
-DbgBreakPoint();
+
     PAGED_CODE();
 
     UNREFERENCED_PARAMETER(DmfModule);
@@ -455,7 +478,7 @@ Return Value:
     UNREFERENCED_PARAMETER(DmfModule);
 
     FuncEntry(DMF_TRACE);
-DbgBreakPoint();
+
     DMF_CONTEXT_SampleInterfaceUpperTransport1* moduleContext;
 
     moduleContext = DMF_CONTEXT_GET(DmfModule);
@@ -510,7 +533,7 @@ Return Value:
     FuncEntry(DMF_TRACE);
 
     moduleContext = DMF_CONTEXT_GET(DmfModule);
-DbgBreakPoint();
+
     // SampleInterfaceLowerProtocol
     // ----------------------------
     //
@@ -541,7 +564,7 @@ DMF_SampleInterfaceUpperTransport1_Method1(
     NTSTATUS ntStatus;
     DMFMODULE transportModule;
     DMF_CONFIG_SampleInterfaceUpperTransport1* moduleConfig;
-    DMF_INTERFACE_TRANSPORT1_CONTEXT* transportContext;
+    DMF_INTERFACE_UPPERTRANSPORT1_CONTEXT* transportContext;
 
     PAGED_CODE()
 
@@ -550,7 +573,7 @@ DMF_SampleInterfaceUpperTransport1_Method1(
     ntStatus = STATUS_SUCCESS;
     transportModule = DMF_InterfaceTransportModuleGet(DmfInterface);
     moduleConfig = DMF_CONFIG_GET(transportModule);
-DbgBreakPoint();
+
     transportContext = DMF_SampleInterfaceUpperTransport1ContextGet(DmfInterface);
 
     TraceEvents(TRACE_LEVEL_INFORMATION, DMF_TRACE,
@@ -616,7 +639,7 @@ Return Value:
     dmfCallbacksDmf_SampleInterfaceUpperTransport1.ChildModulesAdd = DMF_SampleInterfaceUpperTransport1_ChildModulesAdd;
     dmfCallbacksDmf_SampleInterfaceUpperTransport1.DeviceOpen = DMF_SampleInterfaceUpperTransport1_Open;
     dmfCallbacksDmf_SampleInterfaceUpperTransport1.DeviceClose = DMF_SampleInterfaceUpperTransport1_Close;
-DbgBreakPoint();
+
     DMF_CALLBACKS_WDF_INIT(&dmfCallbacksWdf_SampleInterfaceUpperTransport1);
     dmfCallbacksWdf_SampleInterfaceUpperTransport1.ModuleD0Entry = DMF_SampleInterfaceUpperTransport1_ModuleD0Entry;
     dmfCallbacksWdf_SampleInterfaceUpperTransport1.ModuleD0Exit = DMF_SampleInterfaceUpperTransport1_ModuleD0Exit;
@@ -657,7 +680,7 @@ DbgBreakPoint();
     // module will get a unique instance of this context each binding. 
     // 
     DMF_INTERFACE_DESCRIPTOR_SET_CONTEXT_TYPE(&transportDeclarationData, 
-                                              DMF_INTERFACE_TRANSPORT1_CONTEXT);
+                                              DMF_INTERFACE_UPPERTRANSPORT1_CONTEXT);
 
     // Add the interface to the Transport Module.
     //

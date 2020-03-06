@@ -59,13 +59,13 @@ DMF_MODULE_DECLARE_CONFIG(SampleInterfaceLowerTransport1)
 
 // Private context the Protocol Module associates with an Interface.
 //
-typedef struct _DMF_INTERFACE_TRANSPORT1_CONTEXT
+typedef struct _DMF_INTERFACE_LOWERTRANSPORT1_CONTEXT
 {
     // Stores the Id of the Protocol Module.
     //
     ULONG ProtocolId;
-}DMF_INTERFACE_TRANSPORT1_CONTEXT;
-WDF_DECLARE_CONTEXT_TYPE_WITH_NAME(DMF_INTERFACE_TRANSPORT1_CONTEXT, DMF_SampleInterfaceLowerTransport1ContextGet)
+} DMF_INTERFACE_LOWERTRANSPORT1_CONTEXT;
+WDF_DECLARE_CONTEXT_TYPE_WITH_NAME(DMF_INTERFACE_LOWERTRANSPORT1_CONTEXT, DMF_SampleInterfaceLowerTransport1ContextGet)
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////
 // WDF Module Callbacks
@@ -99,12 +99,22 @@ Return Value:
 --*/
 {
     NTSTATUS ntStatus;
+    DMF_CONFIG_SampleInterfaceLowerTransport1* moduleConfig;
 
     UNREFERENCED_PARAMETER(PreviousState);
     UNREFERENCED_PARAMETER(DmfModule);
 
+    PAGED_CODE()
+
     FuncEntry(DMF_TRACE);
-DbgBreakPoint();
+
+    moduleConfig = DMF_CONFIG_GET(DmfModule);
+
+    TraceEvents(TRACE_LEVEL_INFORMATION, DMF_TRACE,
+                "DMF_SampleInterfaceLowerTransport1_ModuleD0Entry: ModuleId=%d ModuleName=%s",
+                moduleConfig->ModuleId,
+                moduleConfig->ModuleName);
+
     ntStatus = STATUS_SUCCESS;
  
     FuncExit(DMF_TRACE, "ntStatus=%!STATUS!", ntStatus);
@@ -138,15 +148,25 @@ Return Value:
 --*/
 {
     NTSTATUS ntStatus;
+    DMF_CONFIG_SampleInterfaceLowerTransport1* moduleConfig;
 
     UNREFERENCED_PARAMETER(DmfModule);
     UNREFERENCED_PARAMETER(TargetState);
 
+    PAGED_CODE()
+
     FuncEntry(DMF_TRACE);
 
-    ntStatus = STATUS_SUCCESS;
+    moduleConfig = DMF_CONFIG_GET(DmfModule);
 
-    FuncExitVoid(DMF_TRACE);
+    TraceEvents(TRACE_LEVEL_INFORMATION, DMF_TRACE,
+                "DMF_SampleInterfaceLowerTransport1_ModuleD0Exit: ModuleId=%d ModuleName=%s",
+                moduleConfig->ModuleId,
+                moduleConfig->ModuleName);
+
+    ntStatus = STATUS_SUCCESS;
+ 
+    FuncExit(DMF_TRACE, "ntStatus=%!STATUS!", ntStatus);
 
     return ntStatus;
 }
@@ -270,7 +290,7 @@ Return Value:
     NTSTATUS ntStatus;
     DMFMODULE transportModule;
     DMF_CONTEXT_SampleInterfaceLowerTransport1* moduleContext;
-    DMF_INTERFACE_TRANSPORT1_CONTEXT* transportContext;
+    DMF_INTERFACE_LOWERTRANSPORT1_CONTEXT* transportContext;
     DMF_CONFIG_SampleInterfaceLowerTransport1* moduleConfig;
 
     PAGED_CODE();
@@ -430,7 +450,7 @@ DMF_SampleInterfaceLowerTransport1_Method1(
     NTSTATUS ntStatus;
     DMFMODULE transportModule;
     DMF_CONFIG_SampleInterfaceLowerTransport1* moduleConfig;
-    DMF_INTERFACE_TRANSPORT1_CONTEXT* transportContext;
+    DMF_INTERFACE_LOWERTRANSPORT1_CONTEXT* transportContext;
 
     PAGED_CODE()
 
@@ -532,11 +552,11 @@ Return Value:
     // Initialize the Transport Declaration Data.
     //
     DMF_INTERFACE_TRANSPORT_SampleInterfaceLower_DESCRIPTOR_INIT(&transportDeclarationData,
-                                                            DMF_SampleInterfaceLowerTransport1_PostBind,
-                                                            DMF_SampleInterfaceLowerTransport1_PreUnbind,
-                                                            DMF_SampleInterfaceLowerTransport1_Bind,
-                                                            DMF_SampleInterfaceLowerTransport1_Unbind,
-                                                            DMF_SampleInterfaceLowerTransport1_Method1);
+                                                                 DMF_SampleInterfaceLowerTransport1_PostBind,
+                                                                 DMF_SampleInterfaceLowerTransport1_PreUnbind,
+                                                                 DMF_SampleInterfaceLowerTransport1_Bind,
+                                                                 DMF_SampleInterfaceLowerTransport1_Unbind,
+                                                                 DMF_SampleInterfaceLowerTransport1_Method1);
 
     
     // An optional context can be set by the Transport module on the bind instance.
@@ -545,7 +565,7 @@ Return Value:
     // module will get a unique instance of this context each binding. 
     // 
     DMF_INTERFACE_DESCRIPTOR_SET_CONTEXT_TYPE(&transportDeclarationData, 
-                                              DMF_INTERFACE_TRANSPORT1_CONTEXT);
+                                              DMF_INTERFACE_LOWERTRANSPORT1_CONTEXT);
 
     // Add the interface to the Transport Module.
     //
