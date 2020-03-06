@@ -326,8 +326,8 @@ Return Value:
 --*/
 {
     NTSTATUS ntStatus;
-    DMF_INTERFACE_PROTOCOL_SampleInterface_BIND_DATA protocolBindData;
-    DMF_INTERFACE_TRANSPORT_SampleInterface_BIND_DATA transportBindData;
+    DMF_INTERFACE_PROTOCOL_SampleInterfaceLower_BIND_DATA protocolBindData;
+    DMF_INTERFACE_TRANSPORT_SampleInterfaceLower_BIND_DATA transportBindData;
     DMF_CONTEXT_SampleInterfaceLowerProtocol* moduleContext;
     DMF_CONFIG_SampleInterfaceLowerProtocol* moduleConfig;
     DMF_INTERFACE_PROTOCOL1_CONTEXT* protocolContext;
@@ -349,12 +349,12 @@ Return Value:
 
     // Call the Interface's Bind function.
     //
-    ntStatus = DMF_SampleInterface_TransportBind(DmfInterface,
-                                                 &protocolBindData,
-                                                 &transportBindData);
+    ntStatus = DMF_SampleInterfaceLower_TransportBind(DmfInterface,
+                                                      &protocolBindData,
+                                                      &transportBindData);
     if (!NT_SUCCESS(ntStatus))
     {
-        TraceEvents(TRACE_LEVEL_ERROR, DMF_TRACE, "DMF_SampleInterface_TransportBind fails: ntStatus=%!STATUS!", ntStatus);
+        TraceEvents(TRACE_LEVEL_ERROR, DMF_TRACE, "DMF_SampleInterfaceLower_TransportBind fails: ntStatus=%!STATUS!", ntStatus);
         goto Exit;
     }
 
@@ -405,7 +405,7 @@ Return Value:
 
     // Call the Interface's Unbind function.
     //
-    DMF_SampleInterface_TransportUnbind(DmfInterface);
+    DMF_SampleInterfaceLower_TransportUnbind(DmfInterface);
 
     FuncExitVoid(DMF_TRACE);
 }
@@ -521,11 +521,11 @@ Return Value:
 --*/
 {
     NTSTATUS ntStatus;
-    DMF_INTERFACE_PROTOCOL_SampleInterface_DECLARATION_DATA protocolDeclarationData;
+    DMF_INTERFACE_PROTOCOL_SampleInterfaceLower_DECLARATION_DATA protocolDeclarationData;
     DMF_MODULE_DESCRIPTOR dmfModuleDescriptor_SampleInterfaceLowerProtocol;
     DMF_CALLBACKS_DMF dmfCallbacksDmf_SampleInterfaceLowerProtocol;
     DMF_CALLBACKS_WDF dmfCallbacksWdf_SampleInterfaceLowerProtocol;
-
+DbgBreakPoint();
     PAGED_CODE();
 
     FuncEntry(DMF_TRACE);
@@ -542,7 +542,7 @@ Return Value:
                                             SampleInterfaceLowerProtocol,
                                             DMF_CONTEXT_SampleInterfaceLowerProtocol,
                                             DMF_MODULE_OPTIONS_PASSIVE,
-                                            DMF_MODULE_OPEN_OPTION_OPEN_Create);
+                                            DMF_MODULE_OPEN_OPTION_OPEN_PrepareHardware);
 
     dmfModuleDescriptor_SampleInterfaceLowerProtocol.CallbacksDmf = &dmfCallbacksDmf_SampleInterfaceLowerProtocol;
     dmfModuleDescriptor_SampleInterfaceLowerProtocol.CallbacksWdf = &dmfCallbacksWdf_SampleInterfaceLowerProtocol;
@@ -560,7 +560,7 @@ Return Value:
 
     // Initialize Protocol's declaration data.
     //
-    DMF_INTERFACE_PROTOCOL_SampleInterface_DESCRIPTOR_INIT(&protocolDeclarationData,
+    DMF_INTERFACE_PROTOCOL_SampleInterfaceLower_DESCRIPTOR_INIT(&protocolDeclarationData,
                                                            DMF_SampleInterfaceLowerProtocol_Bind,
                                                            DMF_SampleInterfaceLowerProtocol_Unbind,
                                                            DMF_SampleInterfaceLowerProtocol_PostBind,
@@ -621,7 +621,7 @@ Return Value:
 {
     DMF_CONTEXT_SampleInterfaceLowerProtocol* moduleContext;
     NTSTATUS ntStatus;
-
+DbgBreakPoint();
     PAGED_CODE();
 
     FuncEntry(DMF_TRACE);
@@ -632,15 +632,15 @@ Return Value:
 
     // Call the Interface's Method1.
     //
-    ntStatus = DMF_SampleInterface_TransportMethod1(moduleContext->SampleInterfaceHandle);
+    ntStatus = DMF_SampleInterfaceLower_TransportMethod1(moduleContext->SampleInterfaceHandle);
 
     if (!NT_SUCCESS(ntStatus))
     {
-        TraceEvents(TRACE_LEVEL_ERROR, DMF_TRACE, "DMF_SampleInterface_TransportMethod1 fails: ntStatus=%!STATUS!", ntStatus);
+        TraceEvents(TRACE_LEVEL_ERROR, DMF_TRACE, "DMF_SampleInterfaceLower_TransportMethod1 fails: ntStatus=%!STATUS!", ntStatus);
         goto Exit;
     }
 
-    TraceEvents(TRACE_LEVEL_VERBOSE, DMF_TRACE, "DMF_SampleInterface_TransportMethod1 success: ntStatus=%!STATUS!", ntStatus);
+    TraceEvents(TRACE_LEVEL_VERBOSE, DMF_TRACE, "DMF_SampleInterfaceLower_TransportMethod1 success: ntStatus=%!STATUS!", ntStatus);
 
 Exit:
 

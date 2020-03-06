@@ -105,13 +105,14 @@ Return Value:
 --*/
 {
     NTSTATUS ntStatus;
-
+    DMF_CONTEXT_SampleInterfaceUpperTransport2* moduleContext;
+DbgBreakPoint();
     UNREFERENCED_PARAMETER(PreviousState);
-    UNREFERENCED_PARAMETER(DmfModule);
 
     FuncEntry(DMF_TRACE);
 
-    ntStatus = STATUS_SUCCESS;
+    moduleContext = DMF_CONTEXT_GET(DmfModule);
+    ntStatus = DMF_SampleInterfaceLowerProtocol_TestMethod(moduleContext->DmfModuleProtocolLower);
  
     FuncExit(DMF_TRACE, "ntStatus=%!STATUS!", ntStatus);
 
@@ -251,8 +252,8 @@ _IRQL_requires_same_
 NTSTATUS
 DMF_SampleInterfaceUpperTransport2_Bind(
     _In_ DMFINTERFACE DmfInterface,
-    _In_ DMF_INTERFACE_PROTOCOL_SampleInterface_BIND_DATA* ProtocolBindData,
-    _Out_ DMF_INTERFACE_TRANSPORT_SampleInterface_BIND_DATA* TransportBindData
+    _In_ DMF_INTERFACE_PROTOCOL_SampleInterfaceUpper_BIND_DATA* ProtocolBindData,
+    _Out_ DMF_INTERFACE_TRANSPORT_SampleInterfaceUpper_BIND_DATA* TransportBindData
     )
 /*++
 
@@ -559,7 +560,7 @@ DMF_SampleInterfaceUpperTransport2_Method1(
                 transportContext->ProtocolId,
                 ntStatus);
 
-    EVT_SampleInterface_ProtocolCallback1(DmfInterface);
+    EVT_SampleInterfaceUpper_ProtocolCallback1(DmfInterface);
 
     FuncExit(DMF_TRACE, "ntStatus=%!STATUS!", ntStatus);
 
@@ -602,7 +603,7 @@ Return Value:
 --*/
 {
     NTSTATUS ntStatus;
-    DMF_INTERFACE_TRANSPORT_SampleInterface_DECLARATION_DATA transportDeclarationData;
+    DMF_INTERFACE_TRANSPORT_SampleInterfaceUpper_DECLARATION_DATA transportDeclarationData;
     DMF_MODULE_DESCRIPTOR dmfModuleDescriptor_SampleInterfaceUpperTransport2;
     DMF_CALLBACKS_DMF dmfCallbacksDmf_SampleInterfaceUpperTransport2;
     DMF_CALLBACKS_WDF dmfCallbacksWdf_SampleInterfaceUpperTransport2;
@@ -642,7 +643,7 @@ Return Value:
 
     // Initialize the Transport Declaration Data.
     //
-    DMF_INTERFACE_TRANSPORT_SampleInterface_DESCRIPTOR_INIT(&transportDeclarationData,
+    DMF_INTERFACE_TRANSPORT_SampleInterfaceUpper_DESCRIPTOR_INIT(&transportDeclarationData,
                                                             DMF_SampleInterfaceUpperTransport2_PostBind,
                                                             DMF_SampleInterfaceUpperTransport2_PreUnbind,
                                                             DMF_SampleInterfaceUpperTransport2_Bind,

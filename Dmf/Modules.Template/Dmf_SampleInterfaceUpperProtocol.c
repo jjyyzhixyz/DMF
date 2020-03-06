@@ -157,7 +157,7 @@ Return Value:
 --*/
 {
     NTSTATUS ntStatus;
-
+DbgBreakPoint();
     UNREFERENCED_PARAMETER(DmfModule);
     UNREFERENCED_PARAMETER(PreviousState);
 
@@ -199,7 +199,7 @@ Return Value:
 
     UNREFERENCED_PARAMETER(DmfModule);
     UNREFERENCED_PARAMETER(TargetState);
-
+DbgBreakPoint();
     FuncEntry(DMF_TRACE);
 
     ntStatus = STATUS_SUCCESS;
@@ -326,13 +326,13 @@ Return Value:
 --*/
 {
     NTSTATUS ntStatus;
-    DMF_INTERFACE_PROTOCOL_SampleInterface_BIND_DATA protocolBindData;
-    DMF_INTERFACE_TRANSPORT_SampleInterface_BIND_DATA transportBindData;
+    DMF_INTERFACE_PROTOCOL_SampleInterfaceUpper_BIND_DATA protocolBindData;
+    DMF_INTERFACE_TRANSPORT_SampleInterfaceUpper_BIND_DATA transportBindData;
     DMF_CONTEXT_SampleInterfaceUpperProtocol* moduleContext;
     DMF_CONFIG_SampleInterfaceUpperProtocol* moduleConfig;
     DMF_INTERFACE_PROTOCOL1_CONTEXT* protocolContext;
     DMFMODULE protocolModule;
-
+DbgBreakPoint();
     PAGED_CODE();
 
     FuncEntry(DMF_TRACE);
@@ -349,12 +349,12 @@ Return Value:
 
     // Call the Interface's Bind function.
     //
-    ntStatus = DMF_SampleInterface_TransportBind(DmfInterface,
+    ntStatus = DMF_SampleInterfaceUpper_TransportBind(DmfInterface,
                                                  &protocolBindData,
                                                  &transportBindData);
     if (!NT_SUCCESS(ntStatus))
     {
-        TraceEvents(TRACE_LEVEL_ERROR, DMF_TRACE, "DMF_SampleInterface_TransportBind fails: ntStatus=%!STATUS!", ntStatus);
+        TraceEvents(TRACE_LEVEL_ERROR, DMF_TRACE, "DMF_SampleInterfaceUpper_TransportBind fails: ntStatus=%!STATUS!", ntStatus);
         goto Exit;
     }
 
@@ -405,7 +405,7 @@ Return Value:
 
     // Call the Interface's Unbind function.
     //
-    DMF_SampleInterface_TransportUnbind(DmfInterface);
+    DMF_SampleInterfaceUpper_TransportUnbind(DmfInterface);
 
     FuncExitVoid(DMF_TRACE);
 }
@@ -439,7 +439,7 @@ Return Value:
     NTSTATUS ntStatus;
 
     PAGED_CODE();
-
+DbgBreakPoint();
     UNREFERENCED_PARAMETER(DmfModule);
 
     FuncEntry(DMF_TRACE);
@@ -477,7 +477,7 @@ Return Value:
 --*/
 {
     PAGED_CODE();
-
+DbgBreakPoint();
     UNREFERENCED_PARAMETER(DmfModule);
 
     FuncEntry(DMF_TRACE);
@@ -521,11 +521,11 @@ Return Value:
 --*/
 {
     NTSTATUS ntStatus;
-    DMF_INTERFACE_PROTOCOL_SampleInterface_DECLARATION_DATA protocolDeclarationData;
+    DMF_INTERFACE_PROTOCOL_SampleInterfaceUpper_DECLARATION_DATA protocolDeclarationData;
     DMF_MODULE_DESCRIPTOR dmfModuleDescriptor_SampleInterfaceUpperProtocol;
     DMF_CALLBACKS_DMF dmfCallbacksDmf_SampleInterfaceUpperProtocol;
     DMF_CALLBACKS_WDF dmfCallbacksWdf_SampleInterfaceUpperProtocol;
-
+DbgBreakPoint();
     PAGED_CODE();
 
     FuncEntry(DMF_TRACE);
@@ -542,7 +542,7 @@ Return Value:
                                             SampleInterfaceUpperProtocol,
                                             DMF_CONTEXT_SampleInterfaceUpperProtocol,
                                             DMF_MODULE_OPTIONS_PASSIVE,
-                                            DMF_MODULE_OPEN_OPTION_OPEN_Create);
+                                            DMF_MODULE_OPEN_OPTION_OPEN_PrepareHardware);
 
     dmfModuleDescriptor_SampleInterfaceUpperProtocol.CallbacksDmf = &dmfCallbacksDmf_SampleInterfaceUpperProtocol;
     dmfModuleDescriptor_SampleInterfaceUpperProtocol.CallbacksWdf = &dmfCallbacksWdf_SampleInterfaceUpperProtocol;
@@ -560,7 +560,7 @@ Return Value:
 
     // Initialize Protocol's declaration data.
     //
-    DMF_INTERFACE_PROTOCOL_SampleInterface_DESCRIPTOR_INIT(&protocolDeclarationData,
+    DMF_INTERFACE_PROTOCOL_SampleInterfaceUpper_DESCRIPTOR_INIT(&protocolDeclarationData,
                                                            DMF_SampleInterfaceUpperProtocol_Bind,
                                                            DMF_SampleInterfaceUpperProtocol_Unbind,
                                                            DMF_SampleInterfaceUpperProtocol_PostBind,
@@ -629,18 +629,18 @@ Return Value:
     moduleContext = DMF_CONTEXT_GET(DmfModule);
 
     DmfAssert(moduleContext->SampleInterfaceHandle != NULL);
-
+DbgBreakPoint();
     // Call the Interface's Method1.
     //
-    ntStatus = DMF_SampleInterface_TransportMethod1(moduleContext->SampleInterfaceHandle);
+    ntStatus = DMF_SampleInterfaceUpper_TransportMethod1(moduleContext->SampleInterfaceHandle);
 
     if (!NT_SUCCESS(ntStatus))
     {
-        TraceEvents(TRACE_LEVEL_ERROR, DMF_TRACE, "DMF_SampleInterface_TransportMethod1 fails: ntStatus=%!STATUS!", ntStatus);
+        TraceEvents(TRACE_LEVEL_ERROR, DMF_TRACE, "DMF_SampleInterfaceUpper_TransportMethod1 fails: ntStatus=%!STATUS!", ntStatus);
         goto Exit;
     }
 
-    TraceEvents(TRACE_LEVEL_VERBOSE, DMF_TRACE, "DMF_SampleInterface_TransportMethod1 success: ntStatus=%!STATUS!", ntStatus);
+    TraceEvents(TRACE_LEVEL_VERBOSE, DMF_TRACE, "DMF_SampleInterfaceUpper_TransportMethod1 success: ntStatus=%!STATUS!", ntStatus);
 
 Exit:
 

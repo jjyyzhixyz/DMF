@@ -104,7 +104,7 @@ Return Value:
     UNREFERENCED_PARAMETER(DmfModule);
 
     FuncEntry(DMF_TRACE);
-
+DbgBreakPoint();
     ntStatus = STATUS_SUCCESS;
  
     FuncExit(DMF_TRACE, "ntStatus=%!STATUS!", ntStatus);
@@ -245,8 +245,8 @@ _IRQL_requires_same_
 NTSTATUS
 DMF_SampleInterfaceLowerTransport1_Bind(
     _In_ DMFINTERFACE DmfInterface,
-    _In_ DMF_INTERFACE_PROTOCOL_SampleInterface_BIND_DATA* ProtocolBindData,
-    _Out_ DMF_INTERFACE_TRANSPORT_SampleInterface_BIND_DATA* TransportBindData
+    _In_ DMF_INTERFACE_PROTOCOL_SampleInterfaceLower_BIND_DATA* ProtocolBindData,
+    _Out_ DMF_INTERFACE_TRANSPORT_SampleInterfaceLower_BIND_DATA* TransportBindData
     )
 /*++
 
@@ -449,7 +449,7 @@ DMF_SampleInterfaceLowerTransport1_Method1(
                 transportContext->ProtocolId,
                 ntStatus);
 
-    EVT_SampleInterface_ProtocolCallback1(DmfInterface);
+    EVT_SampleInterfaceLower_ProtocolCallback1(DmfInterface);
 
     FuncExit(DMF_TRACE, "ntStatus=%!STATUS!", ntStatus);
 
@@ -492,7 +492,7 @@ Return Value:
 --*/
 {
     NTSTATUS ntStatus;
-    DMF_INTERFACE_TRANSPORT_SampleInterface_DECLARATION_DATA transportDeclarationData;
+    DMF_INTERFACE_TRANSPORT_SampleInterfaceLower_DECLARATION_DATA transportDeclarationData;
     DMF_MODULE_DESCRIPTOR dmfModuleDescriptor_SampleInterfaceLowerTransport1;
     DMF_CALLBACKS_DMF dmfCallbacksDmf_SampleInterfaceLowerTransport1;
     DMF_CALLBACKS_WDF dmfCallbacksWdf_SampleInterfaceLowerTransport1;
@@ -531,7 +531,7 @@ Return Value:
 
     // Initialize the Transport Declaration Data.
     //
-    DMF_INTERFACE_TRANSPORT_SampleInterface_DESCRIPTOR_INIT(&transportDeclarationData,
+    DMF_INTERFACE_TRANSPORT_SampleInterfaceLower_DESCRIPTOR_INIT(&transportDeclarationData,
                                                             DMF_SampleInterfaceLowerTransport1_PostBind,
                                                             DMF_SampleInterfaceLowerTransport1_PreUnbind,
                                                             DMF_SampleInterfaceLowerTransport1_Bind,
