@@ -64,6 +64,9 @@
     <ClCompile Include="..\..\Framework\Platform\DmfPlatform_Win32.c">
       <Filter>Platform</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\Framework\Modules.Core\Dmf_BranchTrack.c">
+      <Filter>Modules\Features</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Framework\Modules.Core\Dmf_BranchTrack.h">

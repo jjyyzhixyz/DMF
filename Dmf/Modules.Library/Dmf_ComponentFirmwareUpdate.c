@@ -23,13 +23,16 @@ Environment:
 #include "DmfModules.Library.h"
 #include "DmfModules.Library.Trace.h"
 
-#include <intsafe.h>
+#if defined(DMF_WDF_DRIVER)
 #include "Dmf_ComponentFirmwareUpdate.tmh"
+#endif
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////
 // Module Private Enumerations and Structures
 ///////////////////////////////////////////////////////////////////////////////////////////////////////
 //
+
+#include <intsafe.h>
 
 // Defines a single offer and payload content.
 //

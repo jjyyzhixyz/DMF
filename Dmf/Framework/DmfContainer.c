@@ -27,7 +27,9 @@ Environment:
 
 #include "DmfIncludeInternal.h"
 
+#if defined(DMF_WDF_DRIVER)
 #include "DmfContainer.tmh"
+#endif
 
 // Callbacks called by Windows directly should use C calling convention (not C++).
 //
@@ -180,7 +182,7 @@ Return Value:
                                                    ResourcesTranslated);
     if (! NT_SUCCESS(ntStatus))
     {
-        TraceEvents(TRACE_LEVEL_ERROR, DMF_TRACE, "DMF_ModuleCollectionPrepareHardware fails: ntStatus=%!STATUS!", ntStatus);
+        TraceEvents(TRACE_LEVEL_ERROR, DMF_TRACE, "DMF_ModuleCollectionReleaseHardware fails: ntStatus=%!STATUS!", ntStatus);
         goto Exit;
     }
 
@@ -440,14 +442,10 @@ Return Value:
         //
         if (dmfDeviceContext->IsFilterDevice)
         {
-#if defined(DMF_WDF_DRIVER)
             // Completes this Request with error if it cannot passthru.
             //
             DMF_RequestPassthru(device,
                                 Request);
-#else
-            DmfAssert(FALSE);
-#endif
         }
         else
         {
@@ -510,14 +508,10 @@ Return Value:
         //
         if (dmfDeviceContext->IsFilterDevice)
         {
-#if defined(DMF_WDF_DRIVER)
             // Completes this Request with error if it cannot passthru.
             //
             DMF_RequestPassthru(device,
                                 Request);
-#else
-            DmfAssert(FALSE);
-#endif
         }
         else
         {
@@ -589,14 +583,10 @@ Return Value:
         //
         if (dmfDeviceContext->IsFilterDevice)
         {
-#if defined(DMF_WDF_DRIVER)
             // Completes this Request with error if it cannot passthru.
             //
             DMF_RequestPassthru(device,
                                 Request);
-#else
-            DmfAssert(FALSE);
-#endif
         }
         else
         {
@@ -1444,7 +1434,6 @@ Return Value:
         //
         if (dmfDeviceContext->IsFilterDevice)
         {
-#if defined(DMF_WDF_DRIVER)
             // Completes this Request with error if it cannot passthru.
             // File Create must have a completion routine passed to avoid Verifier issue.
             //
@@ -1452,9 +1441,6 @@ Return Value:
                                               Request,
                                               DmfContainerEvtWdfRequestCompletionRoutine_FileCreate,
                                               dmfDeviceContext);
-#else
-            DmfAssert(FALSE);
-#endif
         }
         else
         {
@@ -1906,7 +1892,7 @@ Return Value:
         // implements EVT_WDF_DRIVER_DEVICE_ADD callback
         //
         ntStatus = STATUS_NOT_SUPPORTED;
-        TraceEvents(TRACE_LEVEL_ERROR, DMF_TRACE, "DMF_Invoke_DeviceCallbacksCreate fails: ntStatus=%!STATUS!", ntStatus);
+        TraceEvents(TRACE_LEVEL_ERROR, DMF_TRACE, "DMF_Invoke_DeviceCallbacksDestroy fails: ntStatus=%!STATUS!", ntStatus);
         goto Exit;
     }
 

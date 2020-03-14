@@ -24,7 +24,9 @@ Environment:
 #include "DmfModules.Library.h"
 #include "DmfModules.Library.Trace.h"
 
+#if defined(DMF_WDF_DRIVER)
 #include "Dmf_AlertableSleep.tmh"
+#endif
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////
 // Module Private Enumerations and Structures
@@ -286,6 +288,7 @@ Return Value:
 // Module Methods
 //
 
+#pragma code_seg("PAGE")
 _IRQL_requires_max_(PASSIVE_LEVEL)
 VOID
 DMF_AlertableSleep_Abort(
@@ -351,7 +354,9 @@ Exit:
 
     FuncExitVoid(DMF_TRACE);
 }
+#pragma code_seg()
 
+#pragma code_seg("PAGE")
 _IRQL_requires_max_(PASSIVE_LEVEL)
 VOID
 DMF_AlertableSleep_ResetForReuse(
@@ -417,6 +422,7 @@ Exit:
 
     FuncExitVoid(DMF_TRACE);
 }
+#pragma code_seg()
 
 #pragma code_seg("PAGE")
 _Must_inspect_result_

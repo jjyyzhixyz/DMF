@@ -26,7 +26,9 @@ Environment:
 
 #include "DmfIncludeInternal.h"
 
+#if defined(DMF_WDF_DRIVER)
 #include "DmfHelpers.tmh"
+#endif
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
@@ -648,8 +650,6 @@ Return Value:
     return dmfModuleFeature;
 }
 
-#if defined(DMF_WDF_DRIVER)
-
 _IRQL_requires_max_(DISPATCH_LEVEL)
 VOID
 DMF_RequestPassthru(
@@ -758,8 +758,6 @@ Return Value:
         TraceEvents(TRACE_LEVEL_INFORMATION, DMF_TRACE, "Passthru Request: Request=%p", Request);
     }
 }
-
-#endif
 
 // eof: DmfHelpers.c
 //

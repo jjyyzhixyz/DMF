@@ -31,7 +31,7 @@
     <TemplateGuid>{2177f19c-eb4c-4687-9e7f-f9eec1f12cf1}</TemplateGuid>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <MinimumVisualStudioVersion>14.0</MinimumVisualStudioVersion>
-    <RootNamespace>SurfaceDtxDriver</RootNamespace>
+    <RootNamespace>Dmf32</RootNamespace>
     <ProjectName>Dmf32</ProjectName>
     <SccProjectName>SAK</SccProjectName>
     <SccAuxPath>SAK</SccAuxPath>
@@ -42,55 +42,21 @@
     <ConfigurationType>StaticLibrary</ConfigurationType>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+  <PropertyGroup Condition="'$(Configuration)'=='Debug'" Label="Configuration">
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>WindowsUserModeDriver10.0</PlatformToolset>
-    <WindowsTargetPlatformVersion>$(LatestTargetPlatformVersion)</WindowsTargetPlatformVersion>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+  <PropertyGroup Condition="'$(Configuration)'=='Release'" Label="Configuration">
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>WindowsUserModeDriver10.0</PlatformToolset>
-    <WindowsTargetPlatformVersion>$(LatestTargetPlatformVersion)</WindowsTargetPlatformVersion>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
-    <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>WindowsUserModeDriver10.0</PlatformToolset>
+  <PropertyGroup Label="Configuration">
+    <PlatformToolset>windowsapplicationfordrivers10.0</PlatformToolset>
     <WindowsTargetPlatformVersion>$(LatestTargetPlatformVersion)</WindowsTargetPlatformVersion>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'" Label="Configuration">
-    <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>WindowsUserModeDriver10.0</PlatformToolset>
-    <WindowsTargetPlatformVersion>$(LatestTargetPlatformVersion)</WindowsTargetPlatformVersion>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
-    <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>WindowsUserModeDriver10.0</PlatformToolset>
-    <WindowsTargetPlatformVersion>$(LatestTargetPlatformVersion)</WindowsTargetPlatformVersion>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'" Label="Configuration">
-    <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>WindowsUserModeDriver10.0</PlatformToolset>
-    <WindowsTargetPlatformVersion>$(LatestTargetPlatformVersion)</WindowsTargetPlatformVersion>
-  </PropertyGroup>
-  <PropertyGroup>
-    <DebuggerFlavor>DbgengKernelDebugger</DebuggerFlavor>
-    <SigningCertPath Condition="'$(SigningCertPath)'==''">$(SigningCertificatesDir)OEMTest_OS_DRIVER.pfx</SigningCertPath>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <PropertyGroup>
     <OutDir>$(SolutionDir)$(ConfigurationName)\$(PlatformName)\lib\$(ProjectName)\</OutDir>
   </PropertyGroup>
   <PropertyGroup>
-    <EnableInf2cat>false</EnableInf2cat>
-    <DebuggerFlavor>DbgengRemoteDebugger</DebuggerFlavor>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <RunCodeAnalysis>false</RunCodeAnalysis>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">
-    <RunCodeAnalysis>false</RunCodeAnalysis>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <RunCodeAnalysis>false</RunCodeAnalysis>
   </PropertyGroup>
   <ItemDefinitionGroup>
@@ -102,146 +68,23 @@
       <ExceptionHandling>Sync</ExceptionHandling>
       <CompileAs>CompileAsCpp</CompileAs>
       <ShowIncludes>false</ShowIncludes>
-      <PreprocessToFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</PreprocessToFile>
-      <PreprocessToFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</PreprocessToFile>
-      <PreprocessToFile Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">false</PreprocessToFile>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <PreprocessToFile Condition="'$(Configuration)'=='Debug'">false</PreprocessToFile>
       <DisableSpecificWarnings />
-      <TreatWarningAsError Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</TreatWarningAsError>
-      <TreatWarningAsError Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">true</TreatWarningAsError>
-      <MultiProcessorCompilation Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</MultiProcessorCompilation>
-      <MultiProcessorCompilation Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">true</MultiProcessorCompilation>
-      <MultiProcessorCompilation Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</MultiProcessorCompilation>
-      <MultiProcessorCompilation Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">true</MultiProcessorCompilation>
-      <MultiProcessorCompilation Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</MultiProcessorCompilation>
-      <MultiProcessorCompilation Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</MultiProcessorCompilation>
-      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Release|x64'">OldStyle</DebugInformationFormat>
-      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">OldStyle</DebugInformationFormat>
-      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">OldStyle</DebugInformationFormat>
-      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">OldStyle</DebugInformationFormat>
-      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">OldStyle</DebugInformationFormat>
-      <DebugInformationFormat Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">OldStyle</DebugInformationFormat>
-      <WppFileExtensions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">.c.C.cpp.CPP.h.H" "$(SurfaceLibraryDir)\User\General\*.h</WppFileExtensions>
-      <WppFileExtensions Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">.c.C.cpp.CPP.h.H" "$(SurfaceLibraryDir)\User\General\*.h</WppFileExtensions>
-      <WppFileExtensions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">.c.C.cpp.CPP.h.H" "$(SurfaceLibraryDir)\User\General\*.h</WppFileExtensions>
-      <WppFileExtensions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">.c.C.cpp.CPP.h.H" "$(SurfaceLibraryDir)\User\General\*.h</WppFileExtensions>
-      <WppFileExtensions Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">.c.C.cpp.CPP.h.H" "$(SurfaceLibraryDir)\User\General\*.h</WppFileExtensions>
-      <WppFileExtensions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">.c.C.cpp.CPP.h.H" "$(SurfaceLibraryDir)\User\General\*.h</WppFileExtensions>
-      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Release|x64'">%(AdditionalIncludeDirectories);..\..;$(SurfaceLibraryDir)\User\3rdParty;$(SurfaceLibraryDir)\User\General;</AdditionalIncludeDirectories>
-      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">%(AdditionalIncludeDirectories);..\..;$(SurfaceLibraryDir)\User\3rdParty;$(SurfaceLibraryDir)\User\General;</AdditionalIncludeDirectories>
-      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">%(AdditionalIncludeDirectories);..\..;$(SurfaceLibraryDir)\User\3rdParty;$(SurfaceLibraryDir)\User\General;</AdditionalIncludeDirectories>
-      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">%(AdditionalIncludeDirectories);..\..;$(SurfaceLibraryDir)\User\3rdParty;$(SurfaceLibraryDir)\User\General;</AdditionalIncludeDirectories>
-      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">%(AdditionalIncludeDirectories);..\..;$(SurfaceLibraryDir)\User\3rdParty;$(SurfaceLibraryDir)\User\General;</AdditionalIncludeDirectories>
-      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(AdditionalIncludeDirectories);..\..;$(SurfaceLibraryDir)\User\3rdParty;$(SurfaceLibraryDir)\User\General;</AdditionalIncludeDirectories>
-      <WppRecorderEnabled Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">true</WppRecorderEnabled>
-      <WppRecorderEnabled Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">true</WppRecorderEnabled>
-      <WppRecorderEnabled Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</WppRecorderEnabled>
-      <WppRecorderEnabled Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</WppRecorderEnabled>
-      <WppRecorderEnabled Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</WppRecorderEnabled>
-      <WppRecorderEnabled Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</WppRecorderEnabled>
-      <RuntimeLibrary Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">MultiThreaded</RuntimeLibrary>
-      <RuntimeLibrary Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">MultiThreaded</RuntimeLibrary>
-      <RuntimeLibrary Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">MultiThreaded</RuntimeLibrary>
-      <RuntimeLibrary Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">MultiThreaded</RuntimeLibrary>
-      <RuntimeLibrary Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">MultiThreaded</RuntimeLibrary>
-      <RuntimeLibrary Condition="'$(Configuration)|$(Platform)'=='Release|x64'">MultiThreaded</RuntimeLibrary>
-      <LanguageStandard Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">stdcpp17</LanguageStandard>
-      <LanguageStandard Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">stdcpp17</LanguageStandard>
-      <LanguageStandard Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">stdcpp17</LanguageStandard>
-      <LanguageStandard Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">stdcpp17</LanguageStandard>
-      <LanguageStandard Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">stdcpp17</LanguageStandard>
-      <LanguageStandard Condition="'$(Configuration)|$(Platform)'=='Release|x64'">stdcpp17</LanguageStandard>
+      <DebugInformationFormat>OldStyle</DebugInformationFormat>
+      <WppFileExtensions>.c.C.cpp.CPP.h.H</WppFileExtensions>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);</AdditionalIncludeDirectories>
+      <WppRecorderEnabled>true</WppRecorderEnabled>
+      <WppEnabled>false</WppEnabled>
     </ClCompile>
     <Link>
-      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(AdditionalDependencies);Dmf32Framework.lib;Dmf32Modules.Library.lib;</AdditionalDependencies>
+      <AdditionalDependencies>%(AdditionalDependencies);Dmf32Framework.lib;Dmf32Modules.Library.lib;</AdditionalDependencies>
     </Link>
-    <Link />
-    <Link>
-      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">%(AdditionalDependencies);Dmf32Framework.lib;Dmf32Modules.Library.lib;</AdditionalDependencies>
-    </Link>
-    <Link />
-    <Link />
-    <Link />
-    <Link>
-      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">%(AdditionalDependencies);Dmf32Framework.lib;Dmf32Modules.Library.lib;</AdditionalDependencies>
-      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">%(AdditionalDependencies);Dmf32Framework.lib;Dmf32Modules.Library.lib;</AdditionalDependencies>
-    </Link>
-    <Link />
-    <Link>
-      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|x64'">%(AdditionalDependencies);Dmf32Framework.lib;Dmf32Modules.Library.lib;</AdditionalDependencies>
-      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">%(AdditionalDependencies);Dmf32Framework.lib;Dmf32Modules.Library.lib;</AdditionalDependencies>
-    </Link>
-    <Link />
-    <Link />
-    <Link />
-    <Lib />
-    <Lib />
-    <Lib />
-    <Lib />
     <Lib>
-      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Dmf32Framework.lib;Dmf32Modules.Library.lib;</AdditionalDependencies>
-      <AdditionalLibraryDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(SolutionDir)$(ConfigurationName)\$(PlatformName)\individual_libs\Dmf32Framework;$(SolutionDir)$(ConfigurationName)\$(PlatformName)\individual_libs\Dmf32Modules.Library;</AdditionalLibraryDirectories>
+      <AdditionalDependencies>Dmf32Framework.lib;Dmf32Modules.Library.lib;</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)$(ConfigurationName)\$(PlatformName)\individual_libs\Dmf32Framework;$(SolutionDir)$(ConfigurationName)\$(PlatformName)\individual_libs\Dmf32Modules.Library;</AdditionalLibraryDirectories>
     </Lib>
-    <Lib />
-    <Lib />
-    <Lib />
-    <Lib />
-    <Lib>
-      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Dmf32Framework.lib;Dmf32Modules.Library.lib;</AdditionalDependencies>
-      <AdditionalLibraryDirectories Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(SolutionDir)$(ConfigurationName)\$(PlatformName)\individual_libs\Dmf32Framework;$(SolutionDir)$(ConfigurationName)\$(PlatformName)\individual_libs\Dmf32Modules.Library;</AdditionalLibraryDirectories>
-    </Lib>
-    <Lib />
-    <Lib />
-    <Lib />
-    <Lib />
-    <Lib />
-    <Lib />
-    <Lib />
-    <Lib />
-    <Lib />
-    <Lib>
-      <AdditionalLibraryDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(SolutionDir)$(ConfigurationName)\$(PlatformName)\individual_libs\Dmf32Framework;$(SolutionDir)$(ConfigurationName)\$(PlatformName)\individual_libs\Dmf32Modules.Library;</AdditionalLibraryDirectories>
-      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Dmf32Framework.lib;Dmf32Modules.Library.lib;</AdditionalDependencies>
-    </Lib>
-    <Lib />
-    <Lib />
-    <Lib />
-    <Lib />
-    <Lib>
-      <AdditionalLibraryDirectories Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(SolutionDir)$(ConfigurationName)\$(PlatformName)\individual_libs\Dmf32Framework;$(SolutionDir)$(ConfigurationName)\$(PlatformName)\individual_libs\Dmf32Modules.Library;</AdditionalLibraryDirectories>
-      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Dmf32Framework.lib;Dmf32Modules.Library.lib;</AdditionalDependencies>
-    </Lib>
-    <Lib />
-    <Lib />
-    <Lib />
-    <Lib />
-    <Lib />
-    <Lib />
-    <Lib />
-    <Lib />
-    <Lib />
-    <Lib>
-      <AdditionalLibraryDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">$(SolutionDir)$(ConfigurationName)\$(PlatformName)\individual_libs\Dmf32Framework;$(SolutionDir)$(ConfigurationName)\$(PlatformName)\individual_libs\Dmf32Modules.Library;</AdditionalLibraryDirectories>
-      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">Dmf32Framework.lib;Dmf32Modules.Library.lib;</AdditionalDependencies>
-    </Lib>
-    <Lib />
-    <Lib />
-    <Lib />
-    <Lib />
-    <Lib>
-      <AdditionalLibraryDirectories Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">$(SolutionDir)$(ConfigurationName)\$(PlatformName)\individual_libs\Dmf32Framework;$(SolutionDir)$(ConfigurationName)\$(PlatformName)\individual_libs\Dmf32Modules.Library;</AdditionalLibraryDirectories>
-      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">Dmf32Framework.lib;Dmf32Modules.Library.lib;</AdditionalDependencies>
-    </Lib>
-    <Lib />
-    <Lib />
-    <Lib />
-    <Lib />
-    <Lib />
-    <Lib />
   </ItemDefinitionGroup>
-  <ItemGroup>
-    <FilesToPackage Include="$(TargetPath)" />
-    <FilesToPackage Include="@(Inf->'%(CopyOutput)')" Condition="'@(Inf)'!=''" />
-  </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Dmf32.c" />
   </ItemGroup>

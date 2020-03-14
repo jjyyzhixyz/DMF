@@ -25,7 +25,9 @@ Environment:
 
 #include "DmfIncludeInternal.h"
 
+#if defined(DMF_WDF_DRIVER)
 #include "DmfCall.tmh"
+#endif
 
 // DMF dispatches all callbacks it receives from WDF to each Module in the Module Collection
 // (Parent Module) as well as to each of its Child Modules. Depending on the callback, DMF 

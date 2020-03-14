@@ -27,7 +27,9 @@ Environment:
 
 #include "DmfIncludeInternal.h"
 
+#if defined(DMF_WDF_DRIVER)
 #include "DmfCore.tmh"
+#endif
 
 // Internal Callbacks for PASSIVE_LEVEL.
 //
@@ -481,7 +483,7 @@ Return Value:
                                (VOID* *)&DmfObject->ModuleDescriptor.CallbacksDmf);
     if (! NT_SUCCESS(ntStatus))
     {
-        TraceEvents(TRACE_LEVEL_ERROR, DMF_TRACE, "Unable to allocate Callbacks Dmf");
+        TraceEvents(TRACE_LEVEL_ERROR, DMF_TRACE, "WdfMemoryCreate fails: ntStatus=%!STATUS!", ntStatus);
         goto Exit;
     }
 
@@ -496,7 +498,7 @@ Return Value:
                                (VOID* *)&DmfObject->ModuleDescriptor.CallbacksWdf);
     if (! NT_SUCCESS(ntStatus))
     {
-        TraceEvents(TRACE_LEVEL_ERROR, DMF_TRACE, "Unable to allocate Callbacks Dmf");
+        TraceEvents(TRACE_LEVEL_ERROR, DMF_TRACE, "WdfMemoryCreate fails: ntStatus=%!STATUS!", ntStatus);
         goto Exit;
     }
 
@@ -1624,8 +1626,6 @@ Return Value:
     return transportModule;
 }
 
-#if defined(DMF_WDF_DRIVER)
-
 BOOLEAN
 DMF_ModuleRequestCompleteOrForward(
     _In_ DMFMODULE DmfModule,
@@ -1683,8 +1683,6 @@ Exit:
 
     return completed;
 }
-
-#endif
 
 #if !defined(DMF_USER_MODE)
 RECORDER_LOG

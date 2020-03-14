@@ -27,7 +27,9 @@ Environment:
 
 #include "DmfIncludeInternal.h"
 
+#if defined(DMF_WDF_DRIVER)
 #include "DmfInternal.tmh"
+#endif
 
 _IRQL_requires_max_(PASSIVE_LEVEL)
 VOID

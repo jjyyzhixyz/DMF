@@ -130,6 +130,7 @@ Environment:
 #include <ndisguid.h>
 #include <strsafe.h>
 #include <ndisguid.h>
+#include <devioctl.h>
 
 // DMF Asserts definitions 
 //

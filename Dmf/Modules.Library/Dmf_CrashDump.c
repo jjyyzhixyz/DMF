@@ -36,7 +36,9 @@ Environment:
 
 #endif // !defined(DMF_USER_MODE)
 
+#if defined(DMF_WDF_DRIVER)
 #include "Dmf_CrashDump.tmh"
+#endif
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////
 // Module Private Enumerations and Structures

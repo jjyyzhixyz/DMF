@@ -47,9 +47,7 @@ extern "C"
 #include "Dmf_LiveKernelDump.h"
 #endif
 #include "Dmf_BufferQueue.h"
-#if defined(DMF_WDF_DRIVER)
 #include "Dmf_IoctlHandler.h"
-#endif
 
 #if defined(__cplusplus)
 }

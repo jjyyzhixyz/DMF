@@ -4,17 +4,17 @@
 
 Module Name:
 
-    DmfU.c
+    Dmf32.c
 
 Environment:
 
-    User-mode Driver Framework
+    Windows User-mode Application
 
 --*/
 
 void
-DmfU()
+Dmf32()
 {
-	int dmfU;
-	dmfU = 0;
+    int dmf32;
+    dmf32 = 0;
 }

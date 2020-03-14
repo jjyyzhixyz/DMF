@@ -9,11 +9,15 @@ Module Name:
 
 Abstract:
 
-    This file contains the lower-edge of DMF. The code is this file is modified as
-    needed for every custom (non-Windows) platform where DMF is compiled.
+    This is the common code for all non-KMDF/UMDF platforms. Functions are here are the top edge of
+    WDF support for non-WDF platforms.
 
     NOTE: Make sure to set "compile as C++" option.
     NOTE: Make sure to #define DMF_USER_MODE in UMDF Drivers.
+
+    NOTE: The function headers' arguments are explained in cases where the parameter
+          is used in a specific manner in the function or has special meaning. All other
+          parameters are annotated with "(See MSDN for meanings of the rest of the parameters.)"
 
 Environment:
 
@@ -25,7 +29,9 @@ Environment:
 
 #include "DmfIncludeInternal.h"
 
+#if defined(DMF_WDF_DRIVER)
 #include "DmfPlatform.tmh"
+#endif
 
 #if defined(__cplusplus)
 extern "C" 
@@ -39,13 +45,39 @@ extern "C"
 ///////////////////////////////////////////////////////////////////////////////////
 //
 
-// All objects can have a custom context assigned. This helper function is called
-// by all object creation functions.
-//
+typedef
+void
+(*DmfPlatform_PlatformObjectDeletionFunction)(_In_ DMF_PLATFORM_OBJECT* PlatformObject);
+
+DMF_PLATFORM_OBJECT*
+DmfPlatformObjectCreate(
+    _In_ DMF_PLATFORM_OBJECT* Parent,
+    _In_ DMF_Platform_ObjectDelete ObjectDeleteCallback
+    );
+
 NTSTATUS
-CustomContextAllocate(WDFOBJECT Object,
-                      WDF_OBJECT_ATTRIBUTES* Attributes
+DmfPlatform_CustomContextAllocate(
+    _In_ WDFOBJECT Object,
+    _In_opt_ WDF_OBJECT_ATTRIBUTES* Attributes
     )
+/*++
+
+Routine Description:
+
+    Internal helper function that allocates a given Custom Context.
+    All objects can have a custom context assigned. This helper function is called
+    by all object creation functions.
+
+Arguments:
+
+    Object - The object to which the allocated given Custom Context is added to.
+    Attributes - Describes the Custom Context to allocate.
+
+Return Value:
+
+    NTSTATUS
+
+--*/
 {
     NTSTATUS ntStatus;
 
@@ -65,19 +97,120 @@ CustomContextAllocate(WDFOBJECT Object,
     return ntStatus;
 }
 
-// TODO: Use ContextSizeOverride.
-//
+DMF_PLATFORM_OBJECT*
+DmfPlatform_ObjectCreateProlog(
+    _In_ DmfPlatform_PlatformObjectDeletionFunction PlatformDeletionFunction,
+    _In_opt_ WDF_OBJECT_ATTRIBUTES* Attributes,
+    _In_ size_t SizeOfPlatformSpecificData,
+    _In_ DmfPlatformObjectType PlatformObjectType
+    )
+/*++
+
+Routine Description:
+
+    Internal helper function that allocates and sets up a DMF_PLATFORM_OBJECT.
+
+Arguments:
+
+    PlatformDeletionFunction - The object custom deletion function to be called to 
+                               delete the object platform specific data.
+    Attributes - Passed by the caller that wants to create the object.
+    SizeOfPlatformSpecificData - Size of the platform specific data that is allocated.
+    PlatformObjectType - Indicates the platform specific object type.
+
+Return Value:
+
+    The created DMF Platform object or NULL if an error occurs.
+
+--*/
+{
+    DMF_PLATFORM_OBJECT* parentObject;
+    DMF_PLATFORM_OBJECT* platformObject;
+
+    if (Attributes != NULL)
+    {
+        parentObject = (DMF_PLATFORM_OBJECT*)Attributes->ParentObject;
+    }
+    else
+    {
+        parentObject = NULL;
+    }
+
+    // Allocate the object.
+    //
+    platformObject = DmfPlatformObjectCreate(parentObject,
+                                             PlatformDeletionFunction);
+    if (platformObject == NULL)
+    {
+        TraceEvents(TRACE_LEVEL_ERROR, DMF_TRACE, "DmfPlatformObjectCreate fails");
+        goto Exit;
+    }
+
+    // Allocate the platform specific object container.
+    //
+    platformObject->Data = (void*)DmfPlatformHandlersTable.DmfPlatformHandlerAllocate(SizeOfPlatformSpecificData);
+    if (platformObject->Data == NULL)
+    {
+        TraceEvents(TRACE_LEVEL_ERROR, DMF_TRACE, "platformObject->Data fails");
+        DmfPlatformHandlersTable.DmfPlatformHandlerFree(platformObject);
+        goto Exit;
+    }
+
+    // This identifier is used for debug purposes.
+    //
+    platformObject->PlatformObjectType = PlatformObjectType;
+
+    // Save the passed attributes for later use by object's functions as needed.
+    //
+    if (Attributes != NULL)
+    {
+        memcpy(&platformObject->ObjectAttributes,
+               Attributes,
+               sizeof(WDF_OBJECT_ATTRIBUTES));
+    }
+
+    NTSTATUS ntStatus;
+
+    ntStatus = DmfPlatform_CustomContextAllocate(platformObject,
+                                                 Attributes);
+    if (!NT_SUCCESS(ntStatus))
+    {
+        TraceEvents(TRACE_LEVEL_ERROR, DMF_TRACE, "DmfPlatform_CustomContextAllocate fails: ntStatus=0x08X", ntStatus);
+        DmfPlatformHandlersTable.DmfPlatformHandlerFree(platformObject->Data);
+        DmfPlatformHandlersTable.DmfPlatformHandlerFree(platformObject);
+    }
+
+Exit:
+
+    return platformObject;
+}
+
 NTSTATUS
 DmfPlatform_WdfObjectAllocateContext(
-    _In_
-    PWDF_DRIVER_GLOBALS DriverGlobals,
-    _In_
-    WDFOBJECT Handle,
-    _In_
-    PWDF_OBJECT_ATTRIBUTES ContextAttributes,
-    _Outptr_opt_
-    PVOID* Context
+    _In_ WDF_DRIVER_GLOBALS* DriverGlobals,
+    _In_ WDFOBJECT Handle,
+    _In_ WDF_OBJECT_ATTRIBUTES* ContextAttributes,
+    _Outptr_opt_ VOID** Context
     )
+/*++
+
+Routine Description:
+
+    Platform implementation of WdfObjectAllocateContext().
+
+    TODO: Use ContextSizeOverride.
+
+Arguments:
+
+    DriverGlobals - Internal platform data for possible future use.
+    Handle - DMF Platform object.
+    (See MSDN for meanings of the rest of the parameters.)
+
+Return Value:
+
+    NTSTATUS
+
+--*/
 {
     NTSTATUS ntStatus;
     DMF_PLATFORM_OBJECT* platformObject;
@@ -85,18 +218,22 @@ DmfPlatform_WdfObjectAllocateContext(
 
     UNREFERENCED_PARAMETER(DriverGlobals);
 
+    DmfAssert(ContextAttributes != NULL);
+
     platformObject = (DMF_PLATFORM_OBJECT*)Handle;
 
     platformContext = (DMF_PLATFORM_CONTEXT*)DmfPlatformHandlersTable.DmfPlatformHandlerAllocate(sizeof(DMF_PLATFORM_CONTEXT));
     if (platformContext == NULL)
     {
         ntStatus = STATUS_INSUFFICIENT_RESOURCES;
+        TraceEvents(TRACE_LEVEL_ERROR, DMF_TRACE, "DmfPlatformHandlerAllocate fails: ntStatus=0x08X", ntStatus);
         goto Exit;
     }
 
     platformContext->ContextData = DmfPlatformHandlersTable.DmfPlatformHandlerAllocate(ContextAttributes->ContextTypeInfo->ContextSize);
     if (platformContext->ContextData == NULL)
     {
+        TraceEvents(TRACE_LEVEL_ERROR, DMF_TRACE, "DmfPlatformHandlerAllocate fails");
         DmfPlatformHandlersTable.DmfPlatformHandlerFree(platformContext);
         ntStatus = STATUS_INSUFFICIENT_RESOURCES;
         goto Exit;
@@ -125,15 +262,29 @@ Exit:
     return ntStatus;
 }
 
-PVOID
+VOID*
 DmfPlatform_WdfObjectGetTypedContextWorker(
-    _In_
-    PWDF_DRIVER_GLOBALS DriverGlobals,
-    _In_
-    WDFOBJECT Handle,
-    _In_
-    PCWDF_OBJECT_CONTEXT_TYPE_INFO TypeInfo
+    _In_ WDF_DRIVER_GLOBALS* DriverGlobals,
+    _In_ WDFOBJECT Handle,
+    _In_ PCWDF_OBJECT_CONTEXT_TYPE_INFO TypeInfo
     )
+/*++
+
+Routine Description:
+
+    Platform implementation of WdfObjectGetTypedContextWorker().
+
+Arguments:
+
+    DriverGlobals - Internal platform data for possible future use.
+    Handle - Platform object.
+    (See MSDN for meanings of the rest of the parameters.)
+
+Return Value:
+
+    NTSTATUS
+
+--*/
 {
     DMF_PLATFORM_OBJECT* platformObject;
     DMF_PLATFORM_CONTEXT* platformContext;
@@ -166,11 +317,25 @@ DmfPlatform_WdfObjectGetTypedContextWorker(
 _IRQL_requires_max_(DISPATCH_LEVEL)
 VOID
 DmfPlatform_WdfObjectDelete(
-    _In_
-    PWDF_DRIVER_GLOBALS DriverGlobals,
-    _In_
-    WDFOBJECT Object
+    _In_ WDF_DRIVER_GLOBALS* DriverGlobals,
+    _In_ WDFOBJECT Object
     )
+/*++
+
+Routine Description:
+
+    Platform implementation of WdfObjectDelete().
+
+Arguments:
+
+    DriverGlobals - Internal platform data for possible future use.
+    Object - DMF Platform object.
+
+Return Value:
+
+    NTSTATUS
+
+--*/
 {
     DMF_PLATFORM_OBJECT* platformObject;
     DMF_PLATFORM_OBJECT* childObject;
@@ -196,7 +361,6 @@ DmfPlatform_WdfObjectDelete(
     //
     if (newReferenceCount == 0)
     {
-        // Create a list of all the objects to be deleted without the lock held.
         // NOTE: Do not hold the ChildListLock while deleting because of potential 
         //       for deadlock when removing child from parent list.
         //       Caller should not be doing anything else with object while it
@@ -231,7 +395,7 @@ DmfPlatform_WdfObjectDelete(
         {
             DMF_PLATFORM_OBJECT* parentPlatformObject = (DMF_PLATFORM_OBJECT*)platformObject->ObjectAttributes.ParentObject;
             DmfPlatformHandlersTable.DmfPlatformHandlerLock(&parentPlatformObject->ChildListLock);
-            DmfAssert(parentPlatformObject->NumberOfChildren >= 0);
+            DmfAssert(parentPlatformObject->NumberOfChildren > 0);
             RemoveEntryList(&platformObject->ChildListEntry);
             parentPlatformObject->NumberOfChildren--;
             DmfAssert(parentPlatformObject->NumberOfChildren >= 0);
@@ -263,6 +427,17 @@ DmfPlatformObjectCreate(
     _In_ DMF_PLATFORM_OBJECT* Parent,
     _In_ DMF_Platform_ObjectDelete ObjectDeleteCallback
     )
+/*++
+
+Routine Description:
+
+Arguments:
+
+Return Value:
+
+    NTSTATUS
+
+--*/
 {
     DMF_PLATFORM_OBJECT* platformObject;
 
@@ -272,8 +447,6 @@ DmfPlatformObjectCreate(
         goto Exit;
     }
 
-    // TODO: Use this.
-    //
     platformObject->ReferenceCount = 1;
 
     // Set object delete callback. It deletes platform specific constructs
@@ -319,8 +492,19 @@ Exit:
 
 void
 DmfPlatformWdfMemoryDelete(
-    DMF_PLATFORM_OBJECT* PlatformObject
+    _In_ DMF_PLATFORM_OBJECT* PlatformObject
     )
+/*++
+
+Routine Description:
+
+Arguments:
+
+Return Value:
+
+    NTSTATUS
+
+--*/
 {
     DmfAssert(PlatformObject->PlatformObjectType == DmfPlatformObjectTypeMemory);
 
@@ -337,27 +521,33 @@ _When_(PoolType == 1 || PoolType == 257, _IRQL_requires_max_(APC_LEVEL))
 _When_(PoolType == 0 || PoolType == 256, _IRQL_requires_max_(DISPATCH_LEVEL))
 NTSTATUS
 DmfPlatform_WdfMemoryCreate(
-    _In_
-    PWDF_DRIVER_GLOBALS DriverGlobals,
-    _In_opt_
-    PWDF_OBJECT_ATTRIBUTES Attributes,
-    _In_
-    _Strict_type_match_
-    POOL_TYPE PoolType,
-    _In_opt_
-    ULONG PoolTag,
-    _In_
-    _When_(BufferSize == 0, __drv_reportError(BufferSize cannot be zero))
-    size_t BufferSize,
-    _Out_
-    WDFMEMORY* Memory,
-    _Outptr_opt_result_bytebuffer_(BufferSize)
-    PVOID* Buffer
+    _In_ WDF_DRIVER_GLOBALS* DriverGlobals,
+    _In_opt_ WDF_OBJECT_ATTRIBUTES* Attributes,
+    _In_ _Strict_type_match_ POOL_TYPE PoolType,
+    _In_opt_ ULONG PoolTag,
+    _In_ _When_(BufferSize == 0, __drv_reportError(BufferSize cannot be zero)) size_t BufferSize,
+    _Out_ WDFMEMORY* Memory,
+    _Outptr_opt_result_bytebuffer_(BufferSize) VOID** Buffer
     )
+/*++
+
+Routine Description:
+
+    Platform implementation of WdfMemoryCreate().
+
+Arguments:
+
+    DriverGlobals - Internal platform data for possible future use.
+    (See MSDN for meanings of the rest of the parameters.)
+
+Return Value:
+
+    NTSTATUS
+
+--*/
 {
     NTSTATUS ntStatus;
     DMF_PLATFORM_OBJECT* platformObject;
-    DMF_PLATFORM_OBJECT* parentObject;
 
     UNREFERENCED_PARAMETER(DriverGlobals);
     UNREFERENCED_PARAMETER(PoolType);
@@ -365,43 +555,22 @@ DmfPlatform_WdfMemoryCreate(
 
     ntStatus = STATUS_UNSUCCESSFUL;
 
-    if (Attributes != NULL)
-    {
-        parentObject = (DMF_PLATFORM_OBJECT*)Attributes->ParentObject;
-    }
-    else
-    {
-        parentObject = NULL;
-    }
-
-    platformObject = DmfPlatformObjectCreate(parentObject,
-                                             DmfPlatformWdfMemoryDelete);
+    platformObject = DmfPlatform_ObjectCreateProlog(DmfPlatformWdfMemoryDelete,
+                                                    Attributes,
+                                                    sizeof(DMF_PLATFORM_MEMORY),
+                                                    DmfPlatformObjectTypeMemory);
     if (platformObject == NULL)
     {
+        TraceEvents(TRACE_LEVEL_ERROR, DMF_TRACE, "DmfPlatform_ObjectCreateProlog fails: ntStatus=0x08X", ntStatus);
         goto Exit;
     }
-
-    platformObject->Data = (DMF_PLATFORM_MEMORY*)DmfPlatformHandlersTable.DmfPlatformHandlerAllocate(sizeof(DMF_PLATFORM_MEMORY));
-    if (platformObject->Data == NULL)
-    {
-        DmfPlatformHandlersTable.DmfPlatformHandlerFree(platformObject);
-        goto Exit;
-    }
-
-    platformObject->PlatformObjectType = DmfPlatformObjectTypeMemory;
 
     DMF_PLATFORM_MEMORY* platformMemory = (DMF_PLATFORM_MEMORY*)platformObject->Data;
-
-    if (Attributes != NULL)
-    {
-        memcpy(&platformObject->ObjectAttributes,
-               Attributes,
-               sizeof(WDF_OBJECT_ATTRIBUTES));
-    }
 
     platformMemory->DataMemory = (CHAR*)DmfPlatformHandlersTable.DmfPlatformHandlerAllocate(BufferSize);
     if (platformMemory->DataMemory == NULL)
     {
+        TraceEvents(TRACE_LEVEL_ERROR, DMF_TRACE, "platformMemory->DataMemory fails");
         DmfPlatformHandlersTable.DmfPlatformHandlerFree(platformObject->Data);
         DmfPlatformHandlersTable.DmfPlatformHandlerFree(platformObject);
         goto Exit;
@@ -416,8 +585,7 @@ DmfPlatform_WdfMemoryCreate(
         *Buffer = platformMemory->DataMemory;
     }
 
-    ntStatus = CustomContextAllocate(platformObject,
-                                     Attributes);
+    ntStatus = STATUS_SUCCESS;
 
 Exit:
 
@@ -428,47 +596,43 @@ _Must_inspect_result_
 _IRQL_requires_max_(DISPATCH_LEVEL)
 NTSTATUS
 DmfPlatform_WdfMemoryCreatePreallocated(
-    _In_
-    PWDF_DRIVER_GLOBALS DriverGlobals,
-    _In_opt_
-    PWDF_OBJECT_ATTRIBUTES Attributes,
-    _In_ __drv_aliasesMem
-    PVOID Buffer,
-    _In_
-    _When_(BufferSize == 0, __drv_reportError(BufferSize cannot be zero))
-    size_t BufferSize,
-    _Out_
-    WDFMEMORY* Memory
+    _In_ WDF_DRIVER_GLOBALS* DriverGlobals,
+    _In_opt_ WDF_OBJECT_ATTRIBUTES* Attributes,
+    _In_ __drv_aliasesMem VOID* Buffer,
+    _In_ _When_(BufferSize == 0, __drv_reportError(BufferSize cannot be zero)) size_t BufferSize,
+    _Out_ WDFMEMORY* Memory
     )
+/*++
+
+Routine Description:
+
+    Platform implementation of WdfMemoryCreatePreallocated().
+
+Arguments:
+
+    DriverGlobals - Internal platform data for possible future use.
+    (See MSDN for meanings of the rest of the parameters.)
+
+Return Value:
+
+    NTSTATUS
+
+--*/
 {
     NTSTATUS ntStatus;
     DMF_PLATFORM_OBJECT* platformObject;
-    DMF_PLATFORM_OBJECT* parentObject;
 
     UNREFERENCED_PARAMETER(DriverGlobals);
 
     ntStatus = STATUS_UNSUCCESSFUL;
 
-    if (Attributes != NULL)
-    {
-        parentObject = (DMF_PLATFORM_OBJECT*)Attributes->ParentObject;
-    }
-    else
-    {
-        parentObject = NULL;
-    }
-
-    platformObject = DmfPlatformObjectCreate(parentObject,
-                                             DmfPlatformWdfMemoryDelete);
+    platformObject = DmfPlatform_ObjectCreateProlog(DmfPlatformWdfMemoryDelete,
+                                                    Attributes,
+                                                    sizeof(DMF_PLATFORM_MEMORY),
+                                                    DmfPlatformObjectTypeMemory);
     if (platformObject == NULL)
     {
-        goto Exit;
-    }
-
-    platformObject->Data = (DMF_PLATFORM_MEMORY*)DmfPlatformHandlersTable.DmfPlatformHandlerAllocate(sizeof(DMF_PLATFORM_MEMORY));
-    if (platformObject->Data == NULL)
-    {
-        DmfPlatformHandlersTable.DmfPlatformHandlerFree(platformObject);
+        TraceEvents(TRACE_LEVEL_ERROR, DMF_TRACE, "DmfPlatform_ObjectCreateProlog fails: ntStatus=0x08X", ntStatus);
         goto Exit;
     }
 
@@ -482,13 +646,9 @@ DmfPlatform_WdfMemoryCreatePreallocated(
     platformMemory->NeedToDeallocate = FALSE;
     platformMemory->Size = BufferSize;
 
-    memcpy(&platformObject->ObjectAttributes,
-            Attributes,
-            sizeof(WDF_OBJECT_ATTRIBUTES));
     *Memory = (WDFMEMORY)platformObject;
 
-    ntStatus = CustomContextAllocate(platformObject,
-                                     Attributes);
+    ntStatus = STATUS_SUCCESS;
 
 Exit:
 
@@ -498,13 +658,26 @@ Exit:
 _IRQL_requires_max_(DISPATCH_LEVEL)
 PVOID
 DmfPlatform_WdfMemoryGetBuffer(
-    _In_
-    PWDF_DRIVER_GLOBALS DriverGlobals,
-    _In_
-    WDFMEMORY Memory,
-    _Out_opt_
-    size_t* BufferSize
+    _In_ WDF_DRIVER_GLOBALS* DriverGlobals,
+    _In_ WDFMEMORY Memory,
+    _Out_opt_ size_t* BufferSize
     )
+/*++
+
+Routine Description:
+
+    Platform implementation of WdfMemoryGetBuffer().
+
+Arguments:
+
+    DriverGlobals - Internal platform data for possible future use.
+    (See MSDN for meanings of the rest of the parameters.)
+
+Return Value:
+
+    NTSTATUS
+
+--*/
 {
     DMF_PLATFORM_OBJECT* platformObject;
     DMF_PLATFORM_MEMORY* platformMemory;
@@ -529,8 +702,19 @@ DmfPlatform_WdfMemoryGetBuffer(
 
 void
 DmfPlatformWdfWaitLockDelete(
-    DMF_PLATFORM_OBJECT* PlatformObject
+    _In_ DMF_PLATFORM_OBJECT* PlatformObject
     )
+/*++
+
+Routine Description:
+
+Arguments:
+
+Return Value:
+
+    NTSTATUS
+
+--*/
 {
     DmfAssert(PlatformObject->PlatformObjectType == DmfPlatformObjectTypeWaitLock);
 
@@ -543,69 +727,59 @@ _Must_inspect_result_
 _IRQL_requires_max_(DISPATCH_LEVEL)
 NTSTATUS
 DmfPlatform_WdfWaitLockCreate(
-    _In_
-    PWDF_DRIVER_GLOBALS DriverGlobals,
-    _In_opt_
-    PWDF_OBJECT_ATTRIBUTES LockAttributes,
-    _Out_
-    WDFWAITLOCK* Lock
+    _In_ WDF_DRIVER_GLOBALS* DriverGlobals,
+    _In_opt_ WDF_OBJECT_ATTRIBUTES* LockAttributes,
+    _Out_ WDFWAITLOCK* Lock
     )
+/*++
+
+Routine Description:
+
+    Platform implementation of WdfWaitLockCreate().
+
+Arguments:
+
+    DriverGlobals - Internal platform data for possible future use.
+    (See MSDN for meanings of the rest of the parameters.)
+
+Return Value:
+
+    NTSTATUS
+
+--*/
 {
     NTSTATUS ntStatus;
     DMF_PLATFORM_OBJECT* platformObject;
-    DMF_PLATFORM_OBJECT* parentObject;
     BOOLEAN waitEventCreated;
 
     UNREFERENCED_PARAMETER(DriverGlobals);
 
     ntStatus = STATUS_UNSUCCESSFUL;
 
-    if (LockAttributes != NULL)
-    {
-        parentObject = (DMF_PLATFORM_OBJECT*)(LockAttributes->ParentObject);
-    }
-    else
-    {
-        parentObject = NULL;
-    }
-
-    platformObject = DmfPlatformObjectCreate(parentObject,
-                                             DmfPlatformWdfWaitLockDelete);
+    platformObject = DmfPlatform_ObjectCreateProlog(DmfPlatformWdfWaitLockDelete,
+                                                    LockAttributes,
+                                                    sizeof(DMF_PLATFORM_WAITLOCK),
+                                                    DmfPlatformObjectTypeWaitLock);
     if (platformObject == NULL)
     {
+        TraceEvents(TRACE_LEVEL_ERROR, DMF_TRACE, "DmfPlatform_ObjectCreateProlog fails: ntStatus=0x08X", ntStatus);
         goto Exit;
     }
-
-    platformObject->Data = (DMF_PLATFORM_WAITLOCK*)DmfPlatformHandlersTable.DmfPlatformHandlerAllocate(sizeof(DMF_PLATFORM_WAITLOCK));
-    if (platformObject->Data == NULL)
-    {
-        DmfPlatformHandlersTable.DmfPlatformHandlerFree(platformObject);
-        goto Exit;
-    }
-
-    platformObject->PlatformObjectType = DmfPlatformObjectTypeWaitLock;
 
     DMF_PLATFORM_WAITLOCK* platformWaitLock = (DMF_PLATFORM_WAITLOCK*)platformObject->Data;
 
     waitEventCreated = DmfPlatformHandlersTable.DmfPlatformHandlerWdfWaitLockCreate(platformWaitLock);
     if (! waitEventCreated)
     {
+        TraceEvents(TRACE_LEVEL_ERROR, DMF_TRACE, "DmfPlatformHandlerWdfWaitLockCreate fails");
         DmfPlatformHandlersTable.DmfPlatformHandlerFree(platformObject->Data);
         DmfPlatformHandlersTable.DmfPlatformHandlerFree(platformObject);
         goto Exit;
     }
 
-    if (LockAttributes != NULL)
-    {
-        memcpy(&platformObject->ObjectAttributes,
-                LockAttributes,
-                sizeof(WDF_OBJECT_ATTRIBUTES));
-    }
-
     *Lock = (WDFWAITLOCK)platformObject;
 
-    ntStatus = CustomContextAllocate(platformObject,
-                                     LockAttributes);
+    ntStatus = STATUS_SUCCESS;
 
 Exit:
 
@@ -620,14 +794,26 @@ _When_(Timeout != NULL && return == STATUS_SUCCESS, _Acquires_lock_(Lock))
 _When_(Timeout != NULL, _Must_inspect_result_)
 NTSTATUS
 DmfPlatform_WdfWaitLockAcquire(
-    _In_
-    PWDF_DRIVER_GLOBALS DriverGlobals,
-    _In_
-    _Requires_lock_not_held_(_Curr_)
-    WDFWAITLOCK Lock,
-    _In_opt_
-    PLONGLONG Timeout
+    _In_ WDF_DRIVER_GLOBALS* DriverGlobals,
+    _In_ _Requires_lock_not_held_(_Curr_) WDFWAITLOCK Lock,
+    _In_opt_ LONGLONG* Timeout
     )
+/*++
+
+Routine Description:
+
+    Platform implementation of WdfWaitLockAcquire().
+
+Arguments:
+
+    DriverGlobals - Internal platform data for possible future use.
+    (See MSDN for meanings of the rest of the parameters.)
+
+Return Value:
+
+    NTSTATUS
+
+--*/
 {
     NTSTATUS ntStatus;
     DMF_PLATFORM_OBJECT* platformObject;
@@ -671,13 +857,25 @@ DmfPlatform_WdfWaitLockAcquire(
 _IRQL_requires_max_(DISPATCH_LEVEL)
 VOID
 DmfPlatform_WdfWaitLockRelease(
-    _In_
-    PWDF_DRIVER_GLOBALS DriverGlobals,
-    _In_
-    _Requires_lock_held_(_Curr_)
-    _Releases_lock_(_Curr_)
-    WDFWAITLOCK Lock
+    _In_ WDF_DRIVER_GLOBALS* DriverGlobals,
+    _In_ _Requires_lock_held_(_Curr_) _Releases_lock_(_Curr_) WDFWAITLOCK Lock
     )
+/*++
+
+Routine Description:
+
+    Platform implementation of WdfWaitLockRelease().
+
+Arguments:
+
+    DriverGlobals - Internal platform data for possible future use.
+    (See MSDN for meanings of the rest of the parameters.)
+
+Return Value:
+
+    NTSTATUS
+
+--*/
 {
     DMF_PLATFORM_OBJECT* platformObject;
     DMF_PLATFORM_WAITLOCK* platformWaitLock;
@@ -693,8 +891,19 @@ DmfPlatform_WdfWaitLockRelease(
 
 void
 DmfPlatformWdfSpinLockDelete(
-    DMF_PLATFORM_OBJECT* PlatformObject
+    _In_ DMF_PLATFORM_OBJECT* PlatformObject
     )
+/*++
+
+Routine Description:
+
+Arguments:
+
+Return Value:
+
+    NTSTATUS
+
+--*/
 {
     DmfAssert(PlatformObject->PlatformObjectType == DmfPlatformObjectTypeSpinLock);
 
@@ -707,17 +916,29 @@ _Must_inspect_result_
 _IRQL_requires_max_(DISPATCH_LEVEL)
 NTSTATUS
 DmfPlatform_WdfSpinLockCreate(
-    _In_
-    PWDF_DRIVER_GLOBALS DriverGlobals,
-    _In_opt_
-    PWDF_OBJECT_ATTRIBUTES SpinLockAttributes,
-    _Out_
-    WDFSPINLOCK* SpinLock
+    _In_ WDF_DRIVER_GLOBALS* DriverGlobals,
+    _In_opt_ WDF_OBJECT_ATTRIBUTES* SpinLockAttributes,
+    _Out_ WDFSPINLOCK* SpinLock
     )
+/*++
+
+Routine Description:
+
+    Platform implementation of WdfSpinLockCreate().
+
+Arguments:
+
+    DriverGlobals - Internal platform data for possible future use.
+    (See MSDN for meanings of the rest of the parameters.)
+
+Return Value:
+
+    NTSTATUS
+
+--*/
 {
     NTSTATUS ntStatus;
     DMF_PLATFORM_OBJECT* platformObject;
-    DMF_PLATFORM_OBJECT* parentObject;
     BOOLEAN spinLockCreated;
 
     UNREFERENCED_PARAMETER(DriverGlobals);
@@ -725,50 +946,30 @@ DmfPlatform_WdfSpinLockCreate(
 
     ntStatus = STATUS_UNSUCCESSFUL;
 
-    if (SpinLockAttributes != NULL)
-    {
-        parentObject = (DMF_PLATFORM_OBJECT*)(SpinLockAttributes->ParentObject);
-    }
-    else
-    {
-        parentObject = NULL;
-    }
-
-    platformObject = DmfPlatformObjectCreate(parentObject,
-                                             DmfPlatformWdfSpinLockDelete);
+    platformObject = DmfPlatform_ObjectCreateProlog(DmfPlatformWdfSpinLockDelete,
+                                                    SpinLockAttributes,
+                                                    sizeof(DMF_PLATFORM_SPINLOCK),
+                                                    DmfPlatformObjectTypeSpinLock);
     if (platformObject == NULL)
     {
+        TraceEvents(TRACE_LEVEL_ERROR, DMF_TRACE, "DmfPlatform_ObjectCreateProlog fails: ntStatus=0x08X", ntStatus);
         goto Exit;
     }
-
-    platformObject->Data = (DMF_PLATFORM_SPINLOCK*)DmfPlatformHandlersTable.DmfPlatformHandlerAllocate(sizeof(DMF_PLATFORM_SPINLOCK));
-    if (platformObject->Data == NULL)
-    {
-        DmfPlatformHandlersTable.DmfPlatformHandlerFree(platformObject);
-        goto Exit;
-    }
-
-    platformObject->PlatformObjectType = DmfPlatformObjectTypeSpinLock;
 
     DMF_PLATFORM_SPINLOCK* platformSpinLock = (DMF_PLATFORM_SPINLOCK*)platformObject->Data;
 
     spinLockCreated = DmfPlatformHandlersTable.DmfPlatformHandlerWdfSpinLockCreate(platformSpinLock);
     if (!spinLockCreated)
     {
+        TraceEvents(TRACE_LEVEL_ERROR, DMF_TRACE, "DmfPlatformHandlerWdfSpinLockCreate fails");
+        DmfPlatformHandlersTable.DmfPlatformHandlerFree(platformObject->Data);
+        DmfPlatformHandlersTable.DmfPlatformHandlerFree(platformObject);
         goto Exit;
-    }
-
-    if (SpinLockAttributes != NULL)
-    {
-        memcpy(&platformObject->ObjectAttributes,
-               SpinLockAttributes,
-               sizeof(WDF_OBJECT_ATTRIBUTES));
     }
 
     *SpinLock = (WDFSPINLOCK)platformObject;
 
-    ntStatus = CustomContextAllocate(platformObject,
-                                     SpinLockAttributes);
+    ntStatus = STATUS_SUCCESS;
 
 Exit:
 
@@ -779,14 +980,25 @@ _IRQL_requires_max_(DISPATCH_LEVEL)
 _IRQL_raises_(DISPATCH_LEVEL)
 VOID
 DmfPlatform_WdfSpinLockAcquire(
-    _In_
-    PWDF_DRIVER_GLOBALS DriverGlobals,
-    _In_
-    _Requires_lock_not_held_(_Curr_)
-    _Acquires_lock_(_Curr_)
-    _IRQL_saves_
-    WDFSPINLOCK SpinLock
+    _In_ WDF_DRIVER_GLOBALS* DriverGlobals,
+    _In_ _Requires_lock_not_held_(_Curr_) _Acquires_lock_(_Curr_) _IRQL_saves_ WDFSPINLOCK SpinLock
     )
+/*++
+
+Routine Description:
+
+    Platform implementation of WdfSpinLockAcquire().
+
+Arguments:
+
+    DriverGlobals - Internal platform data for possible future use.
+    (See MSDN for meanings of the rest of the parameters.)
+
+Return Value:
+
+    NTSTATUS
+
+--*/
 {
     DMF_PLATFORM_OBJECT* platformObject;
     DMF_PLATFORM_SPINLOCK* platformSpinLock;
@@ -804,14 +1016,25 @@ _IRQL_requires_max_(DISPATCH_LEVEL)
 _IRQL_requires_min_(DISPATCH_LEVEL)
 VOID
 DmfPlatform_WdfSpinLockRelease(
-    _In_
-    PWDF_DRIVER_GLOBALS DriverGlobals,
-    _In_
-    _Requires_lock_held_(_Curr_)
-    _Releases_lock_(_Curr_)
-    _IRQL_restores_
-    WDFSPINLOCK SpinLock
+    _In_ WDF_DRIVER_GLOBALS* DriverGlobals,
+    _In_ _Requires_lock_held_(_Curr_) _Releases_lock_(_Curr_) _IRQL_restores_ WDFSPINLOCK SpinLock
     )
+/*++
+
+Routine Description:
+
+    Platform implementation of WdfSpinLockRelease().
+
+Arguments:
+
+    DriverGlobals - Internal platform data for possible future use.
+    (See MSDN for meanings of the rest of the parameters.)
+
+Return Value:
+
+    NTSTATUS
+
+--*/
 {
     DMF_PLATFORM_OBJECT* platformObject;
     DMF_PLATFORM_SPINLOCK* platformSpinLock;
@@ -832,7 +1055,7 @@ DmfPlatform_WdfSpinLockRelease(
 
 void
 DmfPlatformWdfTimerDelete(
-    DMF_PLATFORM_OBJECT* PlatformObject
+    _In_ DMF_PLATFORM_OBJECT* PlatformObject
     )
 {
     DmfAssert(PlatformObject->PlatformObjectType == DmfPlatformObjectTypeTimer);
@@ -846,63 +1069,53 @@ _Must_inspect_result_
 _IRQL_requires_max_(DISPATCH_LEVEL)
 NTSTATUS
 DmfPlatform_WdfTimerCreate(
-    _In_
-    PWDF_DRIVER_GLOBALS DriverGlobals,
-    _In_
-    PWDF_TIMER_CONFIG Config,
-    _In_
-    PWDF_OBJECT_ATTRIBUTES Attributes,
-    _Out_
-    WDFTIMER* Timer
+    _In_ WDF_DRIVER_GLOBALS* DriverGlobals,
+    _In_ WDF_TIMER_CONFIG* Config,
+    _In_ WDF_OBJECT_ATTRIBUTES* Attributes,
+    _Out_ WDFTIMER* Timer
     )
+/*++
+
+Routine Description:
+
+    Platform implementation of WdfTimerCreate().
+
+Arguments:
+
+    DriverGlobals - Internal platform data for possible future use.
+    (See MSDN for meanings of the rest of the parameters.)
+
+Return Value:
+
+    NTSTATUS
+
+--*/
 {
     NTSTATUS ntStatus;
     DMF_PLATFORM_OBJECT* platformObject;
-    DMF_PLATFORM_OBJECT* parentObject;
     BOOLEAN timerCreated;
 
     UNREFERENCED_PARAMETER(DriverGlobals);
 
     ntStatus = STATUS_UNSUCCESSFUL;
 
-    if (Attributes != NULL)
-    {
-        parentObject = (DMF_PLATFORM_OBJECT*)(Attributes->ParentObject);
-    }
-    else
-    {
-        parentObject = NULL;
-    }
-
-    platformObject = DmfPlatformObjectCreate(parentObject,
-                                             DmfPlatformWdfTimerDelete);
+    platformObject = DmfPlatform_ObjectCreateProlog(DmfPlatformWdfTimerDelete,
+                                                    Attributes,
+                                                    sizeof(DMF_PLATFORM_TIMER),
+                                                    DmfPlatformObjectTypeTimer);
     if (platformObject == NULL)
     {
+        TraceEvents(TRACE_LEVEL_ERROR, DMF_TRACE, "DmfPlatform_ObjectCreateProlog fails: ntStatus=0x08X", ntStatus);
         goto Exit;
     }
-
-    platformObject->Data = (DMF_PLATFORM_TIMER*)DmfPlatformHandlersTable.DmfPlatformHandlerAllocate(sizeof(DMF_PLATFORM_TIMER));
-    if (platformObject->Data == NULL)
-    {
-        DmfPlatformHandlersTable.DmfPlatformHandlerFree(platformObject);
-        goto Exit;
-    }
-
-    platformObject->PlatformObjectType = DmfPlatformObjectTypeTimer;
 
     DMF_PLATFORM_TIMER* platformTimer = (DMF_PLATFORM_TIMER*)platformObject->Data;
 
-    if (Attributes != NULL)
-    {
-        memcpy(&platformObject->ObjectAttributes,
-               Attributes,
-               sizeof(WDF_OBJECT_ATTRIBUTES));
-    }
-
     timerCreated = DmfPlatformHandlersTable.DmfPlatformHandlerWdfTimerCreate(platformTimer,
-                                                                      platformObject);
+                                                                             platformObject);
     if (! timerCreated)
     {
+        TraceEvents(TRACE_LEVEL_ERROR, DMF_TRACE, "DmfPlatformHandlerWdfTimerCreate fails: ntStatus=0x08X", ntStatus);
         DmfPlatformHandlersTable.DmfPlatformHandlerFree(platformObject->Data);
         DmfPlatformHandlersTable.DmfPlatformHandlerFree(platformObject);
         goto Exit;
@@ -914,8 +1127,7 @@ DmfPlatform_WdfTimerCreate(
 
     *Timer = (WDFTIMER)platformObject;
 
-    ntStatus = CustomContextAllocate(platformObject,
-                                     Attributes);
+    ntStatus = STATUS_SUCCESS;
 
 Exit:
 
@@ -925,13 +1137,26 @@ Exit:
 _IRQL_requires_max_(DISPATCH_LEVEL)
 BOOLEAN
 DmfPlatform_WdfTimerStart(
-    _In_
-    PWDF_DRIVER_GLOBALS DriverGlobals,
-    _In_
-    WDFTIMER Timer,
-    _In_
-    LONGLONG DueTime
+    _In_ WDF_DRIVER_GLOBALS* DriverGlobals,
+    _In_ WDFTIMER Timer,
+    _In_ LONGLONG DueTime
     )
+/*++
+
+Routine Description:
+
+    Platform implementation of WdfTimerStart().
+
+Arguments:
+
+    DriverGlobals - Internal platform data for possible future use.
+    (See MSDN for meanings of the rest of the parameters.)
+
+Return Value:
+
+    NTSTATUS
+
+--*/
 {
     DMF_PLATFORM_OBJECT* platformObject;
     DMF_PLATFORM_TIMER* platformTimer;
@@ -955,13 +1180,26 @@ _When_(Wait == __true, _IRQL_requires_max_(PASSIVE_LEVEL))
 _When_(Wait == __false, _IRQL_requires_max_(DISPATCH_LEVEL))
 BOOLEAN
 DmfPlatform_WdfTimerStop(
-    _In_
-    PWDF_DRIVER_GLOBALS DriverGlobals,
-    _In_
-    WDFTIMER Timer,
-    _In_
-    BOOLEAN Wait
+    _In_ WDF_DRIVER_GLOBALS* DriverGlobals,
+    _In_ WDFTIMER Timer,
+    _In_ BOOLEAN Wait
     )
+/*++
+
+Routine Description:
+
+    Platform implementation of WdfTimerStop().
+
+Arguments:
+
+    DriverGlobals - Internal platform data for possible future use.
+    (See MSDN for meanings of the rest of the parameters.)
+
+Return Value:
+
+    NTSTATUS
+
+--*/
 {
     DMF_PLATFORM_OBJECT* platformObject;
     DMF_PLATFORM_TIMER* platformTimer;
@@ -982,11 +1220,25 @@ DmfPlatform_WdfTimerStop(
 _IRQL_requires_max_(DISPATCH_LEVEL)
 WDFOBJECT
 DmfPlatform_WdfTimerGetParentObject(
-    _In_
-    PWDF_DRIVER_GLOBALS DriverGlobals,
-    _In_
-    WDFTIMER Timer
+    _In_ WDF_DRIVER_GLOBALS* DriverGlobals,
+    _In_ WDFTIMER Timer
     )
+/*++
+
+Routine Description:
+
+    Platform implementation of WdfTimerGetParentObject().
+
+Arguments:
+
+    DriverGlobals - Internal platform data for possible future use.
+    (See MSDN for meanings of the rest of the parameters.)
+
+Return Value:
+
+    NTSTATUS
+
+--*/
 {
     DMF_PLATFORM_OBJECT* platformObject;
 
@@ -1003,8 +1255,19 @@ DmfPlatform_WdfTimerGetParentObject(
 
 void
 DmfPlatformWdfWorkItemDelete(
-    DMF_PLATFORM_OBJECT* PlatformObject
+    _In_ DMF_PLATFORM_OBJECT* PlatformObject
     )
+/*++
+
+Routine Description:
+
+Arguments:
+
+Return Value:
+
+    NTSTATUS
+
+--*/
 {
     DmfAssert(PlatformObject->PlatformObjectType == DmfPlatformObjectTypeWorkItem);
 
@@ -1017,63 +1280,53 @@ _Must_inspect_result_
 _IRQL_requires_max_(DISPATCH_LEVEL)
 NTSTATUS
 DmfPlatform_WdfWorkItemCreate(
-    _In_
-    PWDF_DRIVER_GLOBALS DriverGlobals,
-    _In_
-    PWDF_WORKITEM_CONFIG Config,
-    _In_
-    PWDF_OBJECT_ATTRIBUTES Attributes,
-    _Out_
-    WDFWORKITEM* WorkItem
+    _In_ WDF_DRIVER_GLOBALS* DriverGlobals,
+    _In_ WDF_WORKITEM_CONFIG* Config,
+    _In_ WDF_OBJECT_ATTRIBUTES* Attributes,
+    _Out_ WDFWORKITEM* WorkItem
     )
+/*++
+
+Routine Description:
+
+    Platform implementation of WdfWorkItemCreate().
+
+Arguments:
+
+    DriverGlobals - Internal platform data for possible future use.
+    (See MSDN for meanings of the rest of the parameters.)
+
+Return Value:
+
+    NTSTATUS
+
+--*/
 {
     NTSTATUS ntStatus;
     DMF_PLATFORM_OBJECT* platformObject;
-    DMF_PLATFORM_OBJECT* parentObject;
     BOOLEAN workitemCreated;
 
     UNREFERENCED_PARAMETER(DriverGlobals);
 
     ntStatus = STATUS_UNSUCCESSFUL;
 
-    if (Attributes != NULL)
-    {
-        parentObject = (DMF_PLATFORM_OBJECT*)(Attributes->ParentObject);
-    }
-    else
-    {
-        parentObject = NULL;
-    }
-
-    platformObject = DmfPlatformObjectCreate(parentObject,
-                                             DmfPlatformWdfWorkItemDelete);
+    platformObject = DmfPlatform_ObjectCreateProlog(DmfPlatformWdfWorkItemDelete,
+                                                    Attributes,
+                                                    sizeof(DMF_PLATFORM_WORKITEM),
+                                                    DmfPlatformObjectTypeWorkItem);
     if (platformObject == NULL)
     {
+        TraceEvents(TRACE_LEVEL_ERROR, DMF_TRACE, "DmfPlatform_ObjectCreateProlog fails: ntStatus=0x08X", ntStatus);
         goto Exit;
     }
-
-    platformObject->Data = (DMF_PLATFORM_WORKITEM*)DmfPlatformHandlersTable.DmfPlatformHandlerAllocate(sizeof(DMF_PLATFORM_WORKITEM));
-    if (platformObject->Data == NULL)
-    {
-        DmfPlatformHandlersTable.DmfPlatformHandlerFree(platformObject);
-        goto Exit;
-    }
-
-    platformObject->PlatformObjectType = DmfPlatformObjectTypeWorkItem;
 
     DMF_PLATFORM_WORKITEM* platformWorkItem = (DMF_PLATFORM_WORKITEM*)platformObject->Data;
-
-    if (Attributes != NULL)
-    {
-        memcpy(&platformObject->ObjectAttributes,
-               Attributes,
-               sizeof(WDF_OBJECT_ATTRIBUTES));
-    }
 
     workitemCreated = DmfPlatformHandlersTable.DmfPlatformHandlerWdfWorkItemCreate(platformWorkItem,
                                                                             platformObject);
     if (!workitemCreated)
     {
+        TraceEvents(TRACE_LEVEL_ERROR, DMF_TRACE, "DmfPlatformHandlerWdfWorkItemCreate fails: ntStatus=0x08X", ntStatus);
         DmfPlatformHandlersTable.DmfPlatformHandlerFree(platformObject->Data);
         DmfPlatformHandlersTable.DmfPlatformHandlerFree(platformObject);
         goto Exit;
@@ -1085,8 +1338,7 @@ DmfPlatform_WdfWorkItemCreate(
 
     *WorkItem = (WDFWORKITEM)platformObject;
 
-    ntStatus = CustomContextAllocate(platformObject,
-                                     Attributes);
+    ntStatus = STATUS_SUCCESS;
 
 Exit:
 
@@ -1096,11 +1348,25 @@ Exit:
 _IRQL_requires_max_(DISPATCH_LEVEL)
 VOID
 DmfPlatform_WdfWorkItemEnqueue(
-    _In_
-    PWDF_DRIVER_GLOBALS DriverGlobals,
-    _In_
-    WDFWORKITEM WorkItem
+    _In_ WDF_DRIVER_GLOBALS* DriverGlobals,
+    _In_ WDFWORKITEM WorkItem
     )
+/*++
+
+Routine Description:
+
+    Platform implementation of WdfWorkItemEnqueue().
+
+Arguments:
+
+    DriverGlobals - Internal platform data for possible future use.
+    (See MSDN for meanings of the rest of the parameters.)
+
+Return Value:
+
+    NTSTATUS
+
+--*/
 {
     DMF_PLATFORM_OBJECT* platformObject;
     DMF_PLATFORM_WORKITEM* platformWorkItem;
@@ -1119,11 +1385,25 @@ DmfPlatform_WdfWorkItemEnqueue(
 _IRQL_requires_max_(DISPATCH_LEVEL)
 WDFOBJECT
 DmfPlatform_WdfWorkItemGetParentObject(
-    _In_
-    PWDF_DRIVER_GLOBALS DriverGlobals,
-    _In_
-    WDFWORKITEM WorkItem
+    _In_ WDF_DRIVER_GLOBALS* DriverGlobals,
+    _In_ WDFWORKITEM WorkItem
     )
+/*++
+
+Routine Description:
+
+    Platform implementation of WdfWorkItemGetParentObject().
+
+Arguments:
+
+    DriverGlobals - Internal platform data for possible future use.
+    (See MSDN for meanings of the rest of the parameters.)
+
+Return Value:
+
+    NTSTATUS
+
+--*/
 {
     DMF_PLATFORM_OBJECT* platformObject;
 
@@ -1136,11 +1416,25 @@ DmfPlatform_WdfWorkItemGetParentObject(
 _IRQL_requires_max_(PASSIVE_LEVEL)
 VOID
 DmfPlatform_WdfWorkItemFlush(
-    _In_
-    PWDF_DRIVER_GLOBALS DriverGlobals,
-    _In_
-    WDFWORKITEM WorkItem
+    _In_ WDF_DRIVER_GLOBALS* DriverGlobals,
+    _In_ WDFWORKITEM WorkItem
     )
+/*++
+
+Routine Description:
+
+    Platform implementation of WdfWorkItemFlush().
+
+Arguments:
+
+    DriverGlobals - Internal platform data for possible future use.
+    (See MSDN for meanings of the rest of the parameters.)
+
+Return Value:
+
+    NTSTATUS
+
+--*/
 {
     DMF_PLATFORM_OBJECT* platformObject;
     DMF_PLATFORM_WORKITEM* platformWorkItem;
@@ -1165,48 +1459,43 @@ _Must_inspect_result_
 _IRQL_requires_max_(DISPATCH_LEVEL)
 NTSTATUS
 DmfPlatform_WdfCollectionCreate(
-    _In_
-    PWDF_DRIVER_GLOBALS DriverGlobals,
-    _In_opt_
-    PWDF_OBJECT_ATTRIBUTES CollectionAttributes,
-    _Out_
-    WDFCOLLECTION* Collection
+    _In_ WDF_DRIVER_GLOBALS* DriverGlobals,
+    _In_opt_ WDF_OBJECT_ATTRIBUTES* CollectionAttributes,
+    _Out_ WDFCOLLECTION* Collection
     )
+/*++
+
+Routine Description:
+
+    Platform implementation of WdfCollectionCreate().
+
+Arguments:
+
+    DriverGlobals - Internal platform data for possible future use.
+    (See MSDN for meanings of the rest of the parameters.)
+
+Return Value:
+
+    NTSTATUS
+
+--*/
 {
     NTSTATUS ntStatus;
     DMF_PLATFORM_OBJECT* platformObject;
-    DMF_PLATFORM_OBJECT* parentObject;
 
     UNREFERENCED_PARAMETER(DriverGlobals);
 
     ntStatus = STATUS_UNSUCCESSFUL;
 
-    if (CollectionAttributes != NULL)
-    {
-        parentObject = (DMF_PLATFORM_OBJECT*)(CollectionAttributes->ParentObject);
-    }
-    else
-    {
-        parentObject = NULL;
-    }
-
-    // TODO: It seems we don't need to delete anything specifically.
-    //
-    platformObject = DmfPlatformObjectCreate(parentObject,
-                                             NULL);
+    platformObject = DmfPlatform_ObjectCreateProlog(NULL,
+                                                    CollectionAttributes,
+                                                    sizeof(DMF_PLATFORM_COLLECTION),
+                                                    DmfPlatformObjectTypeCollection);
     if (platformObject == NULL)
     {
+        TraceEvents(TRACE_LEVEL_ERROR, DMF_TRACE, "DmfPlatform_ObjectCreateProlog fails: ntStatus=0x08X", ntStatus);
         goto Exit;
     }
-
-    platformObject->Data = (DMF_PLATFORM_COLLECTION*)DmfPlatformHandlersTable.DmfPlatformHandlerAllocate(sizeof(DMF_PLATFORM_COLLECTION));
-    if (platformObject->Data == NULL)
-    {
-        DmfPlatformHandlersTable.DmfPlatformHandlerFree(platformObject);
-        goto Exit;
-    }
-
-    platformObject->PlatformObjectType = DmfPlatformObjectTypeCollection;
 
     DMF_PLATFORM_COLLECTION* platformCollection = (DMF_PLATFORM_COLLECTION*)platformObject->Data;
 
@@ -1216,6 +1505,7 @@ DmfPlatform_WdfCollectionCreate(
                                  &platformCollection->ListLock);
     if (!NT_SUCCESS(ntStatus))
     {
+        TraceEvents(TRACE_LEVEL_ERROR, DMF_TRACE, "WdfSpinLockCreate fails: ntStatus=0x08X", ntStatus);
         DmfPlatformHandlersTable.DmfPlatformHandlerFree(platformObject->Data);
         DmfPlatformHandlersTable.DmfPlatformHandlerFree(platformObject);
         goto Exit;
@@ -1224,17 +1514,9 @@ DmfPlatform_WdfCollectionCreate(
     InitializeListHead(&platformCollection->List);
     platformCollection->ItemCount = 0;
 
-    if (CollectionAttributes != NULL)
-    {
-        memcpy(&platformObject->ObjectAttributes,
-               CollectionAttributes,
-               sizeof(WDF_OBJECT_ATTRIBUTES));
-    }
-
     *Collection = (WDFCOLLECTION)platformObject;
 
-    ntStatus = CustomContextAllocate(platformObject,
-                                     CollectionAttributes);
+    ntStatus = STATUS_SUCCESS;
 
 Exit:
 
@@ -1244,11 +1526,25 @@ Exit:
 _IRQL_requires_max_(DISPATCH_LEVEL)
 ULONG
 DmfPlatform_WdfCollectionGetCount(
-    _In_
-    PWDF_DRIVER_GLOBALS DriverGlobals,
-    _In_
-    WDFCOLLECTION Collection
+    _In_ WDF_DRIVER_GLOBALS* DriverGlobals,
+    _In_ WDFCOLLECTION Collection
     )
+/*++
+
+Routine Description:
+
+    Platform implementation of WdfCollectionGetCount().
+
+Arguments:
+
+    DriverGlobals - Internal platform data for possible future use.
+    (See MSDN for meanings of the rest of the parameters.)
+
+Return Value:
+
+    NTSTATUS
+
+--*/
 {
     DMF_PLATFORM_OBJECT* platformObject;
     DMF_PLATFORM_COLLECTION* platformcollection;
@@ -1272,13 +1568,27 @@ _Must_inspect_result_
 _IRQL_requires_max_(DISPATCH_LEVEL)
 NTSTATUS
 DmfPlatform_WdfCollectionAdd(
-    _In_
-    PWDF_DRIVER_GLOBALS DriverGlobals,
-    _In_
-    WDFCOLLECTION Collection,
-    _In_
-    WDFOBJECT Object
+    _In_ WDF_DRIVER_GLOBALS* DriverGlobals,
+    _In_ WDFCOLLECTION Collection,
+    _In_ WDFOBJECT Object
     )
+/*++
+
+Routine Description:
+
+    Platform implementation of WdfCollectionAdd().
+
+Arguments:
+
+    DriverGlobals - Internal platform data for possible future use.
+    Object - DMF Platform object.
+    (See MSDN for meanings of the rest of the parameters.)
+
+Return Value:
+
+    NTSTATUS
+
+--*/
 {
     NTSTATUS ntStatus;
     DMF_PLATFORM_OBJECT* platformObject;
@@ -1320,13 +1630,26 @@ Exit:
 _IRQL_requires_max_(DISPATCH_LEVEL)
 VOID
 DmfPlatform_WdfCollectionRemove(
-    _In_
-    PWDF_DRIVER_GLOBALS DriverGlobals,
-    _In_
-    WDFCOLLECTION Collection,
-    _In_
-    WDFOBJECT Item
+    _In_ WDF_DRIVER_GLOBALS* DriverGlobals,
+    _In_ WDFCOLLECTION Collection,
+    _In_ WDFOBJECT Item
     )
+/*++
+
+Routine Description:
+
+    Platform implementation of WdfCollectionRemove().
+
+Arguments:
+
+    DriverGlobals - Internal platform data for possible future use.
+    (See MSDN for meanings of the rest of the parameters.)
+
+Return Value:
+
+    NTSTATUS
+
+--*/
 {
     DMF_PLATFORM_OBJECT* platformObject;
     DMF_PLATFORM_COLLECTION* platformCollection;
@@ -1366,13 +1689,26 @@ DmfPlatform_WdfCollectionRemove(
 _IRQL_requires_max_(DISPATCH_LEVEL)
 VOID
 DmfPlatform_WdfCollectionRemoveItem(
-    _In_
-    PWDF_DRIVER_GLOBALS DriverGlobals,
-    _In_
-    WDFCOLLECTION Collection,
-    _In_
-    ULONG Index
+    _In_ WDF_DRIVER_GLOBALS* DriverGlobals,
+    _In_ WDFCOLLECTION Collection,
+    _In_ ULONG Index
     )
+/*++
+
+Routine Description:
+
+    Platform implementation of WdfCollectionRemoveItem().
+
+Arguments:
+
+    DriverGlobals - Internal platform data for possible future use.
+    (See MSDN for meanings of the rest of the parameters.)
+
+Return Value:
+
+    NTSTATUS
+
+--*/
 {
     DMF_PLATFORM_OBJECT* platformObject;
     DMF_PLATFORM_COLLECTION* platformCollection;
@@ -1415,13 +1751,26 @@ DmfPlatform_WdfCollectionRemoveItem(
 _IRQL_requires_max_(DISPATCH_LEVEL)
 WDFOBJECT
 DmfPlatform_WdfCollectionGetItem(
-    _In_
-    PWDF_DRIVER_GLOBALS DriverGlobals,
-    _In_
-    WDFCOLLECTION Collection,
-    _In_
-    ULONG Index
+    _In_ WDF_DRIVER_GLOBALS* DriverGlobals,
+    _In_ WDFCOLLECTION Collection,
+    _In_ ULONG Index
     )
+/*++
+
+Routine Description:
+
+    Platform implementation of WdfCollectionGetItem().
+
+Arguments:
+
+    DriverGlobals - Internal platform data for possible future use.
+    (See MSDN for meanings of the rest of the parameters.)
+
+Return Value:
+
+    NTSTATUS
+
+--*/
 {
     WDFOBJECT returnValue;
     DMF_PLATFORM_OBJECT* platformObject;
@@ -1468,11 +1817,25 @@ DmfPlatform_WdfCollectionGetItem(
 _IRQL_requires_max_(DISPATCH_LEVEL)
 WDFOBJECT
 DmfPlatform_WdfCollectionGetFirstItem(
-    _In_
-    PWDF_DRIVER_GLOBALS DriverGlobals,
-    _In_
-    WDFCOLLECTION Collection
+    _In_ WDF_DRIVER_GLOBALS* DriverGlobals,
+    _In_ WDFCOLLECTION Collection
     )
+/*++
+
+Routine Description:
+
+    Platform implementation of WdfCollectionGetFirstItem().
+
+Arguments:
+
+    DriverGlobals - Internal platform data for possible future use.
+    (See MSDN for meanings of the rest of the parameters.)
+
+Return Value:
+
+    NTSTATUS
+
+--*/
 {
     WDFOBJECT returnValue;
     DMF_PLATFORM_OBJECT* platformObject;
@@ -1512,11 +1875,25 @@ DmfPlatform_WdfCollectionGetFirstItem(
 _IRQL_requires_max_(DISPATCH_LEVEL)
 WDFOBJECT
 DmfPlatform_WdfCollectionGetLastItem(
-    _In_
-    PWDF_DRIVER_GLOBALS DriverGlobals,
-    _In_
-    WDFCOLLECTION Collection
+    _In_ WDF_DRIVER_GLOBALS* DriverGlobals,
+    _In_ WDFCOLLECTION Collection
     )
+/*++
+
+Routine Description:
+
+    Platform implementation of WdfCollectionGetLastItem().
+
+Arguments:
+
+    DriverGlobals - Internal platform data for possible future use.
+    (See MSDN for meanings of the rest of the parameters.)
+
+Return Value:
+
+    NTSTATUS
+
+--*/
 {
     WDFOBJECT returnValue;
     DMF_PLATFORM_OBJECT* platformObject;
@@ -1561,13 +1938,26 @@ DmfPlatform_WdfCollectionGetLastItem(
 _IRQL_requires_max_(DISPATCH_LEVEL)
 VOID
 DmfPlatform_WdfDeviceInitSetPnpPowerEventCallbacks(
-    _In_
-    PWDF_DRIVER_GLOBALS DriverGlobals,
-    _In_
-    PWDFDEVICE_INIT DeviceInit,
-    _In_
-    PWDF_PNPPOWER_EVENT_CALLBACKS PnpPowerEventCallbacks
+    _In_ WDF_DRIVER_GLOBALS* DriverGlobals,
+    _In_ PWDFDEVICE_INIT DeviceInit,
+    _In_ WDF_PNPPOWER_EVENT_CALLBACKS* PnpPowerEventCallbacks
     )
+/*++
+
+Routine Description:
+
+    Platform implementation of WdfDeviceInitSetPnpPowerEventCallbacks().
+
+Arguments:
+
+    DriverGlobals - Internal platform data for possible future use.
+    (See MSDN for meanings of the rest of the parameters.)
+
+Return Value:
+
+    NTSTATUS
+
+--*/
 {
     UNREFERENCED_PARAMETER(DriverGlobals);
     UNREFERENCED_PARAMETER(DeviceInit);
@@ -1577,13 +1967,26 @@ DmfPlatform_WdfDeviceInitSetPnpPowerEventCallbacks(
 _IRQL_requires_max_(DISPATCH_LEVEL)
 VOID
 DmfPlatform_WdfDeviceInitSetPowerPolicyEventCallbacks(
-    _In_
-    PWDF_DRIVER_GLOBALS DriverGlobals,
-    _In_
-    PWDFDEVICE_INIT DeviceInit,
-    _In_
-    PWDF_POWER_POLICY_EVENT_CALLBACKS PowerPolicyEventCallbacks
+    _In_ WDF_DRIVER_GLOBALS* DriverGlobals,
+    _In_ PWDFDEVICE_INIT DeviceInit,
+    _In_ WDF_POWER_POLICY_EVENT_CALLBACKS* PowerPolicyEventCallbacks
     )
+/*++
+
+Routine Description:
+
+    Platform implementation of WdfDeviceInitSetPowerPolicyEventCalbacks().
+
+Arguments:
+
+    DriverGlobals - Internal platform data for possible future use.
+    (See MSDN for meanings of the rest of the parameters.)
+
+Return Value:
+
+    NTSTATUS
+
+--*/
 {
     UNREFERENCED_PARAMETER(DriverGlobals);
     UNREFERENCED_PARAMETER(DeviceInit);
@@ -1594,67 +1997,53 @@ _Must_inspect_result_
 _IRQL_requires_max_(PASSIVE_LEVEL)
 NTSTATUS
 DmfPlatform_WdfDeviceCreate(
-    _In_
-    PWDF_DRIVER_GLOBALS DriverGlobals,
-    _Inout_
-    PWDFDEVICE_INIT* DeviceInit,
-    _In_opt_
-    PWDF_OBJECT_ATTRIBUTES DeviceAttributes,
-    _Out_
-    WDFDEVICE* Device
+    _In_ WDF_DRIVER_GLOBALS* DriverGlobals,
+    _Inout_ PWDFDEVICE_INIT* DeviceInit,
+    _In_opt_ WDF_OBJECT_ATTRIBUTES* DeviceAttributes,
+    _Out_ WDFDEVICE* Device
     )
+/*++
+
+Routine Description:
+
+    Platform implementation of WdfDeviceCreate().
+
+Arguments:
+
+    DriverGlobals - Internal platform data for possible future use.
+    (See MSDN for meanings of the rest of the parameters.)
+
+Return Value:
+
+    NTSTATUS
+
+--*/
 {
     NTSTATUS ntStatus;
     DMF_PLATFORM_OBJECT* platformObject;
-    DMF_PLATFORM_OBJECT* parentObject;
 
     UNREFERENCED_PARAMETER(DriverGlobals);
     UNREFERENCED_PARAMETER(DeviceInit);
 
     ntStatus = STATUS_UNSUCCESSFUL;
 
-    if (DeviceAttributes != NULL)
-    {
-        parentObject = (DMF_PLATFORM_OBJECT*)(DeviceAttributes->ParentObject);
-    }
-    else
-    {
-        parentObject = NULL;
-    }
-
-    // TODO: It seems we don't need to delete anything specifically.
-    //
-    platformObject = DmfPlatformObjectCreate(parentObject,
-                                             NULL);
+    platformObject = DmfPlatform_ObjectCreateProlog(NULL,
+                                                    DeviceAttributes,
+                                                    sizeof(DMF_PLATFORM_DEVICE),
+                                                    DmfPlatformObjectTypeDevice);
     if (platformObject == NULL)
     {
+        TraceEvents(TRACE_LEVEL_ERROR, DMF_TRACE, "DmfPlatform_ObjectCreateProlog fails: ntStatus=0x08X", ntStatus);
         goto Exit;
     }
 
-    platformObject->Data = (DMF_PLATFORM_DEVICE*)DmfPlatformHandlersTable.DmfPlatformHandlerAllocate(sizeof(DMF_PLATFORM_DEVICE));
-    if (platformObject->Data == NULL)
-    {
-        DmfPlatformHandlersTable.DmfPlatformHandlerFree(platformObject);
-        goto Exit;
-    }
-
-    platformObject->PlatformObjectType = DmfPlatformObjectTypeDevice;
-
-    // TODO:
-    // DMF_PLATFORM_DEVICE* platformDevice = (DMF_PLATFORM_DEVICE*)platformObject->Data;
+    // TODO: Possible future support.
     //
-
-    if (DeviceAttributes != NULL)
-    {
-        memcpy(&platformObject->ObjectAttributes,
-               DeviceAttributes,
-               sizeof(WDF_OBJECT_ATTRIBUTES));
-    }
+    // DMF_PLATFORM_DEVICE* platformDevice = (DMF_PLATFORM_DEVICE*)platformObject->Data;
 
     *Device = (WDFDEVICE)platformObject;
 
-    ntStatus = CustomContextAllocate(platformObject,
-                                     DeviceAttributes);
+    ntStatus = STATUS_SUCCESS;
 
 Exit:
 
@@ -1664,15 +2053,27 @@ Exit:
 _IRQL_requires_max_(DISPATCH_LEVEL)
 VOID
 DmfPlatform_WdfDeviceInitSetFileObjectConfig(
-    _In_
-    PWDF_DRIVER_GLOBALS DriverGlobals,
-    _In_
-    PWDFDEVICE_INIT DeviceInit,
-    _In_
-    PWDF_FILEOBJECT_CONFIG FileObjectConfig,
-    _In_opt_
-    PWDF_OBJECT_ATTRIBUTES FileObjectAttributes
+    _In_ WDF_DRIVER_GLOBALS* DriverGlobals,
+    _In_ PWDFDEVICE_INIT DeviceInit,
+    _In_ WDF_FILEOBJECT_CONFIG* FileObjectConfig,
+    _In_opt_ WDF_OBJECT_ATTRIBUTES* FileObjectAttributes
     )
+/*++
+
+Routine Description:
+
+    Platform implementation of WdfDeviceInitSetfileObjectConfig().
+
+Arguments:
+
+    DriverGlobals - Internal platform data for possible future use.
+    (See MSDN for meanings of the rest of the parameters.)
+
+Return Value:
+
+    NTSTATUS
+
+--*/
 {
     UNREFERENCED_PARAMETER(DriverGlobals);
     UNREFERENCED_PARAMETER(DeviceInit);
@@ -1683,15 +2084,27 @@ DmfPlatform_WdfDeviceInitSetFileObjectConfig(
 _IRQL_requires_max_(DISPATCH_LEVEL)
 VOID
 DmfPlatform_WdfDeviceInitSetCharacteristics(
-    _In_
-    PWDF_DRIVER_GLOBALS DriverGlobals,
-    _In_
-    PWDFDEVICE_INIT DeviceInit,
-    _In_
-    ULONG DeviceCharacteristics,
-    _In_
-    BOOLEAN OrInValues
+    _In_ WDF_DRIVER_GLOBALS* DriverGlobals,
+    _In_ PWDFDEVICE_INIT DeviceInit,
+    _In_ ULONG DeviceCharacteristics,
+    _In_ BOOLEAN OrInValues
     )
+/*++
+
+Routine Description:
+
+    Platform implementation of WdfDeviceInitSetCharacteristics().
+
+Arguments:
+
+    DriverGlobals - Internal platform data for possible future use.
+    (See MSDN for meanings of the rest of the parameters.)
+
+Return Value:
+
+    NTSTATUS
+
+--*/
 {
     UNREFERENCED_PARAMETER(DriverGlobals);
     UNREFERENCED_PARAMETER(DeviceInit);
@@ -1702,13 +2115,26 @@ DmfPlatform_WdfDeviceInitSetCharacteristics(
 _IRQL_requires_max_(DISPATCH_LEVEL)
 VOID
 DmfPlatform_WdfDeviceInitSetDeviceClass(
-    _In_
-    PWDF_DRIVER_GLOBALS DriverGlobals,
-    _In_
-    PWDFDEVICE_INIT DeviceInit,
-    _In_
-    CONST GUID* DeviceClassGuid
+    _In_ WDF_DRIVER_GLOBALS* DriverGlobals,
+    _In_ PWDFDEVICE_INIT DeviceInit,
+    _In_ CONST GUID* DeviceClassGuid
     )
+/*++
+
+Routine Description:
+
+    Platform implementation of WdfDeviceInitSetDeviceClass().
+
+Arguments:
+
+    DriverGlobals - Internal platform data for possible future use.
+    (See MSDN for meanings of the rest of the parameters.)
+
+Return Value:
+
+    NTSTATUS
+
+--*/
 {
     UNREFERENCED_PARAMETER(DriverGlobals);
     UNREFERENCED_PARAMETER(DeviceInit);
@@ -1730,53 +2156,46 @@ _Must_inspect_result_
 _IRQL_requires_max_(DISPATCH_LEVEL)
 NTSTATUS
 DmfPlatform_WdfIoQueueCreate(
-    _In_
-    PWDF_DRIVER_GLOBALS DriverGlobals,
-    _In_
-    WDFDEVICE Device,
-    _In_
-    PWDF_IO_QUEUE_CONFIG Config,
-    _In_opt_
-    PWDF_OBJECT_ATTRIBUTES QueueAttributes,
-    _Out_opt_
-    WDFQUEUE* Queue
+    _In_ WDF_DRIVER_GLOBALS* DriverGlobals,
+    _In_ WDFDEVICE Device,
+    _In_ WDF_IO_QUEUE_CONFIG* Config,
+    _In_opt_ WDF_OBJECT_ATTRIBUTES* QueueAttributes,
+    _Out_opt_ WDFQUEUE* Queue
     )
+/*++
+
+Routine Description:
+
+    Platform implementation of WdfIoQueueCreate().
+
+Arguments:
+
+    DriverGlobals - Internal platform data for possible future use.
+    (See MSDN for meanings of the rest of the parameters.)
+
+Return Value:
+
+    NTSTATUS
+
+--*/
 {
     NTSTATUS ntStatus;
     DMF_PLATFORM_OBJECT* platformObject;
-    DMF_PLATFORM_OBJECT* parentObject;
 
     UNREFERENCED_PARAMETER(DriverGlobals);
     UNREFERENCED_PARAMETER(Device);
 
     ntStatus = STATUS_UNSUCCESSFUL;
 
-    if (QueueAttributes != NULL)
-    {
-        parentObject = (DMF_PLATFORM_OBJECT*)(QueueAttributes->ParentObject);
-    }
-    else
-    {
-        parentObject = NULL;
-    }
-
-    // TODO: It seems we don't need to delete anything specifically.
-    //
-    platformObject = DmfPlatformObjectCreate(parentObject,
-                                             NULL);
+    platformObject = DmfPlatform_ObjectCreateProlog(NULL,
+                                                    QueueAttributes,
+                                                    sizeof(DMF_PLATFORM_QUEUE),
+                                                    DmfPlatformObjectTypeQueue);
     if (platformObject == NULL)
     {
+        TraceEvents(TRACE_LEVEL_ERROR, DMF_TRACE, "DmfPlatform_ObjectCreateProlog fails: ntStatus=0x08X", ntStatus);
         goto Exit;
     }
-
-    platformObject->Data = (DMF_PLATFORM_QUEUE*)DmfPlatformHandlersTable.DmfPlatformHandlerAllocate(sizeof(DMF_PLATFORM_QUEUE));
-    if (platformObject->Data == NULL)
-    {
-        DmfPlatformHandlersTable.DmfPlatformHandlerFree(platformObject);
-        goto Exit;
-    }
-
-    platformObject->PlatformObjectType = DmfPlatformObjectTypeQueue;
 
     DMF_PLATFORM_QUEUE* platformQueue = (DMF_PLATFORM_QUEUE*)platformObject->Data;
 
@@ -1784,9 +2203,6 @@ DmfPlatform_WdfIoQueueCreate(
            Config,
            sizeof(WDF_IO_QUEUE_CONFIG));
 
-    memcpy(&platformObject->ObjectAttributes,
-           QueueAttributes,
-           sizeof(WDF_OBJECT_ATTRIBUTES));
     *Queue = (WDFQUEUE)platformObject;
 
     ntStatus = STATUS_SUCCESS;
@@ -1799,11 +2215,25 @@ Exit:
 _IRQL_requires_max_(DISPATCH_LEVEL)
 WDFDEVICE
 DmfPlatform_WdfIoQueueGetDevice(
-    _In_
-    PWDF_DRIVER_GLOBALS DriverGlobals,
-    _In_
-    WDFQUEUE Queue
+    _In_ WDF_DRIVER_GLOBALS* DriverGlobals,
+    _In_ WDFQUEUE Queue
     )
+/*++
+
+Routine Description:
+
+    Platform implementation of WdfIoQueueGetDevice().
+
+Arguments:
+
+    DriverGlobals - Internal platform data for possible future use.
+    (See MSDN for meanings of the rest of the parameters.)
+
+Return Value:
+
+    NTSTATUS
+
+--*/
 {
     // TODO:
     //
@@ -1821,13 +2251,26 @@ DmfPlatform_WdfIoQueueGetDevice(
 _IRQL_requires_max_(DISPATCH_LEVEL)
 VOID
 DmfPlatform_WdfRequestComplete(
-    _In_
-    PWDF_DRIVER_GLOBALS DriverGlobals,
-    _In_
-    WDFREQUEST Request,
-    _In_
-    NTSTATUS Status
+    _In_ WDF_DRIVER_GLOBALS* DriverGlobals,
+    _In_ WDFREQUEST Request,
+    _In_ NTSTATUS Status
     )
+/*++
+
+Routine Description:
+
+    Platform implementation of WdfRequestComplete().
+
+Arguments:
+
+    DriverGlobals - Internal platform data for possible future use.
+    (See MSDN for meanings of the rest of the parameters.)
+
+Return Value:
+
+    NTSTATUS
+
+--*/
 {
     UNREFERENCED_PARAMETER(DriverGlobals);
     UNREFERENCED_PARAMETER(Request);
@@ -1842,11 +2285,25 @@ DmfPlatform_WdfRequestComplete(
 _IRQL_requires_max_(DISPATCH_LEVEL)
 WDFDEVICE
 DmfPlatform_WdfFileObjectGetDevice(
-    _In_
-    PWDF_DRIVER_GLOBALS DriverGlobals,
-    _In_
-    WDFFILEOBJECT FileObject
+    _In_ WDF_DRIVER_GLOBALS* DriverGlobals,
+    _In_ WDFFILEOBJECT FileObject
     )
+/*++
+
+Routine Description:
+
+    Platform implementation of WdfFileObjectGetDevice().
+
+Arguments:
+
+    DriverGlobals - Internal platform data for possible future use.
+    (See MSDN for meanings of the rest of the parameters.)
+
+Return Value:
+
+    NTSTATUS
+
+--*/
 {
     UNREFERENCED_PARAMETER(DriverGlobals);
     UNREFERENCED_PARAMETER(FileObject);
@@ -1870,6 +2327,17 @@ void
 DmfPlaformNotImplemented(
     void
     )
+/*++
+
+Routine Description:
+
+Arguments:
+
+Return Value:
+
+    NTSTATUS
+
+--*/
 {
     DmfAssert(FALSE);
 }
@@ -1894,6 +2362,22 @@ void
 DMF_PlatformInitialize(
     void
     )
+/*++
+
+Routine Description:
+
+    Initializes the table of functions that allow WDF calls to be routed to the
+    internal support. Also calls the platform specific initialization callback.
+
+Arguments:
+
+    None
+
+Return Value:
+
+    None
+
+--*/
 {
     ULONG functionTableIndex;
 
@@ -2045,6 +2529,22 @@ void
 DMF_PlatformUninitialize(
     _In_ WDFDEVICE WdfDevice
     )
+/*++
+
+Routine Description:
+
+    Performs uninitialization including freeing all memory allocated by the given
+    parent object and its children.
+
+Arguments:
+
+    WdfDevice - The given parent object.
+
+Return Value:
+
+    None
+
+--*/
 {
     if (WdfDevice != NULL)
     {
@@ -2054,6 +2554,183 @@ DMF_PlatformUninitialize(
     // Perform platform specific uninitialization.
     //
     DmfPlatformHandlersTable.DmfPlatformHandlerUninitialize();
+}
+
+///////////////////////////////////////////////////////////////////////////////////
+// Tracing
+///////////////////////////////////////////////////////////////////////////////////
+//
+
+// TODO: Convert %!STATUS! to 0x%08X.
+//
+
+VOID
+TraceEvents(
+    _In_ ULONG DebugPrintLevel,
+    _In_ ULONG DebugPrintFlag,
+    _Printf_format_string_ _In_ PCSTR DebugMessage,
+    ...
+    )
+/*++
+
+Routine Description:
+
+    Outputs logging information.
+
+Arguments:
+
+    DebugPrintLevel - The message level.
+    DebugPrintFlag - The message flag.
+    DebugMessageFormat - Printf format string.
+    ... - Arguments to output formatted by DebugMessageFormat.
+
+Return Value:
+
+    None
+
+--*/
+{
+    va_list argumentList;
+
+    va_start(argumentList,
+             DebugMessage);
+
+    DmfPlatformHandlersTable.DmfPlatformHandlerTraceEvents(DebugPrintLevel,
+                                                           DebugPrintFlag,
+                                                           DebugMessage,
+                                                           argumentList);
+    va_end(argumentList);
+}
+
+VOID
+TraceInformation(
+    _In_ ULONG DebugPrintFlag,
+    _Printf_format_string_ _In_ PCSTR DebugMessage,
+    ...
+    )
+/*++
+
+Routine Description:
+
+    Outputs logging information.
+
+Arguments:
+
+    DebugPrintLevel - The message level.
+    DebugPrintFlag - The message flag.
+    DebugMessageFormat - Printf format string.
+    ... - Arguments to output formatted by DebugMessageFormat.
+
+Return Value:
+
+    None
+
+--*/
+{
+    va_list argumentList;
+
+    va_start(argumentList,
+             DebugMessage);
+
+    DmfPlatformHandlersTable.DmfPlatformHandlerTraceEvents(TRACE_LEVEL_INFORMATION,
+                                                           DebugPrintFlag,
+                                                           DebugMessage,
+                                                           argumentList);
+    va_end(argumentList);
+}
+
+VOID
+TraceVerbose(
+    _In_ ULONG DebugPrintFlag,
+    _Printf_format_string_ _In_ PCSTR DebugMessage,
+    ...
+    )
+/*++
+
+Routine Description:
+
+    Outputs logging information.
+
+Arguments:
+
+    DebugPrintLevel - The message level.
+    DebugPrintFlag - The message flag.
+    DebugMessageFormat - Printf format string.
+    ... - Arguments to output formatted by DebugMessageFormat.
+
+Return Value:
+
+    None
+
+--*/
+{
+    va_list argumentList;
+
+    va_start(argumentList,
+             DebugMessage);
+
+    DmfPlatformHandlersTable.DmfPlatformHandlerTraceEvents(TRACE_LEVEL_VERBOSE,
+                                                           DebugPrintFlag,
+                                                           DebugMessage,
+                                                           argumentList);
+    va_end(argumentList);
+}
+
+VOID
+TraceError(
+    _In_ ULONG DebugPrintFlag,
+    _Printf_format_string_ _In_ PCSTR DebugMessage,
+    ...
+    )
+/*++
+
+Routine Description:
+
+    Outputs logging information.
+
+Arguments:
+
+    DebugPrintLevel - The message level.
+    DebugPrintFlag - The message flag.
+    DebugMessageFormat - Printf format string.
+    ... - Arguments to output formatted by DebugMessageFormat.
+
+Return Value:
+
+    None
+
+--*/
+{
+    va_list argumentList;
+
+    va_start(argumentList,
+             DebugMessage);
+
+    DmfPlatformHandlersTable.DmfPlatformHandlerTraceEvents(TRACE_LEVEL_ERROR,
+                                                           DebugPrintFlag,
+                                                           DebugMessage,
+                                                           argumentList);
+    va_end(argumentList);
+}
+
+VOID
+FuncEntryArguments(
+    _In_ ULONG DebugPrintFlag,
+    _Printf_format_string_ _In_ PCSTR DebugMessage,
+    ...
+    )
+{
+    va_list argumentList;
+
+    va_start(argumentList,
+             DebugMessage);
+
+    TraceEvents(TRACE_LEVEL_VERBOSE,
+                DebugPrintFlag,
+                DebugMessage,
+                argumentList);
+
+    va_end(argumentList);
 }
 
 #if defined(__cplusplus)

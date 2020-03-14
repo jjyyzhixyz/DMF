@@ -82,6 +82,24 @@
     <Filter Include="Documentation\Modules\Hid">
       <UniqueIdentifier>{0e021f5f-590e-404c-ab18-7ee3a05800cc}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Modules\Sensors">
+      <UniqueIdentifier>{4f71e9b7-4827-4df7-9bca-45d98bb6fa02}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Modules\Network">
+      <UniqueIdentifier>{cf67d15d-ae8a-4ff6-a7cf-c48b8a893506}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headers\Modules\Network">
+      <UniqueIdentifier>{d1b7547d-c4e5-407a-9032-50a54be33588}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headers\Modules\Sensors">
+      <UniqueIdentifier>{a9431321-91a8-4546-b1b0-f4403487faba}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Documentation\Modules\Network">
+      <UniqueIdentifier>{ec35919a-01c2-4817-ae0d-5fdfaf123719}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Documentation\Modules\Sensors">
+      <UniqueIdentifier>{a105dca8-e197-46d9-b632-f91c8a5a66ad}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Modules.Library\DmfModules.Library.h">
@@ -171,6 +189,15 @@
     <ClInclude Include="..\..\Modules.Library\Dmf_AlertableSleep.h">
       <Filter>Headers\Modules\Driver Patterns</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Modules.Library\Dmf_SimpleOrientation.h">
+      <Filter>Headers\Modules\Sensors</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Modules.Library\Dmf_HingeAngle.h">
+      <Filter>Headers\Modules\Sensors</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Modules.Library\Dmf_MobileBroadband.h">
+      <Filter>Headers\Modules\Network</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\Modules.Library\Dmf_PingPongBuffer.c">
@@ -202,6 +229,15 @@
     </ClCompile>
     <ClCompile Include="..\..\Modules.Library\Dmf_AlertableSleep.c">
       <Filter>Modules\Driver Patterns</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Modules.Library\Dmf_SimpleOrientation.cpp">
+      <Filter>Modules\Sensors</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Modules.Library\Dmf_HingeAngle.cpp">
+      <Filter>Modules\Sensors</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Modules.Library\Dmf_MobileBroadband.cpp">
+      <Filter>Modules\Network</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -286,6 +322,15 @@
     </None>
     <None Include="..\..\Modules.Library\Dmf_AlertableSleep.md">
       <Filter>Documentation\Modules\Driver Patterns</Filter>
+    </None>
+    <None Include="..\..\Modules.Library\Dmf_HingeAngle.md">
+      <Filter>Documentation\Modules\Sensors</Filter>
+    </None>
+    <None Include="..\..\Modules.Library\Dmf_SimpleOrientation.md">
+      <Filter>Documentation\Modules\Sensors</Filter>
+    </None>
+    <None Include="..\..\Modules.Library\Dmf_MobileBroadband.md">
+      <Filter>Documentation\Modules\Network</Filter>
     </None>
   </ItemGroup>
 </Project>

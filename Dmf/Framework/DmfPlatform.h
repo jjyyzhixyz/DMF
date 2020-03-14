@@ -50,6 +50,7 @@ extern "C"
 
 #if !defined(DMF_WDF_DRIVER)
 
+
     #define STATUS_SUCCESS                   ((NTSTATUS)0x00000000L) 
     #define STATUS_ABANDONED                 ((NTSTATUS)0x00000080L)
     #define STATUS_ALERTED                   ((NTSTATUS)0x00000101L)
@@ -62,6 +63,7 @@ extern "C"
     #define STATUS_UNSUCCESSFUL              ((NTSTATUS)0xC0000001L)
     #define STATUS_INSUFFICIENT_RESOURCES    ((NTSTATUS)0xC000009AL) 
     #define STATUS_INVALID_DEVICE_REQUEST    ((NTSTATUS)0xC0000010L)
+    #define STATUS_ACCESS_DENIED             ((NTSTATUS)0xC0000022L)
     #define STATUS_BUFFER_TOO_SMALL          ((NTSTATUS)0xC0000023L)
     #define STATUS_OBJECT_NAME_COLLISION     ((NTSTATUS)0xC0000035L)
     #define STATUS_NOT_SUPPORTED             ((NTSTATUS)0xC00000BBL)
@@ -78,12 +80,13 @@ extern "C"
     #define STATUS_NOT_FOUND                 ((NTSTATUS)0xC0000225L)
     #define NT_SUCCESS(Status)  (((NTSTATUS)(Status)) >= 0)
 
-    #define STATUS_WAIT_0                    ((DWORD   )0x00000000L) 
+    #define STATUS_WAIT_0                    ((DWORD   )0x00000000L)
     #define STATUS_WAIT_1                    (STATUS_WAIT_0 + 1)
 
-    // TODO: From WDM.
-    //
-    #define DEVICE_TYPE DWORD
+    #define STATUS_ABANDONED_WAIT_0          ((DWORD   )0x00000080L)
+    #define STATUS_USER_APC                  ((DWORD   )0x000000C0L)
+
+    #define PAGED_CODE()
 
     #define WDF_EVERYTHING_ALWAYS_AVAILABLE
     #include ".\Platform\wudfwdm.h"
@@ -112,6 +115,7 @@ extern "C"
     #include ".\Platform\wdftimer.h"
     #include ".\Platform\wdfworkitem.h"
     #include ".\Platform\wdfcollection.h"
+    #include ".\Platform\wdfstring.h"
 
     // TODO: From WDM.
     //
@@ -207,6 +211,15 @@ extern "C"
     // NOTE: Every platform defines platform specific versions of these
     //       functions.
     //
+
+    typedef
+    void
+    (*DmfPlatformHandlerTraceEvents)(
+        _In_ ULONG DebugPrintLevel,
+        _In_ ULONG DebugPrintFlag,
+        _Printf_format_string_ _In_ PCSTR   DebugMessage,
+        ...
+        );
 
     // TODO: We should return possible return a context that is used later
     //       so platform can store platform specific data. (Use global memory
@@ -366,7 +379,8 @@ extern "C"
     // Structure of all the mapped handlers.
     //
     typedef struct
-    {        
+    {
+        DmfPlatformHandlerTraceEvents DmfPlatformHandlerTraceEvents;
         DmfPlatformHandler_PlatformInitialize DmfPlatformHandlerInitialize;
         DmfPlatformHandler_PlatformUninitialize DmfPlatformHandlerUninitialize;
         DmfPlatformHandler_Allocate DmfPlatformHandlerAllocate;

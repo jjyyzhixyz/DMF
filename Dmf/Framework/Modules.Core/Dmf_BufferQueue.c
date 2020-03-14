@@ -25,7 +25,9 @@ Environment:
 #include "DmfModules.Core.h"
 #include "DmfModules.Core.Trace.h"
 
+#if defined(DMF_WDF_DRIVER)
 #include "Dmf_BufferQueue.tmh"
+#endif
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////
 // Module Private Enumerations and Structures

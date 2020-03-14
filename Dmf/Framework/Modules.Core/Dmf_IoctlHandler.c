@@ -25,9 +25,9 @@ Environment:
 #include "DmfModules.Core.h"
 #include "DmfModules.Core.Trace.h"
 
-#include "Dmf_IoctlHandler.tmh"
-
 #if defined(DMF_WDF_DRIVER)
+#include "Dmf_IoctlHandler.tmh"
+#endif
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////
 // Module Private Enumerations and Structures
@@ -1110,8 +1110,6 @@ Return Value:
     FuncExitVoid(DMF_TRACE);
 }
 #pragma code_seg()
-
-#endif
 
 // eof: Dmf_IoctlHandler.c
 //

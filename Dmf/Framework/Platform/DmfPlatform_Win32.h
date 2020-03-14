@@ -82,10 +82,7 @@ typedef struct _DMF_PLATFORM_DEVICE
     ULONG Dummy;
 } DMF_PLATFORM_DEVICE;
 
-#define PAGED_CODE()
-
 typedef CRITICAL_SECTION DMF_PLATFORM_CRITICAL_SECTION;
-
 
 extern DmfPlatform_Handlers DmfPlatformHandlersTable;
 

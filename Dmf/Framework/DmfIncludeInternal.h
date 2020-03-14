@@ -384,6 +384,10 @@ typedef struct _DMF_DEVICE_CONTEXT
     // Indicates that the Client Driver is a Filter driver.
     //
     BOOLEAN IsFilterDevice;
+
+    // Callback that allows Client to emit logging/telemetry data.
+    //
+    EVT_DMF_DEVICE_LOG* EvtDmfDeviceLog;
 } DMF_DEVICE_CONTEXT;
 
 WDF_DECLARE_CONTEXT_TYPE_WITH_NAME(DMF_DEVICE_CONTEXT, DmfDeviceContextGet)
@@ -643,8 +647,6 @@ DMF_RequestPassthru(
     _In_ WDFREQUEST Request
     );
 
-#if defined(DMF_WDF_DRIVER)
-
 _IRQL_requires_max_(DISPATCH_LEVEL)
 VOID
 DMF_RequestPassthruWithCompletion(
@@ -653,8 +655,6 @@ DMF_RequestPassthruWithCompletion(
     _In_ PFN_WDF_REQUEST_COMPLETION_ROUTINE CompletionRoutine,
     __drv_aliasesMem WDFCONTEXT CompletionContext
     );
-
-#endif
 
 // DmfInternal.h
 //

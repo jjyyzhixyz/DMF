@@ -24,7 +24,10 @@ Environment:
 --*/
 
 #include "DmfIncludeInternal.h"
+
+#if defined(DMF_WDF_DRIVER)
 #include "DmfInterfaceInternal.tmh"
+#endif
 
 DMFMODULE
 DMF_InterfaceTransportModuleGet(

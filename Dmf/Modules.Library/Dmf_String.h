@@ -20,6 +20,32 @@ Environment:
 
 #pragma once
 
+#if !defined(DMF_WDF_DRIVER)
+
+__forceinline
+_IRQL_requires_max_(DISPATCH_LEVEL)
+_At_(DestinationString->Buffer, _Post_equal_to_(SourceString))
+_At_(DestinationString->Length, _Post_equal_to_(_String_length_(SourceString) * sizeof(WCHAR)))
+_At_(DestinationString->MaximumLength, _Post_equal_to_((_String_length_(SourceString)+1) * sizeof(WCHAR)))
+VOID
+DMF_String_RtlInitUnicodeString(
+    _Out_ PUNICODE_STRING DestinationString,
+    _In_opt_z_ __drv_aliasesMem WCHAR* SourceString
+    )
+{
+    DestinationString->Buffer = SourceString;
+    DestinationString->Length = (USHORT)(wcslen(SourceString) * sizeof(WCHAR));
+    // Add WCHAR for final \0\0.
+    //
+    DestinationString->MaximumLength = DestinationString->Length + sizeof(WCHAR);
+}
+
+// This function is not available in non-Windows environments.
+//
+#define RtlInitUnicodeString DMF_String_RtlInitUnicodeString
+
+#endif
+
 #if defined(DMF_USER_MODE)
 
 __forceinline

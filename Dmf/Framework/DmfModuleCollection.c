@@ -43,7 +43,9 @@ Environment:
 
 #include "DmfIncludeInternal.h"
 
+#if defined(DMF_WDF_DRIVER)
 #include "DmfModuleCollection.tmh"
+#endif
 
 _IRQL_requires_max_(PASSIVE_LEVEL)
 NTSTATUS
@@ -2964,7 +2966,6 @@ Return Value:
     //
     if (ModuleCollectionConfig->BranchTrackModuleConfig != NULL)
     {
-#if defined(DMF_WDF_DRIVER)
         DMF_MODULE_ATTRIBUTES moduleAttributes;
 
         DMF_BranchTrack_ATTRIBUTES_INIT(&moduleAttributes);
@@ -2977,9 +2978,6 @@ Return Value:
                                                 &moduleAttributes,
                                                 WDF_NO_OBJECT_ATTRIBUTES,
                                                 NULL);
-#else
-        DmfAssert(FALSE);
-#endif
     }
 
 #if !defined(DMF_USER_MODE)
@@ -3283,7 +3281,6 @@ Return Value:
     //
     if (ModuleCollectionConfig->BranchTrackModuleConfig != NULL)
     {
-#if defined(DMF_WDF_DRIVER)
         // The Client Driver has enabled BranchTrack. Check if the User has enabled BranchTrack.
         //
         ULONG shouldBranchTrackBeInstantiatedAutomatically = DMF_ModuleBranchTrack_HasClientEnabledBranchTrack(ModuleCollectionConfig->DmfPrivate.ClientDriverWdfDevice);
@@ -3305,9 +3302,6 @@ Return Value:
             //
             numberOfClientModulesToCreate--;
         }
-#else
-        DmfAssert(FALSE);
-#endif
     }
 
     // LiveKernelDump Module enabled if Config structure is set by Client.
@@ -3722,11 +3716,7 @@ Return Value:
     //
     if (ModuleCollectionConfig->DmfPrivate.BranchTrackEnabled)
     {
-#if defined(DMF_WDF_DRIVER)
         DMF_ModuleBranchTrack_ModuleCollectionInitialize(moduleCollectionHandle);
-#else
-        DmfAssert(FALSE);
-#endif
     }
 
 #if !defined(DMF_USER_MODE)
@@ -3829,7 +3819,6 @@ Return Value:
     isControlDevice = DMF_DmfDeviceInitIsControlDevice(dmfDeviceInit);
     isFilterDriver = DMF_DmfDeviceInitIsFilterDriver(dmfDeviceInit);
 
-#if defined(DMF_WDF_DRIVER)
     // If Default queue is not created by the client, then create one here.
     // Module which implement IoQueue callbacks will need a default queue.
     //
@@ -3854,7 +3843,6 @@ Return Value:
             goto Exit;
         }
     }
-#endif
 
     // Add DMF_DEVICE_CONTEXT as context to Client's Device object.
     //
@@ -3897,6 +3885,11 @@ Return Value:
         {
             dmfEventCallbacks->EvtDmfDeviceModulesAdd(Device,
                                                       (PDMFMODULE_INIT)&moduleCollectionConfig);
+        }
+
+        if (dmfEventCallbacks->EvtDmfDeviceLog != NULL)
+        {
+            dmfDeviceContext->EvtDmfDeviceLog = dmfEventCallbacks->EvtDmfDeviceLog;
         }
     }
 

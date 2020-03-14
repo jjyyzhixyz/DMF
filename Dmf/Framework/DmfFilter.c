@@ -25,7 +25,9 @@ Environment:
 
 #include "DmfIncludeInternal.h"
 
+#if defined(DMF_WDF_DRIVER)
 #include "DmfFilter.tmh"
+#endif
 
 #if !defined(DMF_USER_MODE)
 

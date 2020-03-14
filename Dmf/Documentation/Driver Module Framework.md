@@ -185,6 +185,8 @@ Function)](#section-11-public-calls-by-client-includes-module-create-function)
 
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[EVT_DMF_DEVICE_MODULES_ADD](#evt_dmf_device_modules_add)
 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[EVT_DMF_DEVICE_LOG](#evt_dmf_device_log)
+
 [DMF Client API Reference](#dmf-client-api-reference)
 
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[DMF Client Structures](#dmf-client-structures)
@@ -3187,7 +3189,8 @@ that structure to **DMF_DmfDeviceInitSetEventCallbacks**.
   **Member**                                                  | **Description**
   ----------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------
   **Size**                                                    | Size of the structure initialized by **DMF_EVENT_CALLBACKS_INIT().**
-  **PFN_DMF_DEVICE_MODULES_ADD EvtDmfDeviceModulesAdd**       | Set the **EvtDmfDeviceModulesAdd** member to the function that the Client Driver uses to add Modules that will be instantiated.
+  **EVT_DMF_DEVICE_MODULES_ADD* EvtDmfDeviceModulesAdd**      | Set the **EvtDmfDeviceModulesAdd** member to the function that the Client Driver uses to add Modules that will be instantiated.
+  **EVT_DMF_DEVICE_LOG* EvtDmfDeviceLog**                     | Set the **EvtDmfDeviceLog** member to the function that the Client Driver uses to to receive event log information from Modules.
 
 Client Driver DMF Initialization Macros
 ---------------------------------------
@@ -7519,6 +7522,42 @@ TRUE if the two GUIDs are the same. FALSE, otherwise.
 This function is better than the version provided in the DDK because it
 is portable between Kernel and User-mode.
 
+### DMF_Utility_LogEmitString
+````
+_IRQL_requires_max_(PASSIVE_LEVEL)
+VOID
+DMF_Utility_LogEmitString(
+    _In_ DMFMODULE DmfModule,
+    _In_ DmfLogDataSeverity DmfLogDataSeverity,
+    _In_ WCHAR* FormatString,
+    ...
+    );
+````
+Allows a Module to call the Client Driver's event log callback with a formatted string that
+contains information that can be written to the event log or other sink under the Client Driver's
+control.
+
+#### Parameters
+
+  Parameter | Description
+  ----------------------------- | ---------------------------------------------------------------
+  **DMFMODULE DmfModule**          | The Module from which the string is emitted.
+  **DmfLogDataSeverity DmfLogDataSeverity**           | The severity of the message.
+  **WCHAR* FormatString**       | The format string which is used to format the following variable arguments.
+  **...**               | The variable argument list that contains the data to write in the string and emit to Client Driver.
+
+#### Returns
+
+None.
+
+#### Remarks
+
+-   This call allows Modules to output logging information using whatever logging sink the Client Driver uses.
+
+-   The standard printf formatting specification is used to create the string emitted to Client Driver.
+
+-   Can only be called from passive level.
+
 ### DMF_Utility_UserModeAccessCreate
 ```
 NTSTATUS
@@ -7887,6 +7926,7 @@ functions are not Module specific.
   **DMF_Utility_EventLogEntryWriteDevice**       |  Given a **WDFDEVICE**, write an event log entry.
   **DMF_Utility_EventLogEntryWriteDmfModule**    |  Given a **DMFMODULE**, write an event log entry.
   **DMF_Utility_EventLogEntryWriteUserMode**     |  Write an event log entry in a User-mode driver.
+  **DMF_Utility_LogEmitString**                  |  Callback Client driver with a string that can be written to event log or other sink.
 
 These APIs are used to abstract code and data structures so that the
 same code can be used in both Kernel and User-mode code:

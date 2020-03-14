@@ -25,7 +25,9 @@ Environment:
 
 #include "DmfIncludeInternal.h"
 
+#if defined(DMF_WDF_DRIVER)
 #include "DmfDeviceInit.tmh"
+#endif
 
 // Memory Pool Tag.
 //
