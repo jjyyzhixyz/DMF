@@ -248,7 +248,14 @@ extern "C"
         _In_ ULONG DebugPrintLevel,
         _In_ ULONG DebugPrintFlag,
         _Printf_format_string_ _In_ PCSTR   DebugMessage,
-        ...
+        _In_ va_list ArgumentList
+        );
+
+    BOOLEAN
+    DmfPlatform_FormatStringTranslate(
+        _In_ PCSTR DebugMessage,
+        _Out_writes_(OutStringSize) CHAR* OutString,
+        _In_ size_t OutStringSize
         );
 
     // TODO: We should return possible return a context that is used later

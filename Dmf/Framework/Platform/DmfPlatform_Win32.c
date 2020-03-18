@@ -860,7 +860,7 @@ DmfPlatformHandlerTraceEvents_Win32(
     _In_ ULONG DebugPrintLevel,
     _In_ ULONG DebugPrintFlag,
     _Printf_format_string_ _In_ PCSTR DebugMessage,
-    ...
+    _In_ va_list ArgumentList
     )
 /*++
 
@@ -881,20 +881,18 @@ Return Value:
 
 --*/
 {
-    va_list argumentList;
-
     if ((DebugPrintLevel <= DmfPlatform_LoggingLevel) &&
         (DebugPrintFlag & DmfPlatform_LoggingFlags))
     {
-        va_start(argumentList,
-                 DebugMessage);
+        CHAR translatedDebugMessage[1024];
 
-        printf(DebugMessage,
-                argumentList);
+        DmfPlatform_FormatStringTranslate(DebugMessage,
+                                          translatedDebugMessage,
+                                          ARRAYSIZE(translatedDebugMessage));
+        vprintf_s(translatedDebugMessage,
+                  ArgumentList);
         printf("\n");
     }
-
-    va_end(argumentList);
 }
 
 ////////////////////////////////////////////////////////////////////////////

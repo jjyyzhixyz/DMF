@@ -2782,6 +2782,112 @@ Return Value:
     va_end(argumentList);
 }
 
+BOOLEAN
+DmfPlatform_FormatStringTranslate(
+    _In_ PCSTR DebugMessage,
+    _Out_writes_(OutStringSize) CHAR* OutString,
+    _In_ size_t OutStringSize
+    )
+/*++
+
+Routine Description:
+
+    Replace special WPP tracing format specifiers with 0x%X so that printf
+    can output the values.
+
+Arguments:
+
+    DebugMessage - Original format message to filter.
+    OutString - Translated format message.
+    OutStringSize - Size in bytes of OutString buffer.
+
+Return Value:
+
+    TRUE if the OutString buffer is large enough.
+
+--*/
+{
+    BOOLEAN returnValue;
+    CHAR* currentCharacterIn;
+    CHAR* currentCharacterOut;
+    size_t remainingBytes;
+    CHAR replacementFormat[] = "0x%X";
+    size_t replacementFormatSize;
+
+    if (strlen(DebugMessage) + sizeof(CHAR) > OutStringSize)
+    {
+        strcpy_s(OutString,
+                 OutStringSize,
+                 "Format string is too long.");
+        returnValue = FALSE;
+        goto Exit;
+    }
+
+    replacementFormatSize = strlen(replacementFormat);
+    currentCharacterIn = (CHAR*)DebugMessage;
+    currentCharacterOut = OutString;
+    remainingBytes = OutStringSize;
+    while (*currentCharacterIn)
+    {
+        if (*currentCharacterIn == '%')
+        {
+            if (*(currentCharacterIn + 1) == '!')
+            {
+                // Special string.
+                //
+
+                // Skip '%'
+                //
+                currentCharacterIn++;
+                // Skip '!'
+                currentCharacterIn++;
+                // Skip characters inside '!' and '!'.
+                //
+                while ((*currentCharacterIn) &&
+                        (*currentCharacterIn != '!'))
+                {
+                    currentCharacterIn++;
+                }
+                if (*currentCharacterIn)
+                {
+                    // Skip trailing !''.
+                    //
+                    currentCharacterIn++;
+                }
+                // Replace with default format string.
+                //
+                strcat_s(currentCharacterOut,
+                         remainingBytes,
+                         replacementFormat);
+                remainingBytes -= replacementFormatSize;
+                currentCharacterOut += replacementFormatSize;
+                continue;
+            }
+            else
+            {
+                // Not a special string...fall through and keep copying.
+                //
+            }
+        }
+        // Copy the current compatible character.
+        //
+        *currentCharacterOut = *currentCharacterIn;
+        currentCharacterOut++;
+        remainingBytes--;
+        currentCharacterIn++;
+    }
+    // Zero terminate the string.
+    //
+    *currentCharacterOut = '\0';
+    // Indicate the original string was translated.
+    //
+    returnValue = TRUE;
+
+Exit:
+
+    return returnValue;
+}
+
 #if defined(__cplusplus)
 }
 #endif // defined(__cplusplus)
