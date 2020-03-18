@@ -215,6 +215,7 @@ Arguments:
 Return Value:
 
     FALSE
+    TODO: Return TRUE if timer was already in the queue.
 
 --*/
 {
@@ -255,6 +256,7 @@ Arguments:
 Return Value:
 
     TRUE
+    TODO: Return FALSE if timer was not yet started.
 
 --*/
 {

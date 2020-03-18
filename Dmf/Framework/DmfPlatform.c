@@ -429,11 +429,23 @@ DmfPlatformObjectCreate(
 
 Routine Description:
 
+    Creates the equivalent of a Platform specific WDFOBJECT. This is the parent 
+    container for all other Platform versions of WDF objects. It contains all the
+    information needed to support WDF APIs as well as a pointer to opaque Platform
+    specific information.
+
 Arguments:
+
+    Parent - The parent DMF_PLATORM_OBJECT that should be assigned to the newly 
+             created DMF_PLATFORM_OBJECT or NULL if not specified.
+    ObjectDeleteCallback - The Platform specific deletion callback that deletes
+                           Platform specific information in the object's 
+                           opaque buffer.
 
 Return Value:
 
-    NTSTATUS
+    The address of the newly created DMF_PLATFORM_OBJECT (WDFOBJECT) or NULL if
+    the object could not be created.
 
 --*/
 {
@@ -496,7 +508,11 @@ DmfPlatformWdfMemoryDelete(
 
 Routine Description:
 
+    Deletes the private Platform specific data for a given memory.
+
 Arguments:
+
+    PlatformObject - The container of the given memory.
 
 Return Value:
 
@@ -1002,7 +1018,7 @@ Arguments:
 
 Return Value:
 
-    NTSTATUS
+    None
 
 --*/
 {
@@ -1038,7 +1054,7 @@ Arguments:
 
 Return Value:
 
-    NTSTATUS
+    None
 
 --*/
 {
@@ -1218,7 +1234,8 @@ Arguments:
 
 Return Value:
 
-    Always TRUE indicating that the timer was already started.
+    TRUE indicates that the timer was already started.
+    FALSE indicates that the timer was not yet started.
 
 --*/
 {
@@ -1233,7 +1250,7 @@ Return Value:
     platformTimer = (DMF_PLATFORM_TIMER*)platformObject->Data;
 
     returnValue = DmfPlatformHandlersTable.DmfPlatformHandlerWdfTimerStop(platformTimer,
-                                                                   Wait);
+                                                                          Wait);
 
     return returnValue;
 }
