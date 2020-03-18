@@ -354,7 +354,7 @@ Return Value:
     // Copy the converted string to the destination buffer.
     //
     wcscpy_s(UnicodeString->Buffer,
-             UnicodeString->MaximumLength,
+             UnicodeString->MaximumLength / sizeof(WCHAR),
              wideString);
 
     // Zero-terminate the destination string.
@@ -1191,14 +1191,8 @@ Return Value:
     ansiString.Length = (USHORT)strlen(NarrowString);
     ansiString.MaximumLength = (USHORT)BufferSize;
 
-#if defined(DMF_WDF_DRIVER)
     RtlInitUnicodeString(&unicodeString,
                          WideString);
-#else
-    unicodeString.Buffer = WideString;
-    unicodeString.Length = (USHORT)(wcslen(WideString) * sizeof(WCHAR));
-    unicodeString.MaximumLength = unicodeString.Length;
-#endif
     if (unicodeString.Length / sizeof(WCHAR) > BufferSize)
     {
         ntStatus = STATUS_BUFFER_TOO_SMALL;
