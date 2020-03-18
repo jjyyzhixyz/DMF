@@ -2443,7 +2443,7 @@ Return Value:
             // WDFIOQUEUE
             //
             case WdfIoQueueCreateTableIndex:
-                WdfFunctions[WdfIoQueueCreateTableIndex] = (WDFFUNC)WdfIoQueueCreate;
+                WdfFunctions[WdfIoQueueCreateTableIndex] = (WDFFUNC)DmfPlatform_WdfIoQueueCreate;
                 break;
             case WdfIoQueueGetDeviceTableIndex:
                 WdfFunctions[WdfIoQueueGetDeviceTableIndex] = (WDFFUNC)DmfPlatform_WdfIoQueueGetDevice;

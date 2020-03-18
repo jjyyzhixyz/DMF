@@ -951,7 +951,7 @@ Return Value:
 {
     PAGED_CODE();
 
-#if !defined(DMF_USER_MODE)
+#if defined(DMF_KERNEL_MODE)
 
     RECORDER_LOG recorder;
 
@@ -1684,7 +1684,7 @@ Exit:
     return completed;
 }
 
-#if !defined(DMF_USER_MODE)
+#if defined(DMF_KERNEL_MODE)
 RECORDER_LOG
 DMF_InFlightRecorderGet(
     _In_ DMFMODULE DmfModule

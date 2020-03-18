@@ -48,6 +48,7 @@ extern "C"
 #endif
 #include "Dmf_BufferQueue.h"
 #include "Dmf_IoctlHandler.h"
+#include "Dmf_String.h"
 
 #if defined(__cplusplus)
 }

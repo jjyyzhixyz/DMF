@@ -67,6 +67,12 @@
     <ClCompile Include="..\..\Framework\Modules.Core\Dmf_BranchTrack.c">
       <Filter>Modules\Features</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\Framework\Modules.Core\Dmf_String.c">
+      <Filter>Modules\Driver Patterns</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Framework\DmfBranchTrack.c">
+      <Filter>Framework</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Framework\Modules.Core\Dmf_BranchTrack.h">
@@ -168,6 +174,9 @@
     <ClInclude Include="..\..\Framework\Platform\DmfIncludes_WIN32_MODE.h">
       <Filter>Headers\Framework\Platform</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Framework\Modules.Core\Dmf_String.h">
+      <Filter>Headers\Modules\Driver Patterns</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Modules">
@@ -252,6 +261,9 @@
     </None>
     <None Include="..\..\Framework\Modules.Core\Dmf_LiveKernelDump.md">
       <Filter>Documentation\Modules\Features</Filter>
+    </None>
+    <None Include="..\..\Framework\Modules.Core\Dmf_String.md">
+      <Filter>Documentation\Modules\Driver Patterns</Filter>
     </None>
   </ItemGroup>
 </Project>

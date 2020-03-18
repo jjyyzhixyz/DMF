@@ -192,7 +192,6 @@
     <ClInclude Include="..\..\Modules.Library\Dmf_SimpleOrientation.h" />
     <ClInclude Include="..\..\Modules.Library\Dmf_SmbiosWmi.h" />
     <ClInclude Include="..\..\Modules.Library\Dmf_SpbTarget.h" />
-    <ClInclude Include="..\..\Modules.Library\Dmf_String.h" />
     <ClInclude Include="..\..\Modules.Library\Dmf_SymbolicLinkTarget.h" />
     <ClInclude Include="..\..\Modules.Library\Dmf_Thread.h" />
     <ClInclude Include="..\..\Modules.Library\Dmf_NotifyUserWithRequest.h" />
@@ -224,7 +223,6 @@
     <ClCompile Include="..\..\Modules.Library\Dmf_SimpleOrientation.cpp" />
     <ClCompile Include="..\..\Modules.Library\Dmf_SmbiosWmi.c" />
     <ClCompile Include="..\..\Modules.Library\Dmf_SpbTarget.c" />
-    <ClCompile Include="..\..\Modules.Library\Dmf_String.c" />
     <ClCompile Include="..\..\Modules.Library\Dmf_SymbolicLinkTarget.c" />
     <ClCompile Include="..\..\Modules.Library\Dmf_Thread.c" />
     <ClCompile Include="..\..\Modules.Library\Dmf_NotifyUserWithRequest.c" />
@@ -261,7 +259,6 @@
     <None Include="..\..\Modules.Library\Dmf_SimpleOrientation.md" />
     <None Include="..\..\Modules.Library\Dmf_SmbiosWmi.md" />
     <None Include="..\..\Modules.Library\Dmf_SpbTarget.md" />
-    <None Include="..\..\Modules.Library\Dmf_String.md" />
     <None Include="..\..\Modules.Library\Dmf_Thread.md" />
     <None Include="..\..\Modules.Library\Dmf_ThreadedBufferQueue.md" />
     <None Include="..\..\Modules.Library\Dmf_VirtualHidMini.md" />

@@ -99,6 +99,7 @@ extern "C"
 
     #include ".\Platform\wdfobject.h"
     #include ".\Platform\wdfcore.h"
+    #include ".\Platform\wdfdriver.h"
 
     // TODO: From WDM.
     //
@@ -116,6 +117,7 @@ extern "C"
     #include ".\Platform\wdfworkitem.h"
     #include ".\Platform\wdfcollection.h"
     #include ".\Platform\wdfstring.h"
+    #include ".\Platform\wdfregistry.h"
 
     // TODO: From WDM.
     //

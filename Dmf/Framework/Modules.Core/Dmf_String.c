@@ -23,8 +23,8 @@ Environment:
 // DMF and this Module's Library specific definitions.
 //
 #include "DmfModule.h"
-#include "DmfModules.Library.h"
-#include "DmfModules.Library.Trace.h"
+#include "DmfModules.Core.h"
+#include "DmfModules.Core.Trace.h"
 
 #if defined(DMF_WDF_DRIVER)
 #include "Dmf_String.tmh"

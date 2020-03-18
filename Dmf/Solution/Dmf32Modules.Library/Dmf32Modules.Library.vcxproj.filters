@@ -82,9 +82,6 @@
     <Filter Include="Documentation\Modules\Hid">
       <UniqueIdentifier>{0e021f5f-590e-404c-ab18-7ee3a05800cc}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Modules\Sensors">
-      <UniqueIdentifier>{4f71e9b7-4827-4df7-9bca-45d98bb6fa02}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Modules\Network">
       <UniqueIdentifier>{cf67d15d-ae8a-4ff6-a7cf-c48b8a893506}</UniqueIdentifier>
     </Filter>
@@ -162,9 +159,6 @@
     <ClInclude Include="..\..\Modules.Library\Dmf_SmbiosWmi.h">
       <Filter>Headers\Modules\Driver Patterns</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Modules.Library\Dmf_String.h">
-      <Filter>Headers\Modules\Driver Patterns</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Modules.Library\Dmf_Registry.h">
       <Filter>Headers\Modules\Driver Patterns</Filter>
     </ClInclude>
@@ -218,9 +212,6 @@
     <ClCompile Include="..\..\Modules.Library\Dmf_SmbiosWmi.c">
       <Filter>Modules\Driver Patterns</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\Modules.Library\Dmf_String.c">
-      <Filter>Modules\Driver Patterns</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\Modules.Library\Dmf_Interface_ComponentFirmwareUpdate.c">
       <Filter>Interfaces</Filter>
     </ClCompile>
@@ -229,15 +220,6 @@
     </ClCompile>
     <ClCompile Include="..\..\Modules.Library\Dmf_AlertableSleep.c">
       <Filter>Modules\Driver Patterns</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Modules.Library\Dmf_SimpleOrientation.cpp">
-      <Filter>Modules\Sensors</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Modules.Library\Dmf_HingeAngle.cpp">
-      <Filter>Modules\Sensors</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Modules.Library\Dmf_MobileBroadband.cpp">
-      <Filter>Modules\Network</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -293,9 +275,6 @@
     <None Include="..\..\Modules.Library\Dmf_SmbiosWmi.md">
       <Filter>Documentation\Modules\Driver Patterns</Filter>
     </None>
-    <None Include="..\..\Modules.Library\Dmf_String.md">
-      <Filter>Documentation\Modules\Driver Patterns</Filter>
-    </None>
     <None Include="..\..\Modules.Library\Dmf_CmApi.md">
       <Filter>Documentation\Modules\Driver Patterns</Filter>
     </None>
@@ -322,15 +301,6 @@
     </None>
     <None Include="..\..\Modules.Library\Dmf_AlertableSleep.md">
       <Filter>Documentation\Modules\Driver Patterns</Filter>
-    </None>
-    <None Include="..\..\Modules.Library\Dmf_HingeAngle.md">
-      <Filter>Documentation\Modules\Sensors</Filter>
-    </None>
-    <None Include="..\..\Modules.Library\Dmf_SimpleOrientation.md">
-      <Filter>Documentation\Modules\Sensors</Filter>
-    </None>
-    <None Include="..\..\Modules.Library\Dmf_MobileBroadband.md">
-      <Filter>Documentation\Modules\Network</Filter>
     </None>
   </ItemGroup>
 </Project>
