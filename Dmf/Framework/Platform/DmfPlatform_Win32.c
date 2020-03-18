@@ -797,6 +797,9 @@ Return Value:
 // Platform Initialization
 //
 
+ULONG DmfPlatform_LoggingLevel = TRACE_LEVEL_INFORMATION;
+ULONG DmfPlatform_LoggingFlags = 0xFFFFFFFF;
+
 void
 DmfPlatformHandlerInitialize_Win32(
     void
@@ -821,6 +824,8 @@ Return Value:
 {
     // NOTE: Platform can start deamon or thread or allocate resources
     //       that are stored in global memory.
+    //
+    // TODO: Set global logging flags here.
     //
 }
 
@@ -875,19 +880,18 @@ Return Value:
 
 --*/
 {
-    UNREFERENCED_PARAMETER(DebugPrintLevel);
-    UNREFERENCED_PARAMETER(DebugPrintFlag);
-
     va_list argumentList;
 
-    va_start(argumentList,
-             DebugMessage);
+    if ((DebugPrintLevel <= DmfPlatform_LoggingLevel) &&
+        (DebugPrintFlag & DmfPlatform_LoggingFlags))
+    {
+        va_start(argumentList,
+                 DebugMessage);
 
-    // TODO: Support levels/flags.
-    //
-
-    printf(DebugMessage,
-           argumentList);
+        printf(DebugMessage,
+                argumentList);
+        printf("\n");
+    }
 
     va_end(argumentList);
 }
