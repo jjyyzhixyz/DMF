@@ -596,7 +596,7 @@ Return Value:
     if (! NT_SUCCESS(ntStatus))
     {
         DmfAssert(FALSE);
-        TraceEvents(TRACE_LEVEL_ERROR, DMF_TRACE, "Invalid code path RtlStringCchLengthW ntStatus=%!STATUS!", ntStatus);
+        TraceEvents(TRACE_LEVEL_ERROR, DMF_TRACE, "RtlStringCchLengthW fails: ntStatus=%!STATUS!", ntStatus);
         goto Exit;
     }
 
@@ -620,7 +620,7 @@ Return Value:
         if (! NT_SUCCESS(ntStatus))
         {
             DmfAssert(FALSE);
-            TraceEvents(TRACE_LEVEL_ERROR, DMF_TRACE, "Invalid code path RtlStringCchLengthW ntStatus=%!STATUS!", ntStatus);
+            TraceEvents(TRACE_LEVEL_ERROR, DMF_TRACE, "RtlStringCchLengthW fails: ntStatus=%!STATUS!", ntStatus);
             goto Exit;
         }
 
@@ -641,7 +641,7 @@ Return Value:
                                                      MemoryTag);
         if (NULL == fullPathName)
         {
-            TraceEvents(TRACE_LEVEL_ERROR, DMF_TRACE, "Out of Memory");
+            TraceEvents(TRACE_LEVEL_ERROR, DMF_TRACE, "ExAllocatePoolWithTag fails");
             goto Exit;
         }
 
@@ -653,7 +653,7 @@ Return Value:
         if (! NT_SUCCESS(ntStatus))
         {
             DmfAssert(FALSE);
-            TraceEvents(TRACE_LEVEL_ERROR, DMF_TRACE, "Invalid code path RtlStringCchCopyW ntStatus=%!STATUS!", ntStatus);
+            TraceEvents(TRACE_LEVEL_ERROR, DMF_TRACE, "RtlStringCchCopyW fails: ntStatus=%!STATUS!", ntStatus);
             goto Exit;
         }
 
@@ -668,7 +668,7 @@ Return Value:
         if (! NT_SUCCESS(ntStatus))
         {
             DmfAssert(FALSE);
-            TraceEvents(TRACE_LEVEL_ERROR, DMF_TRACE, "Invalid code path RtlStringCchCatW ntStatus=%!STATUS!", ntStatus);
+            TraceEvents(TRACE_LEVEL_ERROR, DMF_TRACE, "RtlStringCchCatW fails: ntStatus=%!STATUS!", ntStatus);
             goto Exit;
         }
 
@@ -677,7 +677,7 @@ Return Value:
         ntStatus = Registry_RecursivePathCreate(fullPathName);
         if (! NT_SUCCESS(ntStatus))
         {
-            TraceEvents(TRACE_LEVEL_ERROR, DMF_TRACE, "Unable to create RegistryPath=%S ntStatus=%!STATUS!", fullPathName, ntStatus);
+            TraceEvents(TRACE_LEVEL_ERROR, DMF_TRACE, "Registry_RecursivePathCreate fails: RegistryPath=%S ntStatus=%!STATUS!", fullPathName, ntStatus);
             goto Exit;
         }
 
@@ -693,7 +693,7 @@ Return Value:
                                            entry);
             if (! NT_SUCCESS(ntStatus))
             {
-                TraceEvents(TRACE_LEVEL_ERROR, DMF_TRACE, "Invalid code path Registry_EntryWrite ntStatus=%!STATUS!", ntStatus);
+                TraceEvents(TRACE_LEVEL_ERROR, DMF_TRACE, "Registry_EntryWrite fails: ntStatus=%!STATUS!", ntStatus);
                 goto Exit;
             }
         }
@@ -766,7 +766,7 @@ Return Value:
                                         tree->NumberOfBranches);
         if (! NT_SUCCESS(ntStatus))
         {
-            TraceEvents(TRACE_LEVEL_ERROR, DMF_TRACE, "Invalid code path Registry_BranchWrite ntStatus=%!STATUS!", ntStatus);
+            TraceEvents(TRACE_LEVEL_ERROR, DMF_TRACE, "Registry_BranchWrite fails: ntStatus=%!STATUS!", ntStatus);
             goto Exit;
         }
     }
@@ -1208,7 +1208,7 @@ Return Value:
                 if (NULL == keyInformationBuffer)
                 {
                     returnValue = FALSE;
-                    TraceEvents(TRACE_LEVEL_ERROR, DMF_TRACE, "Out of memory");
+                    TraceEvents(TRACE_LEVEL_ERROR, DMF_TRACE, "ExAllocatePoolWithTag fails");
                     goto Exit;
                 }
 
@@ -1336,7 +1336,7 @@ Return Value:
                                NULL);
     if (!NT_SUCCESS(ntStatus))
     {
-        TraceEvents(TRACE_LEVEL_ERROR, DMF_TRACE, "RegQueryInfoKey ntStatus=%!STATUS!", ntStatus);
+        TraceEvents(TRACE_LEVEL_ERROR, DMF_TRACE, "RegQueryInfoKey fails: ntStatus=%!STATUS!", ntStatus);
         goto Exit;
     }
 
@@ -1361,7 +1361,7 @@ Return Value:
                                (PVOID*)&subKeyNameMemoryBuffer);
     if (!NT_SUCCESS(ntStatus))
     {
-        TraceEvents(TRACE_LEVEL_ERROR, DMF_TRACE, "WdfMemoryCreate ntStatus=%!STATUS!", ntStatus);
+        TraceEvents(TRACE_LEVEL_ERROR, DMF_TRACE, "WdfMemoryCreate fails: ntStatus=%!STATUS!", ntStatus);
         goto Exit;
     }
 
@@ -1383,7 +1383,7 @@ Return Value:
                                 NULL);
         if (!NT_SUCCESS(ntStatus))
         {
-            TraceEvents(TRACE_LEVEL_ERROR, DMF_TRACE, "RegEnumKeyEx ntStatus=%!STATUS!", ntStatus);
+            TraceEvents(TRACE_LEVEL_ERROR, DMF_TRACE, "RegEnumKeyEx fails: ntStatus=%!STATUS!", ntStatus);
             break;
         }
 
@@ -1442,7 +1442,7 @@ Registry_KeyEnumerationFilterAllSubkeys(
         // be here.
         //
         returnValue = FALSE;
-        TraceEvents(TRACE_LEVEL_WARNING, DMF_TRACE, "Registry_HandleOpenByHandle NULL");
+        TraceEvents(TRACE_LEVEL_WARNING, DMF_TRACE, "Registry_HandleOpenByHandle fails");
         goto Exit;
     }
 
@@ -1493,7 +1493,7 @@ Registry_KeyEnumerationFilterStrstr(
             // be here.
             //
             returnValue = FALSE;
-            TraceEvents(TRACE_LEVEL_WARNING, DMF_TRACE, "Registry_HandleOpenByHandle NULL");
+            TraceEvents(TRACE_LEVEL_WARNING, DMF_TRACE, "Registry_HandleOpenByHandle fails");
             goto Exit;
         }
 
@@ -1566,8 +1566,6 @@ Return Value:
 
     FuncEntry(DMF_TRACE);
 
-    TraceEvents(TRACE_LEVEL_VERBOSE, DMF_TRACE, "Check if action needed [%ws]...", ValueName);
-
     DmfAssert(ActionType != Registry_ActionTypeInvalid);
 
     // Indicate if action will be taken...default is no.
@@ -1592,11 +1590,6 @@ Return Value:
         if (WriteIfNotFound)
         {
             needsAction = TRUE;
-            TraceEvents(TRACE_LEVEL_VERBOSE, DMF_TRACE, "%ws not found (action will happen)", ValueName);
-        }
-        else
-        {
-            TraceEvents(TRACE_LEVEL_VERBOSE, DMF_TRACE, "%ws not found (no action will happen)", ValueName);
         }
     }
     else if (STATUS_BUFFER_OVERFLOW == ntStatus)
@@ -1619,7 +1612,7 @@ Return Value:
                                    (PVOID*)&valueMemoryBuffer);
         if (!NT_SUCCESS(ntStatus))
         {
-            TraceEvents(TRACE_LEVEL_ERROR, DMF_TRACE, "WdfMemoryCreate ntStatus=%!STATUS!", ntStatus);
+            TraceEvents(TRACE_LEVEL_ERROR, DMF_TRACE, "WdfMemoryCreate fails: ntStatus=%!STATUS!", ntStatus);
             goto Exit;
         }
 
@@ -1639,7 +1632,7 @@ Return Value:
             // Fall through to free memory. Let the caller decide what to do.
             // Generally, this code path should not happen.
             //
-            TraceEvents(TRACE_LEVEL_ERROR, DMF_TRACE, "ZwQueryValueKey ntStatus=%!STATUS!", ntStatus);
+            TraceEvents(TRACE_LEVEL_ERROR, DMF_TRACE, "ZwQueryValueKey fails: ntStatus=%!STATUS!", ntStatus);
         }
         else
         {
@@ -1652,12 +1645,7 @@ Return Value:
                                    ValueDataToWrite,
                                    ValueDataToWriteSize))
             {
-                TraceEvents(TRACE_LEVEL_VERBOSE, DMF_TRACE, "%ws found needs action", ValueName);
                 needsAction = TRUE;
-            }
-            else
-            {
-                TraceEvents(TRACE_LEVEL_VERBOSE, DMF_TRACE, "%ws found but needs no action", ValueName);
             }
         }
 
@@ -1668,7 +1656,7 @@ Return Value:
     {
         // Any other status means something is wrong.
         //
-        TraceEvents(TRACE_LEVEL_ERROR, DMF_TRACE, "ZwQueryValueKey ntStatus=%!STATUS!", ntStatus);
+        TraceEvents(TRACE_LEVEL_ERROR, DMF_TRACE, "ZwQueryValueKey fails: ntStatus=%!STATUS!", ntStatus);
         goto Exit;
     }
 
@@ -1692,7 +1680,7 @@ Return Value:
                                                   (VOID*)ValueDataToWrite);
                 if (! NT_SUCCESS(ntStatus))
                 {
-                    TraceEvents(TRACE_LEVEL_ERROR, DMF_TRACE, "WdfRegistryAssignValue %ws...ntStatus=%!STATUS!", ValueName, ntStatus);
+                    TraceEvents(TRACE_LEVEL_ERROR, DMF_TRACE, "WdfRegistryAssignValue fails: %ws...ntStatus=%!STATUS!", ValueName, ntStatus);
                 }
                 break;
             }
@@ -1702,7 +1690,7 @@ Return Value:
                                                   &valueNameString);
                 if (! NT_SUCCESS(ntStatus))
                 {
-                    TraceEvents(TRACE_LEVEL_ERROR, DMF_TRACE, "WdfRegistryRemoveValue %ws...ntStatus=%!STATUS!", ValueName, ntStatus);
+                    TraceEvents(TRACE_LEVEL_ERROR, DMF_TRACE, "WdfRegistryRemoveValue fails: %ws...ntStatus=%!STATUS!", ValueName, ntStatus);
                 }
                 break;
             }
@@ -1731,10 +1719,6 @@ Return Value:
                 break;
             }
         }
-    }
-    else
-    {
-        TraceEvents(TRACE_LEVEL_VERBOSE, DMF_TRACE, "%ws: no action taken", ValueName);
     }
 
 Exit:
@@ -1789,8 +1773,6 @@ Return Value:
 
     FuncEntry(DMF_TRACE);
 
-    TraceEvents(TRACE_LEVEL_VERBOSE, DMF_TRACE, "Action always [%ws]...", ValueName);
-
     DmfAssert(ActionType != Registry_ActionTypeInvalid);
 
     RtlInitUnicodeString(&valueNameString,
@@ -1814,7 +1796,7 @@ Return Value:
                                               (VOID*)ValueDataBuffer);
             if (! NT_SUCCESS(ntStatus))
             {
-                TraceEvents(TRACE_LEVEL_ERROR, DMF_TRACE, "WdfRegistryAssignValue %ws...ntStatus=%!STATUS!", ValueName, ntStatus);
+                TraceEvents(TRACE_LEVEL_ERROR, DMF_TRACE, "WdfRegistryAssignValue fails: %ws...ntStatus=%!STATUS!", ValueName, ntStatus);
             }
             break;
         }
@@ -1827,7 +1809,7 @@ Return Value:
                                               &valueNameString);
             if (! NT_SUCCESS(ntStatus))
             {
-                TraceEvents(TRACE_LEVEL_ERROR, DMF_TRACE, "RtlDeleteRegistryValue %ws...ntStatus=%!STATUS!", ValueName, ntStatus);
+                TraceEvents(TRACE_LEVEL_ERROR, DMF_TRACE, "RtlDeleteRegistryValue fails: %ws...ntStatus=%!STATUS!", ValueName, ntStatus);
             }
             break;
         }
@@ -1924,8 +1906,6 @@ Return:
 
     FuncEntry(DMF_TRACE);
 
-    TraceEvents(TRACE_LEVEL_INFORMATION, DMF_TRACE, "Start timer");
-
     WdfTimerStart(Timer,
                   WDF_REL_TIMEOUT_IN_MS(Registry_DeferredRegistryWritePollingIntervalMs));
 
@@ -1983,13 +1963,11 @@ Return:
         // Out of memory.
         //
         ntStatus = STATUS_INSUFFICIENT_RESOURCES;
-        TraceEvents(TRACE_LEVEL_ERROR, DMF_TRACE, "Out of memory %!STATUS!", ntStatus);
+        TraceEvents(TRACE_LEVEL_ERROR, DMF_TRACE, "ExAllocatePoolWithTag fails: ntStatus=%!STATUS!", ntStatus);
         goto Exit;
     }
 
     ntStatus = STATUS_SUCCESS;
-
-    TraceEvents(TRACE_LEVEL_INFORMATION, DMF_TRACE, "Create deferred operation context");
 
     // Populate the deferred operation context.
     //
@@ -2002,7 +1980,6 @@ Return:
     // Add the operation to the list of operations.
     //
     DMF_ModuleLock(DmfModule);
-    TraceEvents(TRACE_LEVEL_INFORMATION, DMF_TRACE, "Insert deferred operation context into list listEntry=0x%p", &deferredContext->ListEntry);
     InsertTailList(&moduleContext->ListDeferredOperations,
                    &deferredContext->ListEntry);
     // Since there is a least one entry in the list, start the timer.
@@ -2052,8 +2029,6 @@ Return:
 
     FuncEntry(DMF_TRACE);
 
-    TraceEvents(TRACE_LEVEL_INFORMATION, DMF_TRACE, "Polling timer expires");
-
     dmfModule = (DMFMODULE)WdfTimerGetParentObject(WdfTimer);
     DmfAssert(dmfModule != NULL);
 
@@ -2066,7 +2041,6 @@ Return:
     listEntry = moduleContext->ListDeferredOperations.Flink;
     needToRestartTimer = FALSE;
 
-    TraceEvents(TRACE_LEVEL_INFORMATION, DMF_TRACE, "Begin list iteration");
     // The loop ends when the current list entry points to the list header.
     //
     while (listEntry != &moduleContext->ListDeferredOperations)
@@ -2092,22 +2066,21 @@ Return:
                 {
                     // Leave it in the list because driver needs to try again.
                     //
-                    TraceEvents(TRACE_LEVEL_INFORMATION, DMF_TRACE, "STATUS_OBJECT_NAME_NOT_FOUND...try again");
+                    TraceEvents(TRACE_LEVEL_VERBOSE, DMF_TRACE, "STATUS_OBJECT_NAME_NOT_FOUND...try again");
                     needToRestartTimer = TRUE;
                 }
                 else
                 {
                     if (NT_SUCCESS(ntStatus))
                     {
-                        TraceEvents(TRACE_LEVEL_INFORMATION, DMF_TRACE, "Registry_TreeWriteEx returns ntStatus=%!STATUS!", ntStatus);
+                        TraceEvents(TRACE_LEVEL_VERBOSE, DMF_TRACE, "Registry_TreeWriteEx returns ntStatus=%!STATUS!", ntStatus);
                     }
                     else
                     {
-                        TraceEvents(TRACE_LEVEL_INFORMATION, DMF_TRACE, "Registry_TreeWrite returns ntStatus=%!STATUS! (no retry)", ntStatus);
+                        TraceEvents(TRACE_LEVEL_VERBOSE, DMF_TRACE, "Registry_TreeWrite returns ntStatus=%!STATUS! (no retry)", ntStatus);
                     }
                     // Remove it from the list.
                     //
-                    TraceEvents(TRACE_LEVEL_INFORMATION, DMF_TRACE, "Remove deferredContext=0x%p", deferredContext);
                     RemoveEntryList(listEntry);
                     ExFreePoolWithTag(deferredContext,
                                       MemoryTag);
@@ -2126,7 +2099,6 @@ Return:
         //
         listEntry = nextListEntry;
     }
-    TraceEvents(TRACE_LEVEL_INFORMATION, DMF_TRACE, "End list iteration needToRestartTimer=%d", needToRestartTimer);
 
     if (needToRestartTimer)
     {
@@ -2278,7 +2250,6 @@ Return Value:
         goto SkipListIteration;
     }
 
-    TraceEvents(TRACE_LEVEL_VERBOSE, DMF_TRACE, "Begin list iteration");
     // Loop ends when the current entry points to the list header.
     //
     while (listEntry != &moduleContext->ListDeferredOperations)
@@ -2292,7 +2263,6 @@ Return Value:
                                             ListEntry);
         // Remove from list.
         //
-        TraceEvents(TRACE_LEVEL_INFORMATION, DMF_TRACE, "Remove deferredContext=0x%p", deferredContext);
         RemoveEntryList(listEntry);
 #if !defined(DMF_USER_MODE)
         // Free its allocated memory.
@@ -2306,7 +2276,6 @@ Return Value:
         //
         listEntry = nextListEntry;
     }
-    TraceEvents(TRACE_LEVEL_VERBOSE, DMF_TRACE, "End list iteration");
 
 SkipListIteration:
 
@@ -4002,8 +3971,6 @@ Return Value:
 
     FuncEntry(DMF_TRACE);
 
-    TraceEvents(TRACE_LEVEL_VERBOSE, DMF_TRACE, "DMF_Registry_ScheduledTaskCallbackContainer");
-
     returnValue = ScheduledTask_WorkResult_FailButTryAgain;
 
     device = DMF_ParentDeviceGet(DmfScheduledTask);
@@ -4020,7 +3987,7 @@ Return Value:
         if (! NT_SUCCESS(ntStatus))
         {
             TraceEvents(TRACE_LEVEL_ERROR, DMF_TRACE,
-                        "DMF_Registry_CallbackWork callbackIndex=%d ntStatus=%!STATUS!",
+                        "DMF_Registry_CallbackWork fails: callbackIndex=%d ntStatus=%!STATUS!",
                         callbackIndex,
                         ntStatus);
             goto Exit;

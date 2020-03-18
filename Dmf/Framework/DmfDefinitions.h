@@ -1836,7 +1836,7 @@ PushEntryList(
 
 void
 DMF_PlatformInitialize(
-    void
+    _In_ DMF_PLATFORM_PARAMETERS* DmfPlatformSpecificParameters
     );
 
 void

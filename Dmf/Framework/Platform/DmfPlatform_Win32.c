@@ -802,7 +802,7 @@ ULONG DmfPlatform_LoggingFlags = 0xFFFFFFFF;
 
 void
 DmfPlatformHandlerInitialize_Win32(
-    void
+    _In_ DMF_PLATFORM_PARAMETERS* DmfPlatformParameters
     )
 /*++
 
@@ -825,8 +825,9 @@ Return Value:
     // NOTE: Platform can start deamon or thread or allocate resources
     //       that are stored in global memory.
     //
-    // TODO: Set global logging flags here.
-    //
+
+    DmfPlatform_LoggingLevel = DmfPlatformParameters->TraceLoggingLevel;
+    DmfPlatform_LoggingFlags = DmfPlatformParameters->TraceLoggingFlags;
 }
 
 void

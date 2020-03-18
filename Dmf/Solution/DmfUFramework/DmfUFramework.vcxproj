@@ -190,6 +190,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Framework\DmfIncludeInternal.h" />
+    <ClInclude Include="..\..\Framework\DmfDefinitions.h" />
+    <ClInclude Include="..\..\Framework\Platform\DmfIncludes_USER_MODE.h" />
     <ClInclude Include="..\..\Framework\DmfTrace.h" />
     <ClInclude Include="..\..\Framework\DmfModule.h" />
     <ClInclude Include="..\..\Framework\Modules.Core\DmfInterface.h" />
@@ -202,11 +204,9 @@
     <ClInclude Include="..\..\Framework\Modules.Core\Dmf_HashTable.h" />
     <ClInclude Include="..\..\Framework\Modules.Core\Dmf_IoctlHandler.h" />
     <ClInclude Include="..\..\Framework\Modules.Core\Dmf_BufferQueue.h" />
-    <ClInclude Include="..\..\Framework\DmfDefinitions.h" />
     <ClInclude Include="..\..\Framework\Modules.Core\DmfModules.Core.Trace.h" />
     <ClInclude Include="..\..\Framework\Modules.Core\Dmf_RingBuffer.h" />
     <ClInclude Include="..\..\Framework\Modules.Core\Dmf_String.h" />
-    <ClInclude Include="..\..\Framework\Platform\DmfIncludes_USER_MODE.h" />
   </ItemGroup>
   <ItemGroup>
     <FilesToPackage Include="$(TargetPath)" />

@@ -21,9 +21,7 @@ Abstract:
 
 Environment:
 
-    Kernel-mode Driver Framework
-    User-mode Driver Framework
-    Win32 Application
+    Non-KMDF and non-UMDF platforms
 
 --*/
 
@@ -282,7 +280,7 @@ Arguments:
 
 Return Value:
 
-    NTSTATUS
+    VOID*
 
 --*/
 {
@@ -333,7 +331,7 @@ Arguments:
 
 Return Value:
 
-    NTSTATUS
+    None
 
 --*/
 {
@@ -502,7 +500,7 @@ Arguments:
 
 Return Value:
 
-    NTSTATUS
+    None
 
 --*/
 {
@@ -656,7 +654,7 @@ Exit:
 }
 
 _IRQL_requires_max_(DISPATCH_LEVEL)
-PVOID
+VOID*
 DmfPlatform_WdfMemoryGetBuffer(
     _In_ WDF_DRIVER_GLOBALS* DriverGlobals,
     _In_ WDFMEMORY Memory,
@@ -675,7 +673,7 @@ Arguments:
 
 Return Value:
 
-    NTSTATUS
+    VOID*
 
 --*/
 {
@@ -708,11 +706,15 @@ DmfPlatformWdfWaitLockDelete(
 
 Routine Description:
 
+    Deletes the private Platform specific data for a given wait lock.
+
 Arguments:
+
+    PlatformObject - The container of the given wait lock.
 
 Return Value:
 
-    NTSTATUS
+    None
 
 --*/
 {
@@ -873,7 +875,7 @@ Arguments:
 
 Return Value:
 
-    NTSTATUS
+    None
 
 --*/
 {
@@ -897,11 +899,15 @@ DmfPlatformWdfSpinLockDelete(
 
 Routine Description:
 
+    Deletes the private Platform specific data for a given spin lock.
+
 Arguments:
+
+    PlatformObject - The container of the given spin lock.
 
 Return Value:
 
-    NTSTATUS
+    None
 
 --*/
 {
@@ -1057,6 +1063,21 @@ void
 DmfPlatformWdfTimerDelete(
     _In_ DMF_PLATFORM_OBJECT* PlatformObject
     )
+/*++
+
+Routine Description:
+
+    Deletes the private Platform specific data for a given timer.
+
+Arguments:
+
+    PlatformObject - The container of the given timer.
+
+Return Value:
+
+    None
+
+--*/
 {
     DmfAssert(PlatformObject->PlatformObjectType == DmfPlatformObjectTypeTimer);
 
@@ -1154,7 +1175,7 @@ Arguments:
 
 Return Value:
 
-    NTSTATUS
+    Always FALSE indicating that timer was not in the queue.
 
 --*/
 {
@@ -1169,7 +1190,7 @@ Return Value:
     platformTimer = (DMF_PLATFORM_TIMER*)platformObject->Data;
 
     returnValue = DmfPlatformHandlersTable.DmfPlatformHandlerWdfTimerStart(platformTimer,
-                                                                    DueTime);
+                                                                           DueTime);
 
     // Always tell caller timer was not in queue.
     //
@@ -1197,7 +1218,7 @@ Arguments:
 
 Return Value:
 
-    NTSTATUS
+    Always TRUE indicating that the timer was already started.
 
 --*/
 {
@@ -1236,7 +1257,7 @@ Arguments:
 
 Return Value:
 
-    NTSTATUS
+    WDFOBJECT of the parent of the timer.
 
 --*/
 {
@@ -1261,11 +1282,15 @@ DmfPlatformWdfWorkItemDelete(
 
 Routine Description:
 
+    Deletes the private Platform specific data for a given workitem.
+
 Arguments:
+
+    PlatformObject - The container of the given workitem.
 
 Return Value:
 
-    NTSTATUS
+    None
 
 --*/
 {
@@ -1364,7 +1389,7 @@ Arguments:
 
 Return Value:
 
-    NTSTATUS
+    None
 
 --*/
 {
@@ -1401,7 +1426,7 @@ Arguments:
 
 Return Value:
 
-    NTSTATUS
+    WDFOBJECT of the parent of the given workitem.
 
 --*/
 {
@@ -1432,7 +1457,7 @@ Arguments:
 
 Return Value:
 
-    NTSTATUS
+    None
 
 --*/
 {
@@ -1542,7 +1567,7 @@ Arguments:
 
 Return Value:
 
-    NTSTATUS
+    The number of items in the collection.
 
 --*/
 {
@@ -1558,9 +1583,15 @@ Return Value:
     return platformcollection->ItemCount;
 }
 
+// List entry for each element in the collection.
+//
 typedef struct
 {
+    // Allows insertion into the list.
+    //
     LIST_ENTRY ListEntry;
+    // Key of item added into the list.
+    //
     WDFOBJECT Object;
 } COLLECTION_ENTRY;
 
@@ -1647,7 +1678,7 @@ Arguments:
 
 Return Value:
 
-    NTSTATUS
+    None
 
 --*/
 {
@@ -1706,7 +1737,7 @@ Arguments:
 
 Return Value:
 
-    NTSTATUS
+    None
 
 --*/
 {
@@ -1768,7 +1799,7 @@ Arguments:
 
 Return Value:
 
-    NTSTATUS
+    The returned item at the zero-based index in the list (which still remains in the collection).
 
 --*/
 {
@@ -1833,7 +1864,7 @@ Arguments:
 
 Return Value:
 
-    NTSTATUS
+    The returned item at the first index in the list (which still remains in the collection).
 
 --*/
 {
@@ -1891,7 +1922,7 @@ Arguments:
 
 Return Value:
 
-    NTSTATUS
+    The returned item at the last index in the list (which still remains in the collection).
 
 --*/
 {
@@ -1955,7 +1986,7 @@ Arguments:
 
 Return Value:
 
-    NTSTATUS
+    None
 
 --*/
 {
@@ -1984,7 +2015,7 @@ Arguments:
 
 Return Value:
 
-    NTSTATUS
+    None
 
 --*/
 {
@@ -2071,7 +2102,7 @@ Arguments:
 
 Return Value:
 
-    NTSTATUS
+    None
 
 --*/
 {
@@ -2102,7 +2133,7 @@ Arguments:
 
 Return Value:
 
-    NTSTATUS
+    None
 
 --*/
 {
@@ -2132,7 +2163,7 @@ Arguments:
 
 Return Value:
 
-    NTSTATUS
+    None
 
 --*/
 {
@@ -2231,14 +2262,13 @@ Arguments:
 
 Return Value:
 
-    NTSTATUS
+    WDFDEVICE that is the parent of the given queue.
 
 --*/
 {
-    // TODO:
-    //
     UNREFERENCED_PARAMETER(DriverGlobals);
     UNREFERENCED_PARAMETER(Queue);
+
     return NULL;
 }
 
@@ -2246,7 +2276,6 @@ Return Value:
 // WDFREQUEST
 ///////////////////////////////////////////////////////////////////////////////////
 //
-
 
 _IRQL_requires_max_(DISPATCH_LEVEL)
 VOID
@@ -2268,7 +2297,7 @@ Arguments:
 
 Return Value:
 
-    NTSTATUS
+    None
 
 --*/
 {
@@ -2301,12 +2330,13 @@ Arguments:
 
 Return Value:
 
-    NTSTATUS
+    WDFDEVICE that is the parent of the given file object.
 
 --*/
 {
     UNREFERENCED_PARAMETER(DriverGlobals);
     UNREFERENCED_PARAMETER(FileObject);
+
     return NULL;
 }
 
@@ -2331,11 +2361,16 @@ DmfPlaformNotImplemented(
 
 Routine Description:
 
+    Default handler for all WDF APIs that are not yet implemented. It tells the caller
+    that the code for that API needs to be written.
+
 Arguments:
+
+    None
 
 Return Value:
 
-    NTSTATUS
+    None
 
 --*/
 {
@@ -2360,7 +2395,7 @@ ULONG WdfStructureCount= WDF_STRUCTURE_TABLE_NUM_ENTRIES;
 
 void
 DMF_PlatformInitialize(
-    void
+    _In_ DMF_PLATFORM_PARAMETERS* DmfPlatformParameters
     )
 /*++
 
@@ -2522,7 +2557,7 @@ Return Value:
 
     // Perform platform specific initialization.
     //
-    DmfPlatformHandlersTable.DmfPlatformHandlerInitialize();
+    DmfPlatformHandlersTable.DmfPlatformHandlerInitialize(DmfPlatformParameters);
 }
 
 void
@@ -2612,11 +2647,10 @@ TraceInformation(
 
 Routine Description:
 
-    Outputs logging information.
+    Outputs logging information at TRACE_LEVEL_INFORMATION.
 
 Arguments:
 
-    DebugPrintLevel - The message level.
     DebugPrintFlag - The message flag.
     DebugMessageFormat - Printf format string.
     ... - Arguments to output formatted by DebugMessageFormat.
@@ -2649,11 +2683,10 @@ TraceVerbose(
 
 Routine Description:
 
-    Outputs logging information.
+    Outputs logging information at TRACE_LEVEL_VERBOSE.
 
 Arguments:
 
-    DebugPrintLevel - The message level.
     DebugPrintFlag - The message flag.
     DebugMessageFormat - Printf format string.
     ... - Arguments to output formatted by DebugMessageFormat.
@@ -2686,11 +2719,10 @@ TraceError(
 
 Routine Description:
 
-    Outputs logging information.
+    Outputs logging information at TRACE_LEVEL_ERROR.
 
 Arguments:
 
-    DebugPrintLevel - The message level.
     DebugPrintFlag - The message flag.
     DebugMessageFormat - Printf format string.
     ... - Arguments to output formatted by DebugMessageFormat.
@@ -2719,6 +2751,23 @@ FuncEntryArguments(
     _Printf_format_string_ _In_ PCSTR DebugMessage,
     ...
     )
+/*++
+
+Routine Description:
+
+    Outputs logging information with arguments during function entry at TRACE_LEVEL_VERBOSE.
+
+Arguments:
+
+    DebugPrintFlag - The message flag.
+    DebugMessageFormat - Printf format string.
+    ... - Arguments to output formatted by DebugMessageFormat.
+
+Return Value:
+
+    None
+
+--*/
 {
     va_list argumentList;
 

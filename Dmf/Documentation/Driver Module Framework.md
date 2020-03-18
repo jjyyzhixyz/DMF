@@ -113,8 +113,6 @@ Function)](#section-11-public-calls-by-client-includes-module-create-function)
 
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[The Module .md File](#the-module-.md-file)
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[The Module .mc File](#the-module-.mc-file)
-
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[The Module's Create Function](#the-modules-create-function)
 
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[Contents of a Module's Create Function](#contents-of-a-modules-create-function)
@@ -1708,8 +1706,6 @@ In addition, Modules may have two optional files:
 
 -   Module's _Public.h file
 
--   Module's .mc file
-
 The Module .h File
 ------------------
 
@@ -2707,25 +2703,6 @@ code, this file has a specific format so that all Modules are documented
 in a consistent manner.
 
 Example: Link a Module md file. [TODO]
-
-The Module .mc File
--------------------
-
-*NOTE: This concept will be eliminated in the near future. Instead
-callbacks to the Client will happen where Client can output event
-logging information itself.*
-
-Modules may write to the Event Log. (There are some DMF APIs that
-simplify writing to the Event Log).
-
-The .mc file contains definitions that must be copied into the Client
-Driver's .mc file in order for the Event Log entries that the Module
-writes to appear properly formed in the Event Log.
-
-Due to how the compiler works, it is not possible to directly include
-the .mc file into the Client Driver project.
-
-If a Module does not write to the Event Log, this file is not necessary.
 
 The Module's Create Function
 ----------------------------

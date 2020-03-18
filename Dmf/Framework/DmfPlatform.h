@@ -50,6 +50,29 @@ extern "C"
 
 #if !defined(DMF_WDF_DRIVER)
 
+    typedef struct
+    {
+        // Logging level.
+        //
+        ULONG TraceLoggingLevel;
+        // Logging flags.
+        //
+        ULONG TraceLoggingFlags;
+        // Context for possible future use by platform specific code.
+        //
+        void* PlatformSpecificContext;
+    } DMF_PLATFORM_PARAMETERS;
+
+    __forceinline
+    void
+    DMF_PLATFORM_PARAMETERS_INIT(
+        _In_ DMF_PLATFORM_PARAMETERS* DmfPlatFormParameters
+        )
+    {
+        DmfPlatFormParameters->TraceLoggingLevel = 0;
+        DmfPlatFormParameters->TraceLoggingFlags = 0x0;
+        DmfPlatFormParameters->PlatformSpecificContext = NULL;
+    }
 
     #define STATUS_SUCCESS                   ((NTSTATUS)0x00000000L) 
     #define STATUS_ABANDONED                 ((NTSTATUS)0x00000080L)
@@ -101,9 +124,11 @@ extern "C"
     #include ".\Platform\wdfcore.h"
     #include ".\Platform\wdfdriver.h"
 
-    // TODO: From WDM.
+    // It is not used in non-Windows platforms but the header files still 
+    // need to compile.
     //
-    typedef struct _PNP_BUS_INFORMATION {
+    typedef struct _PNP_BUS_INFORMATION
+    {
         GUID BusTypeGuid;
         INTERFACE_TYPE LegacyBusType;
         ULONG BusNumber;
@@ -119,13 +144,16 @@ extern "C"
     #include ".\Platform\wdfstring.h"
     #include ".\Platform\wdfregistry.h"
 
-    // TODO: From WDM.
+    // Dummy IO_STACK_LOCATION parameter so that the include files compile.
+    // It is not used in non-Windows platforms but the header files still 
+    // need to compile.
     //
     typedef struct 
     {
         ULONG Dummy;
-    }IO_STACK_LOCATION, *PIO_STACK_LOCATION;
+    } IO_STACK_LOCATION, *PIO_STACK_LOCATION;
     #include ".\Platform\wdfrequest.h"
+
     #include ".\Platform\wdfio.h"
     #include ".\Platform\wdffileobject.h"
 
@@ -230,7 +258,7 @@ extern "C"
     typedef
     void
     (*DmfPlatformHandler_PlatformInitialize)(
-        void
+        _In_ DMF_PLATFORM_PARAMETERS* DmfPlatformParameters
         );
 
     typedef

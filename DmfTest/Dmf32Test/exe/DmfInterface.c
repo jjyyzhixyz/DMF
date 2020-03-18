@@ -140,7 +140,12 @@ main()
 Start:
     printf("Starting...\n");
 
-    DMF_PlatformInitialize();
+    DMF_PLATFORM_PARAMETERS dmfPlatformParameters;
+
+    DMF_PLATFORM_PARAMETERS_INIT(&dmfPlatformParameters);
+    dmfPlatformParameters.TraceLoggingLevel = TRACE_LEVEL_INFORMATION;
+    dmfPlatformParameters.TraceLoggingFlags = 0xFFFFFFFF;
+    DMF_PlatformInitialize(&dmfPlatformParameters);
 
     deviceInit = (PWDFDEVICE_INIT)&deviceInit;
     dmfDeviceInit = DMF_DmfDeviceInitAllocate(deviceInit);                      
