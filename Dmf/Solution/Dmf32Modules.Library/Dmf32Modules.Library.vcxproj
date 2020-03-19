@@ -67,7 +67,7 @@
       <WppEnabled>false</WppEnabled>
       <RuntimeLibrary Condition="'$(Configuration)'=='Release'">MultiThreaded</RuntimeLibrary>
       <RuntimeLibrary Condition="'$(Configuration)'=='Debug'">MultiThreadedDebug</RuntimeLibrary>
-      <Optimization   Condition="'$(Configuration)'=='Debug'">Disabled</Optimization>
+      <Optimization Condition="'$(Configuration)'=='Debug'">Disabled</Optimization>
     </ClCompile>
     <Link>
       <AdditionalDependencies>%(AdditionalDependencies);hid.lib;setupapi.lib;cfgmgr32.lib;</AdditionalDependencies>
@@ -116,9 +116,6 @@
     <ClCompile Include="..\..\Modules.Library\Dmf_SymbolicLinkTarget.c" />
     <ClCompile Include="..\..\Modules.Library\Dmf_Thread.c" />
     <ClCompile Include="..\..\Modules.Library\Dmf_ThreadedBufferQueue.c" />
-  </ItemGroup>
-  <ItemGroup>
-    <MessageCompile Include="..\..\Modules.Library\Dmf_NotifyUserWithRequest_EventLog.mc" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="..\..\Modules.Library\Dmf_SymbolicLinkTarget.md" />
