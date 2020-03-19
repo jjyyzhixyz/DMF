@@ -761,17 +761,23 @@ Return Value:
     DMFMODULE_VALIDATE_IN_METHOD(DmfModule,
                                  String);
 
-    TraceEvents(TRACE_LEVEL_INFORMATION, DMF_TRACE, "");
-    TraceEvents(TRACE_LEVEL_INFORMATION, DMF_TRACE, "a");
-    TraceEvents(TRACE_LEVEL_INFORMATION, DMF_TRACE, "1=%d", 1);
-    TraceEvents(TRACE_LEVEL_INFORMATION, DMF_TRACE, "0x100=0x%x", 0x100);
-    TraceEvents(TRACE_LEVEL_INFORMATION, DMF_TRACE, "abc=%s", "abc");
-    TraceEvents(TRACE_LEVEL_INFORMATION, DMF_TRACE, "ABC=%S", L"ABC");
-    TraceEvents(TRACE_LEVEL_INFORMATION, DMF_TRACE, "... success: ntStatus=%!STATUS!", STATUS_SUCCESS);
-    TraceEvents(TRACE_LEVEL_INFORMATION, DMF_TRACE, "... fails: ntStatus=%!STATUS!", STATUS_UNSUCCESSFUL);
-    TraceEvents(TRACE_LEVEL_INFORMATION, DMF_TRACE, "... success: ntStatus=%!STATUS", STATUS_SUCCESS);
-    TraceEvents(TRACE_LEVEL_INFORMATION, DMF_TRACE, "0x%x=0x80000000", 0x80000000);
-    TraceEvents(TRACE_LEVEL_INFORMATION, DMF_TRACE, "%08d=00000123", 123);
+    // The WPP preprocessor does not understand the above #if. And it does not
+    // like some of the format strings below. So, hide original call so the 
+    // preprocessor does not see it.
+    //
+    #define TraceEventsHidFromWppPreprocessor   TraceEvents
+
+    TraceEventsHidFromWppPreprocessor(TRACE_LEVEL_INFORMATION, DMF_TRACE, "");
+    TraceEventsHidFromWppPreprocessor(TRACE_LEVEL_INFORMATION, DMF_TRACE, "a");
+    TraceEventsHidFromWppPreprocessor(TRACE_LEVEL_INFORMATION, DMF_TRACE, "1=%d", 1);
+    TraceEventsHidFromWppPreprocessor(TRACE_LEVEL_INFORMATION, DMF_TRACE, "0x100=0x%x", 0x100);
+    TraceEventsHidFromWppPreprocessor(TRACE_LEVEL_INFORMATION, DMF_TRACE, "abc=%s", "abc");
+    TraceEventsHidFromWppPreprocessor(TRACE_LEVEL_INFORMATION, DMF_TRACE, "ABC=%S", L"ABC");
+    TraceEventsHidFromWppPreprocessor(TRACE_LEVEL_INFORMATION, DMF_TRACE, "... success: ntStatus=%!STATUS!", STATUS_SUCCESS);
+    TraceEventsHidFromWppPreprocessor(TRACE_LEVEL_INFORMATION, DMF_TRACE, "... fails: ntStatus=%!STATUS!", STATUS_UNSUCCESSFUL);
+    TraceEventsHidFromWppPreprocessor(TRACE_LEVEL_INFORMATION, DMF_TRACE, "... success: ntStatus=%!STATUS", STATUS_SUCCESS);
+    TraceEventsHidFromWppPreprocessor(TRACE_LEVEL_INFORMATION, DMF_TRACE, "0x%x=0x80000000", 0x80000000);
+    TraceEventsHidFromWppPreprocessor(TRACE_LEVEL_INFORMATION, DMF_TRACE, "%08d=00000123", 123);
 
     // NOTE: Strings like "%b" will be caught by debug build assert.
     //
@@ -802,7 +808,7 @@ Return Value:
         longString[1] = 's';
         longString[extraLongSize - 2] = 'L';
         longString[extraLongSize - 1] = '\0';
-        TraceEvents(TRACE_LEVEL_INFORMATION, DMF_TRACE, longString, longString);
+        TraceEventsHidFromWppPreprocessor(TRACE_LEVEL_INFORMATION, DMF_TRACE, longString, longString);
         WdfObjectDelete(memory);
     }
 
