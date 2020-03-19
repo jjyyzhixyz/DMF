@@ -886,7 +886,7 @@ Return Value:
     if ((DebugPrintLevel <= DmfPlatform_LoggingLevel) &&
         (DebugPrintFlag & DmfPlatform_LoggingFlags))
     {
-        CHAR translatedDebugMessage[1024];
+        CHAR translatedDebugMessage[DMF_PLATFORM_TRACE_BUFFER_SIZE];
 
         DmfPlatform_FormatStringTranslate(DebugMessage,
                                           translatedDebugMessage,

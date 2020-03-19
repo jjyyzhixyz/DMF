@@ -251,6 +251,8 @@ extern "C"
         _In_ va_list ArgumentList
         );
 
+    #define DMF_PLATFORM_TRACE_BUFFER_SIZE 1024
+
     BOOLEAN
     DmfPlatform_FormatStringTranslate(
         _In_ PCSTR DebugMessage,

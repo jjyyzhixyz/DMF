@@ -9,11 +9,10 @@ Module Name:
 
 Abstract:
 
-    This is the common code for all non-KMDF/UMDF platforms. Functions are here are the top edge of
+    This is the common code for all non-native WDF platforms. Functions are here are the top edge of
     WDF support for non-WDF platforms.
 
     NOTE: Make sure to set "compile as C++" option.
-    NOTE: Make sure to #define DMF_USER_MODE in UMDF Drivers.
 
     NOTE: The function headers' arguments are explained in cases where the parameter
           is used in a specific manner in the function or has special meaning. All other
@@ -21,7 +20,7 @@ Abstract:
 
 Environment:
 
-    Non-KMDF and non-UMDF platforms
+    Non-native WDF platforms.
 
 --*/
 
@@ -2857,6 +2856,7 @@ Return Value:
                 //
                 currentCharacterIn++;
                 // Skip '!'
+                //
                 currentCharacterIn++;
                 // Skip characters inside '!' and '!'.
                 //
@@ -2865,18 +2865,45 @@ Return Value:
                 {
                     currentCharacterIn++;
                 }
-                if (*currentCharacterIn)
+                if (*currentCharacterIn == '!')
                 {
                     // Skip trailing !''.
                     //
                     currentCharacterIn++;
+                }
+                else
+                {
+                    // It is a malformed string that starts with %! but
+                    // has no trailing !. Just overwrite target buffer 
+                    // with error message and get out.
+                    //
+                    strcpy_s(OutString,
+                             OutStringSize,
+                             "Error in format string: expected trailing '!'");
+                    returnValue = FALSE;
+                    goto Exit;
                 }
                 // Replace with default format string.
                 //
                 strcat_s(currentCharacterOut,
                          remainingBytes,
                          replacementFormat);
-                remainingBytes -= replacementFormatSize;
+                if (remainingBytes >= replacementFormatSize)
+                {
+                    remainingBytes -= replacementFormatSize;
+                }
+                else
+                {
+                    // It is a malformed string where there is not enough
+                    // space in the target buffer for the rest of the
+                    // translated string.
+                    //
+                    strcpy_s(OutString,
+                             OutStringSize,
+                             "Error in format string: not enough space");
+                    returnValue = FALSE;
+                    goto Exit;
+                }
                 currentCharacterOut += replacementFormatSize;
                 continue;
             }
